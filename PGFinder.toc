@@ -1,0 +1,32 @@
+## Interface: 60200
+## Title: Premade Group Finder
+## Version: v3.0
+## Notes: Finds premade groups of your choice
+## Author: Ant-Kazzak
+## SavedVariables: Profiles
+## SavedVariables: friends
+## SavedVariables: keywords
+## SavedVariables: INTERVAL
+## SavedVariables: ENABLED
+## SavedVariables: SOUND_NOTIFICATION
+## SavedVariables: WHISPER_NOTIFICATION
+## SavedVariables: GUILD_NOTIFICATION
+## SavedVariables: AUTO_SIGN
+## SavedVariables: SEARCH_LOGIN
+## SavedVariables: LATEST_CATEGORY
+## SavedVariables: POPUP_NOTIFICATION
+## SavedVariablesPerCharacter: ROLES
+## SavedVariablesPerCharacter: playerName
+## SavedVariablesPerCharacter: LATEST_PROFILE
+## SavedVariablesPerCharacter: POPUPPOINT
+
+Localization\Localization.enUS.lua
+
+Util\PGFinderUtils.lua
+PGFinder.lua
+Options\PGFinderOptions.lua
+Options\PGFinderOptionsSettings.lua
+Options\PGFinderOptionsLists.lua
+Options\PGFinderOptionsProfiles.lua
+Util\PGFinderPopUp.lua
+Util\Profiles.lua
