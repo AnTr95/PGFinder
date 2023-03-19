@@ -6,9 +6,9 @@ SLASH_PREMADEGROUPFINDER1 = "/pgf"
 SLASH_PREMADEGROUPFINDER2 = "/premadefinder"
 SLASH_PREMADEGROUPFINDER3 = "/premadegroupfinder"
 
-L.OPTIONS_TITLE = "Premade Group Finder"
-L.OPTIONS_AUTHOR = "Author: " .. GetAddOnMetadata(addon, "Author") 
-L.OPTIONS_VERSION = "Version: " .. GetAddOnMetadata(addon, "Version")
+L.OPTIONS_TITLE = "Premade Group Finder";
+L.OPTIONS_AUTHOR = "Author: " .. GetAddOnMetadata(addon, "Author");
+L.OPTIONS_VERSION = "Version: " .. GetAddOnMetadata(addon, "Version");
 L.OPTIONS_INFO_PROFILES = "Profiles"
 L.OPTIONS_INFO_SETTINGS = "Settings"
 L.OPTIONS_INFO_LISTS = "Lists"
@@ -38,6 +38,11 @@ L.OPTIONS_CONFIG = "Configuration:"
 L.OPTIONS_MINIMAP_COLOR_TEXT = "Change minimap color to reflect enabled status"
 L.OPTIONS_SEARCH_BINDING_TEXT = "Bind a button to search"
 L.OPTIONS_SEARCH_BINDING_DEFAULT = "UNBOUND"
+L.OPTIONS_MIN_LEADER_SCORE = "Min. Leader Score:";
+L.OPTIONS_DUNGEON_DIFFICULTY = "Dungeon Difficulty";
+L.OPTIONS_RAID_SELECT = "Select Raid";
+L.OPTIONS_BLIZZARD_SEARCH_INFO = "Blizzard caps all search results to ~100 so the more specific you can be in the search the more results you will get.\n\n For example adding key levels, selecting 1 dungeon/raid because then it searches for only that activity. This cap exists even in their own version without addons.";
+L.OPTIONS_REFRESH_BUTTON_DISABLED = "New Refresh Available In: ";
 
 L.NOTIFICATION_YOU = "PGF: a group has been found: "
 L.NOTIFICATION_FRIENDS_1 = "PGF: a premade group that "
@@ -71,4 +76,4 @@ L.INFO_MINIMAP_SHIFTRIGHTCLICK = "Shift-right-click to load a profile"
 L.INFO_BLACKLIST_INFO = "WARNING! Only blacklist players you are 100% sure is the creator of the group! To blacklist cross-realm players use Player-Server"
 L.INFO_RAREINFO_INFO = "Tracks which rares you killed, char specific \n|cFF00FF00Rare = Killed\n|cFFFF0000Rare = Not killed"
 
-L.ADDON = "PGF: "
+L.ADDON = "PGF: ";
