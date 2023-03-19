@@ -1,6 +1,6 @@
 ## Interface: 100005
 ## Title: Premade Group Finder
-## Version: 10.01
+## Version: 10.02
 ## Notes: Made finding groups quick and easy
 ## Author: Ant-Kazzak / Antmage-Ragnaros
 ## SavedVariables: PGF_DevAllActivityIDs

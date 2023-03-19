@@ -979,7 +979,6 @@ local function initDungeon()
 
 	function PGF_DungeonState_OnClick(self)
 		UIDropDownMenu_SetSelectedID(dungeonDifficultyDropDown, self:GetID());
-		print(self:GetID())
 		lastSelectedDungeonState = self:GetText();
 		updateDungeonDifficulty();
 	end
