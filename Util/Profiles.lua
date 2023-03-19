@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 PGF_standardProfiles = {
 	["Legion: Argus Mounts"] = {
 		"blistermaw",
@@ -32,6 +33,16 @@ PGF_standardProfiles = {
 		"j'im"
 	},
 	["WoD: Mounts"] = {
+=======
+standardProfiles = {
+	["Tanaan Jungle"] = {
+		"vengeance",
+		"deathtalon",
+		"terrorfist",
+		"doomroller"
+	},
+	["Mounts"] = {
+>>>>>>> 599b4e149a82ab29a1d101bb621be17c2562fc30
 		"poundfist",
 		"pathrunner",
 		"silthide",
@@ -55,7 +66,11 @@ PGF_standardProfiles = {
 		"gogg'nathog"
 	},
 	["MoP: World Bosses"] = {
+<<<<<<< HEAD
 		"sha of anger",
+=======
+		"sha of Anger",
+>>>>>>> 599b4e149a82ab29a1d101bb621be17c2562fc30
 		"nalak",
 		"oondasta",
 		"galleon"
