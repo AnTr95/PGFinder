@@ -527,38 +527,6 @@ local rGUI = {};
 local currentDungeonsActivityIDs = {["(Mythic Keystone)"] = {}, ["(Mythic)"] = {}, ["(Heroic)"] = {}, ["(Normal)"] = {}};
 local currentRaidsActivityIDs = {};
 
-local function isNextBoss(graph, boss, bosses)
-	if (boss and graph) then
-		if (bosses[graph[boss]["parent_paths"][1][1]]) then
-			return true;
-		end
-	end
-	return false
-end
-
-local function getBestAchievement(raid)
-	for i, achievementIDs in ipairs(achievementIDs[raid]) do
-		if (select(4, GetAchievementInfo(achievementIDs))) then
-			return GetAchievementLink(achievementIDs);
-		end
-	end
-	return nil;
-end
-local dungeonFrame = CreateFrame("Frame", nil, f);
-dungeonFrame:Hide();
-dungeonFrame:SetPoint("TOPLEFT", 0, 0);
-dungeonFrame:SetSize(f:GetWidth(), f:GetHeight());
-
-local raidFrame = CreateFrame("Frame", nil, f);
-raidFrame:SetPoint("TOPLEFT", 0, 0);
-raidFrame:SetSize(f:GetWidth(), f:GetHeight());
-raidFrame:Hide();
-
---C_LFGList.GetSearchResultMemberInfo(resultID, playerIndex); returns: [1] = role, [2] = classUNIVERSAL, [3] = classLocal, [4] = spec
-
-f:RegisterEvent("PLAYER_LOGIN");
-f:RegisterEvent("PLAYER_ENTERING_WORLD");
-
 --[[
 	Checking if a table PGF_Contains a given value and if it does, what index is the value located at
 	param(arr) table
@@ -592,6 +560,44 @@ local function PGF_GetSize(arr)
 	end
 	return count
 end
+
+local function isNextBoss(graph, boss, bosses)
+	if (boss and graph) then
+		if (boss == "Broodkeeper") then
+			if (bosses[graph[boss]["parent_paths"][1][1]] and PGF_GetSize(bosses) == 1) then
+				return true;
+			elseif (bosses[graph[boss]["parent_paths"][1][1]] and bosses[graph[boss]["parent_paths"][2][1]] and bosses[graph[boss]["parent_paths"][3][1]]) then
+				return true;
+			end
+		elseif (bosses[graph[boss]["parent_paths"][1][1]]) then
+			return true;
+		end
+	end
+	return false
+end
+
+local function getBestAchievement(raid)
+	for i, achievementIDs in ipairs(achievementIDs[raid]) do
+		if (select(4, GetAchievementInfo(achievementIDs))) then
+			return GetAchievementLink(achievementIDs);
+		end
+	end
+	return nil;
+end
+local dungeonFrame = CreateFrame("Frame", nil, f);
+dungeonFrame:Hide();
+dungeonFrame:SetPoint("TOPLEFT", 0, 0);
+dungeonFrame:SetSize(f:GetWidth(), f:GetHeight());
+
+local raidFrame = CreateFrame("Frame", nil, f);
+raidFrame:SetPoint("TOPLEFT", 0, 0);
+raidFrame:SetSize(f:GetWidth(), f:GetHeight());
+raidFrame:Hide();
+
+--C_LFGList.GetSearchResultMemberInfo(resultID, playerIndex); returns: [1] = role, [2] = classUNIVERSAL, [3] = classLocal, [4] = spec
+
+f:RegisterEvent("PLAYER_LOGIN");
+f:RegisterEvent("PLAYER_ENTERING_WORLD");
 
 local function saveOriginalUI()
 	originalUI = {
@@ -906,7 +912,7 @@ local function PGF_ShowDungeonFrame()
 	LFGListFrame.SearchPanel.RefreshButton:SetPoint("TOPLEFT", LFGListFrame.SearchPanel.SearchBox, "TOPLEFT", -50, 7);
 	LFGListFrame.SearchPanel.FilterButton:SetPoint("BOTTOMRIGHT", PVEFrame, "BOTTOMRIGHT", -20, 45);
 	LFGListFrame.SearchPanel.FilterButton:SetSize(80, LFGListFrame.SearchPanel.FilterButton:GetHeight());
-	LFGListFrame.SearchPanel.CategoryName:SetPoint("TOP", 125, -23);
+	LFGListFrame.SearchPanel.CategoryName:SetPoint("TOP", 125, -17);
 	LFGListFrame.SearchPanel.CategoryName:SetFont(PVEFrameTitleText:GetFont(), 11);
 	LFGListFrame.SearchPanel.ResultsInset:SetPoint("TOPLEFT", LFGListFrame, "TOPLEFT", -5, -50);
 	LFGListApplicationDialog.Description:ClearAllPoints();
@@ -937,7 +943,7 @@ local function PGF_ShowRaidFrame()
 	LFGListFrame.SearchPanel.RefreshButton:SetPoint("TOPLEFT", LFGListFrame.SearchPanel.SearchBox, "TOPLEFT", -50, 7);
 	LFGListFrame.SearchPanel.FilterButton:SetPoint("BOTTOMRIGHT", PVEFrame, "BOTTOMRIGHT", -20, 45);
 	LFGListFrame.SearchPanel.FilterButton:SetSize(80, LFGListFrame.SearchPanel.FilterButton:GetHeight());
-	LFGListFrame.SearchPanel.CategoryName:SetPoint("TOP", 125, -23);
+	LFGListFrame.SearchPanel.CategoryName:SetPoint("TOP", 125, -17);
 	LFGListFrame.SearchPanel.CategoryName:SetFont(PVEFrameTitleText:GetFont(), 11);
 	LFGListFrame.SearchPanel.ResultsInset:SetPoint("TOPLEFT", LFGListFrame, "TOPLEFT", -5, -50);
 	LFGListApplicationDialog.Description:ClearAllPoints();
