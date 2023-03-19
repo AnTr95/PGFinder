@@ -1,6 +1,13 @@
-local addon = ... -- The name of the addon folder
+local addon = ...; -- The name of the addon folder
+local L = PGFinderLocals; -- Strings
+
 local f = CreateFrame("Frame", nil, PVEFrame);
-local L = PGFinderLocals -- Strings
+f:SetFrameStrata("HIGH");
+f:SetPoint("RIGHT", LFGListFrame.SearchPanel.ResultsInset, "RIGHT", 395, 55);
+f:SetFrameLevel(800);
+f:SetSize(400, 300);
+f:Hide();
+
 
 --[[
 	Lets do some caching
@@ -49,14 +56,15 @@ local math = math;
 local table = table;
 local string = string;
 local strlower = strlower;
-
+--[[
+	Creating some local variables
+]]
 local lastCat = nil;
 local slowSearch = false;
 local slowResults = {};
 local slowCount = 0;
 local slowTotal = 0;
 local originalUI = {};
-local isLogin = true;
 local ticks = 0;
 local refreshTimeReset = 3;
 local searchAvailable = true;
@@ -66,11 +74,6 @@ local lastSelectedDungeonState = "";
 local lastSelectedRaidState = "";
 local performanceTimeStamp = 0;
 local refreshButtonClick = LFGListFrame.SearchPanel.RefreshButton:GetScript("OnClick");
-local signUpRoles = PGF_roles or {
-	["TANK"] = false,
-	["HEALER"] = false,
-	["DPS"] = false,
-};
 local dungeonStateMap = {
 	["Normal"] = "(Normal)",
 	["Heroic"] = "(Heroic)",
@@ -188,36 +191,6 @@ local VOTI_Path = {
 	}
 };
 
-local function dfs(graph, start, visited, path)
-	visited[start] = true;
-	path = path or {};
-	visited = visited or {};
-	table.insert(path, start);
-	local paths = graph[start].children_paths;
-	if (paths) then
-		for _, child_path in ipairs(paths) do
-			local child = child_path[1];
-			if (not visited[child]) then
-				dfs(graph, child, visited, path);
-				for i = 2, #child_path do
-					local grandchild = child_path[i];
-					if (not visited[grandchild]) then
-						dfs(graph, grandchild, visited, path);
-					end
-				end
-			end
-		end
-	end
-	return path;
-end
-local function isNextBoss(graph, boss, bosses)
-	if (boss and graph) then
-		if (bosses[graph[boss]["parent_paths"][1][1]]) then
-			return true;
-		end
-	end
-	return false
-end
 local dungeonAbbreviations = {
 	["The Nokhud Offensive"] = "NO",
 	["Court of Stars"] = "COS",
@@ -327,6 +300,8 @@ local classSpecilizationMap = {
     }
 };
 
+local roleIndex = {["TANK"] = 1, ["HEALER"] = 2, ["DAMAGER"] = 3};
+
 --[[
 SelectedInfo
 	dungeons - saves which dungeons are selected
@@ -347,16 +322,7 @@ local selectedInfo = {
 
 local achievementIDs = {
 	["Vault of the Incarnates"] = {17108, 16352, 16350, 16351, 16349, 16347, 16346, 16348, 16346, 17107, 16343},
-}
-
-local function getBestAchievement(raid)
-	for i, achievementIDs in ipairs(achievementIDs[raid]) do
-		if (select(4, GetAchievementInfo(achievementIDs))) then
-			return GetAchievementLink(achievementIDs);
-		end
-	end
-	return nil;
-end
+};
 
 local scoreColors = {
 	[3450] = {1.00, 0.50, 0.00},
@@ -493,24 +459,99 @@ local scoreColors = {
 	[0] = {0.62, 0.62, 0.62},
 };
 
+-- precompute the lookup table for reducing the complexity to O(1)
+local colorLookup = {};
+local lastScore = 0;
+for i = 0, 3450 do
+	if (scoreColors[i]) then
+		colorLookup[i] = scoreColors[i];
+		lastScore = i;
+	else
+		colorLookup[i] = scoreColors[lastScore];
+	end
+end
+
+local LFG_LIST_SEARCH_ENTRY_MENU = {
+	{
+		text = nil,	--Group name goes here
+		isTitle = true,
+		notCheckable = true,
+	},
+	{
+		text = WHISPER_LEADER,
+		func = function(_, name) ChatFrame_SendTell(name); end,
+		notCheckable = true,
+		arg1 = nil, --Leader name goes here
+		disabled = nil, --Disabled if we don't have a leader name yet or you haven't applied
+		tooltipWhileDisabled = 1,
+		tooltipOnButton = 1,
+		tooltipTitle = nil, --The title to display on mouseover
+		tooltipText = nil, --The text to display on mouseover
+	},
+	{
+		text = LFG_LIST_REPORT_GROUP_FOR,
+		notCheckable = true,
+		func = function(_, id, name) 
+			LFGList_ReportListing(id, name); 
+			LFGListSearchPanel_UpdateResultList(LFGListFrame.SearchPanel); 
+		end;
+	},
+	{
+		text = REPORT_GROUP_FINDER_ADVERTISEMENT,
+		notCheckable = true,
+		func = function(_, id, name) 
+			LFGList_ReportAdvertisement(id, name); 
+			LFGListSearchPanel_UpdateResultList(LFGListFrame.SearchPanel); 
+		end;
+	},
+	{
+		text = "Send Best Achievement",
+		func = function(_, activityShortName, leaderName) SendChatMessage(getBestAchievement(activityShortName), "WHISPER", nil, leaderName); end,
+		notCheckable = true,
+		arg1 = nil, --Leader name goes here
+		disabled = nil, --Disabled if we don't have a leader name yet or you haven't applied
+		tooltipWhileDisabled = 1,
+		tooltipOnButton = 1,
+		tooltipTitle = nil, --The title to display on mouseover
+		tooltipText = nil, --The text to display on mouseover
+	},
+	{
+		text = CANCEL,
+		notCheckable = true,
+	},
+};
+
 local dungeonTextures = {true, true, true, true, true, true, true, true, true, true};
 local raidTextures = {true, true, true, true};
-f:SetFrameStrata("HIGH");
-f:SetPoint("RIGHT", LFGListFrame.SearchPanel.ResultsInset, "RIGHT", 395, 55);
-f:SetFrameLevel(800);
-f:SetSize(400, 300);
-f:Hide();
 
+local GUI = {};
+local rGUI = {};
+local currentDungeonsActivityIDs = {["(Mythic Keystone)"] = {}, ["(Mythic)"] = {}, ["(Heroic)"] = {}, ["(Normal)"] = {}};
+local currentRaidsActivityIDs = {};
+
+local function isNextBoss(graph, boss, bosses)
+	if (boss and graph) then
+		if (bosses[graph[boss]["parent_paths"][1][1]]) then
+			return true;
+		end
+	end
+	return false
+end
+
+local function getBestAchievement(raid)
+	for i, achievementIDs in ipairs(achievementIDs[raid]) do
+		if (select(4, GetAchievementInfo(achievementIDs))) then
+			return GetAchievementLink(achievementIDs);
+		end
+	end
+	return nil;
+end
 local dungeonFrame = CreateFrame("Frame", nil, f);
 dungeonFrame:Hide();
-local GUI = {};
-local currentDungeonsActivityIDs = {["(Mythic Keystone)"] = {}, ["(Mythic)"] = {}, ["(Heroic)"] = {}, ["(Normal)"] = {}};
 dungeonFrame:SetPoint("TOPLEFT", 0, 0);
 dungeonFrame:SetSize(f:GetWidth(), f:GetHeight());
 
 local raidFrame = CreateFrame("Frame", nil, f);
-local rGUI = {};
-local currentRaidsActivityIDs = {};
 raidFrame:SetPoint("TOPLEFT", 0, 0);
 raidFrame:SetSize(f:GetWidth(), f:GetHeight());
 raidFrame:Hide();
@@ -556,7 +597,7 @@ end
 
 local function saveOriginalUI()
 	originalUI = {
-		["PVEFrame"] = {}, 
+		["PVEFrame"] = {["width"] = 0, ["height"] = 0}, 
 		["LFGListFrame"] = {["position"] = {}, ["position2"] = {}},
 		["LFGListFrame.SearchPanel.SearchBox"] = {["position"] = {}}, 
 		["LFGListFrame.SearchPanel.FilterButton"] = {["position"] = {}}, 
@@ -606,6 +647,24 @@ local function restoreOriginalUI()
 	LFGListApplicationDialog.Description.EditBox:SetSize(originalUI["LFGListApplicationDialog.Description.EditBox"].size[1], originalUI["LFGListApplicationDialog.Description.EditBox"].size[2]);
 end
 
+-- define the getColorForScoreLookup function
+local function getColorForScoreLookup(score)
+	return colorLookup[score] or {0.62, 0.62, 0.62};
+end
+
+local function getScoreColor(score)
+	local minDiff = math.huge;
+	local closestColor = nil;
+	for k, v in pairs(scoreColors) do
+		local diff = math.abs(score - k);
+		if (diff < minDiff) then
+			minDiff = diff;
+			closestColor = v;
+		end
+	end
+	return closestColor;
+end
+
 local function ResolveCategoryFilters(categoryID, filters)
 	-- Dungeons ONLY display recommended groups.
 	if categoryID == GROUP_FINDER_CATEGORY_ID_DUNGEONS then
@@ -624,9 +683,6 @@ local function updateSearch()
 		local dungeonsSelected = PGF_GetSize(selectedInfo.dungeons);
 		local count = 0;
 		if (slowSearch == false) then
-			if (selectedInfo.levels[1]) then
-				searchBox:SetText(selectedInfo.levels[1]);
-			end
 			C_LFGList.Search(LFGListFrame.SearchPanel.categoryID, ResolveCategoryFilters(LFGListFrame.SearchPanel.categoryID, LFGListFrame.SearchPanel.filters), LFGListFrame.SearchPanel.preferredFilters, C_LFGList.GetLanguageSearchFilter());
 		else
 			slowTotal = dungeonsSelected;
@@ -644,7 +700,7 @@ local function updateSearch()
 	end
 end
 
-f:SetScript("OnUpdate", function(self, elapsed)
+PVEFrame:HookScript("OnUpdate", function(self, elapsed)
 	ticks = ticks + elapsed;
 	if (ticks >= refreshTimeReset and not searchAvailable) then
 		LFGListFrame.SearchPanel.RefreshButton:SetScript("OnClick", refreshButtonClick);
@@ -842,12 +898,14 @@ local function PGF_ShowDungeonFrame()
 	LFGListFrame.SearchPanel.CategoryName:ClearAllPoints();
 	LFGListFrame.SearchPanel.SearchBox:SetPoint("TOPLEFT", dungeonFrame, "TOPLEFT", 28, -10);
 	LFGListFrame.SearchPanel.RefreshButton:SetPoint("TOPLEFT", LFGListFrame.SearchPanel.SearchBox, "TOPLEFT", -50, 7);
-	LFGListFrame.SearchPanel.FilterButton:SetPoint("BOTTOMRIGHT", PVEFrame, "BOTTOMRIGHT", -10, 35);
-	LFGListFrame.SearchPanel.CategoryName:SetPoint("TOP", 135, -23);
+	LFGListFrame.SearchPanel.FilterButton:SetPoint("BOTTOMRIGHT", PVEFrame, "BOTTOMRIGHT", -20, 45);
+	LFGListFrame.SearchPanel.FilterButton:SetSize(80, LFGListFrame.SearchPanel.FilterButton:GetHeight());
+	LFGListFrame.SearchPanel.CategoryName:SetPoint("TOP", 125, -23);
+	LFGListFrame.SearchPanel.CategoryName:SetFont(PVEFrameTitleText:GetFont(), 11);
 	LFGListFrame.SearchPanel.ResultsInset:SetPoint("TOPLEFT", LFGListFrame, "TOPLEFT", -5, -50);
 	LFGListApplicationDialog.Description:ClearAllPoints();
 	LFGListApplicationDialog.Description:SetParent(dungeonFrame);
-	LFGListApplicationDialog.Description:SetPoint("BOTTOMRIGHT", PVEFrame, "BOTTOMRIGHT", -5, 5);
+	LFGListApplicationDialog.Description:SetPoint("BOTTOMRIGHT", PVEFrame, "BOTTOMRIGHT", -10, 15);
 	LFGListApplicationDialog.Description:SetSize(210, 20);
 	LFGListApplicationDialog.Description.EditBox:SetMaxLetters(50);
 	LFGListApplicationDialog.Description.EditBox:SetSize(LFGListApplicationDialog.Description:GetWidth(), LFGListApplicationDialog.Description:GetHeight());
@@ -871,12 +929,14 @@ local function PGF_ShowRaidFrame()
 	LFGListFrame.SearchPanel.CategoryName:ClearAllPoints();
 	LFGListFrame.SearchPanel.SearchBox:SetPoint("TOPLEFT", raidFrame, "TOPLEFT", 28, -10);
 	LFGListFrame.SearchPanel.RefreshButton:SetPoint("TOPLEFT", LFGListFrame.SearchPanel.SearchBox, "TOPLEFT", -50, 7);
-	LFGListFrame.SearchPanel.FilterButton:SetPoint("BOTTOMRIGHT", PVEFrame, "BOTTOMRIGHT", -10, 35);
-	LFGListFrame.SearchPanel.CategoryName:SetPoint("TOP", 135, -23);
+	LFGListFrame.SearchPanel.FilterButton:SetPoint("BOTTOMRIGHT", PVEFrame, "BOTTOMRIGHT", -20, 45);
+	LFGListFrame.SearchPanel.FilterButton:SetSize(80, LFGListFrame.SearchPanel.FilterButton:GetHeight());
+	LFGListFrame.SearchPanel.CategoryName:SetPoint("TOP", 125, -23);
+	LFGListFrame.SearchPanel.CategoryName:SetFont(PVEFrameTitleText:GetFont(), 11);
 	LFGListFrame.SearchPanel.ResultsInset:SetPoint("TOPLEFT", LFGListFrame, "TOPLEFT", -5, -50);
 	LFGListApplicationDialog.Description:ClearAllPoints();
 	LFGListApplicationDialog.Description:SetParent(raidFrame);
-	LFGListApplicationDialog.Description:SetPoint("BOTTOMRIGHT", PVEFrame, "BOTTOMRIGHT", -5, 5);
+	LFGListApplicationDialog.Description:SetPoint("BOTTOMRIGHT", PVEFrame, "BOTTOMRIGHT", -10, 15);
 	LFGListApplicationDialog.Description:SetSize(210, 20);
 	LFGListApplicationDialog.Description.EditBox:SetMaxLetters(50);
 	LFGListApplicationDialog.Description.EditBox:SetSize(LFGListApplicationDialog.Description:GetWidth(), LFGListApplicationDialog.Description:GetHeight());
@@ -885,10 +945,6 @@ local function PGF_ShowRaidFrame()
 	LFGListFrame:SetPoint(originalUI["LFGListFrame"].position[1], originalUI["LFGListFrame"].position[2], originalUI["LFGListFrame"].position[3], originalUI["LFGListFrame"].position[4], originalUI["LFGListFrame"].position[5]);
 	LFGListFrame:SetSize(368, LFGListFrame:GetHeight());
 	updateRaidDifficulty();
-end
-
-local function getEncounterIDs()
-
 end
 
 --Create GUI
@@ -1030,7 +1086,7 @@ local function initDungeon()
 	slowSearchtext:Hide();
 	slowSearchCheckBox:Hide();
 	local performanceText = f:CreateFontString(nil, "ARTWORK", "GameFontNormalTiny2");
-	performanceText:SetPoint("TOPLEFT", LFGListFrame.SearchPanel.ResultsInset, "TOPLEFT", 0, 10);
+	performanceText:SetPoint("TOPLEFT", LFGListFrame.SearchPanel.ResultsInset, "TOPLEFT", 3, 15);
 	performanceText:SetJustifyV("TOP");
 	performanceText:SetJustifyH("LEFT");
 	performanceText:SetText("");
@@ -1040,7 +1096,7 @@ local function initDungeon()
 		performanceText:SetText(input);
 	end
 	local blizzSearchInfo = CreateFrame("Button", nil, f, "UIPanelInfoButton");
-	blizzSearchInfo:SetPoint("TOPLEFT", performanceText, "TOPLEFT", 0, 20);
+	blizzSearchInfo:SetPoint("TOPRIGHT", LFGListFrame.SearchPanel.ResultsInset, "TOPRIGHT", -28, 19);
 	blizzSearchInfo:SetScript("OnEnter", function(self)
 		GameTooltip:SetOwner(self);
 		GameTooltip:SetText(L.OPTIONS_BLIZZARD_SEARCH_INFO, 1, 1, 1, 1, true);
@@ -1054,17 +1110,17 @@ local function initDungeon()
 	dungeonDifficultyText:SetText(L.OPTIONS_DUNGEON_DIFFICULTY);
 	local minLeaderScoreText = dungeonFrame:CreateFontString(nil, "ARTWORK", "GameFontNormalTiny2");
 	minLeaderScoreText:SetFont(minLeaderScoreText:GetFont(), 10);
-	minLeaderScoreText:SetPoint("TOPLEFT", slowSearchtext, "TOPLEFT", -20, -70);
+	minLeaderScoreText:SetPoint("TOPLEFT", slowSearchtext, "TOPLEFT", -20, -50);
 	minLeaderScoreText:SetText(L.OPTIONS_MIN_LEADER_SCORE);
 	local minLeaderScoreEditBox = CreateFrame("EditBox", nil, dungeonFrame, "InputBoxTemplate");
-	minLeaderScoreEditBox:SetPoint("RIGHT", minLeaderScoreText, "RIGHT", 60, 0);
+	minLeaderScoreEditBox:SetPoint("RIGHT", minLeaderScoreText, "RIGHT", 100, 0);
 	minLeaderScoreEditBox:SetAutoFocus(false);
 	minLeaderScoreEditBox:SetMultiLine(false);
 	minLeaderScoreEditBox:SetFontObject(GameFontNormalTiny2);
 	minLeaderScoreEditBox:SetTextColor(1,1,1,1);
 	minLeaderScoreEditBox:SetTextInsets(1,5,2,5);
 	minLeaderScoreEditBox:SetMaxLetters(4);
-	minLeaderScoreEditBox:SetSize(45, 10);
+	minLeaderScoreEditBox:SetSize(85, 10);
 	minLeaderScoreEditBox:SetText("");
 	minLeaderScoreEditBox:SetScript("OnEscapePressed", function (self)
 		self:ClearFocus();
@@ -1091,7 +1147,7 @@ local function initDungeon()
 	end);
 	local roleText = f:CreateFontString(nil, "ARTWORK", "GameFontNormalTiny2");
 	roleText:SetFont(roleText:GetFont(), 10);
-	roleText:SetPoint("TOPLEFT", minLeaderScoreText, "TOPLEFT", 0, -20);
+	roleText:SetPoint("TOPLEFT", minLeaderScoreText, "TOPLEFT", 0, -25);
 	roleText:SetText(L.OPTIONS_ROLE);
 	local canBeTank, canBeHealer, canBeDPS = UnitGetAvailableRoles("player");
 	local dpsTexture = f:CreateTexture(nil, "OVERLAY");
@@ -1328,13 +1384,12 @@ end);
 LFGListFrame.SearchPanel.RefreshButton:HookScript("OnEnter", function(self)
 	if (searchAvailable) then
 		GameTooltip:SetOwner(self);
-		local calc = string.format("%.2fs", refreshTimeReset-ticks);
 		GameTooltip:SetText("Search Available");
 		GameTooltip:Show();
 	else
 		GameTooltip:SetOwner(self);
 		local calc = string.format("%.2fs", refreshTimeReset-ticks);
-		GameTooltip:SetText(L.OPTIONS_REFRESH_BUTTON_DISABLED .. calc .. "s", 1, 1, 1, 1, true);
+		GameTooltip:SetText(L.OPTIONS_REFRESH_BUTTON_DISABLED .. calc, 1, 1, 1, 1, true);
 		GameTooltip:Show();
 	end
 end);
@@ -1347,6 +1402,8 @@ LFGListFrame.SearchPanel:HookScript("OnHide", function(self)
 	f:Hide();
 	restoreOriginalUI();
 end);
+
+LFGListFrame.SearchPanel.SearchBox:SetScript("OnEnterPressed", LFGListSearchPanelSearchBox_OnEnterPressed);
 
 function LFGListSearchPanelSearchBox_OnEnterPressed(self)
 	local parent = self:GetParent();
@@ -1362,7 +1419,6 @@ function LFGListSearchPanelSearchBox_OnEnterPressed(self)
 	end
 end
 
-LFGListFrame.SearchPanel.SearchBox:SetScript("OnEnterPressed", LFGListSearchPanelSearchBox_OnEnterPressed);
 
 local function PGF_LFGListSearchPanel_UpdateButtonStatus(self)
 	--Update the SignUpButton
@@ -1380,56 +1436,6 @@ local function PGF_LFGListApplicationViewer_UpdateInfo(self)
 end
 
 hooksecurefunc("LFGListApplicationViewer_UpdateInfo", PGF_LFGListApplicationViewer_UpdateInfo);
-
-local LFG_LIST_SEARCH_ENTRY_MENU = {
-	{
-		text = nil,	--Group name goes here
-		isTitle = true,
-		notCheckable = true,
-	},
-	{
-		text = WHISPER_LEADER,
-		func = function(_, name) ChatFrame_SendTell(name); end,
-		notCheckable = true,
-		arg1 = nil, --Leader name goes here
-		disabled = nil, --Disabled if we don't have a leader name yet or you haven't applied
-		tooltipWhileDisabled = 1,
-		tooltipOnButton = 1,
-		tooltipTitle = nil, --The title to display on mouseover
-		tooltipText = nil, --The text to display on mouseover
-	},
-	{
-		text = LFG_LIST_REPORT_GROUP_FOR,
-		notCheckable = true,
-		func = function(_, id, name) 
-			LFGList_ReportListing(id, name); 
-			LFGListSearchPanel_UpdateResultList(LFGListFrame.SearchPanel); 
-		end;
-	},
-	{
-		text = REPORT_GROUP_FINDER_ADVERTISEMENT,
-		notCheckable = true,
-		func = function(_, id, name) 
-			LFGList_ReportAdvertisement(id, name); 
-			LFGListSearchPanel_UpdateResultList(LFGListFrame.SearchPanel); 
-		end;
-	},
-	{
-		text = "Send Best Achievement",
-		func = function(_, activityShortName, leaderName) SendChatMessage(getBestAchievement(activityShortName), "WHISPER", nil, leaderName); end,
-		notCheckable = true,
-		arg1 = nil, --Leader name goes here
-		disabled = nil, --Disabled if we don't have a leader name yet or you haven't applied
-		tooltipWhileDisabled = 1,
-		tooltipOnButton = 1,
-		tooltipTitle = nil, --The title to display on mouseover
-		tooltipText = nil, --The text to display on mouseover
-	},
-	{
-		text = CANCEL,
-		notCheckable = true,
-	},
-};
 
 function LFGListUtil_GetSearchEntryMenu(resultID)
 	local searchResults = C_LFGList.GetSearchResultInfo(resultID);
@@ -1454,36 +1460,6 @@ function LFGListUtil_GetSearchEntryMenu(resultID)
 	LFG_LIST_SEARCH_ENTRY_MENU[5].tooltipTitle = (not applied) and WHISPER;
 	LFG_LIST_SEARCH_ENTRY_MENU[5].tooltipText = (not applied) and LFG_LIST_MUST_SIGN_UP_TO_WHISPER;
 	return LFG_LIST_SEARCH_ENTRY_MENU;
-end
-
--- precompute the lookup table for reducing the complexity to O(1)
-local colorLookup = {};
-local lastScore = 0;
-for i = 0, 3450 do
-	if (scoreColors[i]) then
-		colorLookup[i] = scoreColors[i];
-		lastScore = i;
-	else
-		colorLookup[i] = scoreColors[lastScore];
-	end
-end
-
--- define the getColorForScoreLookup function
-local function getColorForScoreLookup(score)
-	return colorLookup[score] or {0.62, 0.62, 0.62};
-end
-
-local function getScoreColor(score)
-	local minDiff = math.huge;
-	local closestColor = nil;
-	for k, v in pairs(scoreColors) do
-		local diff = math.abs(score - k);
-		if (diff < minDiff) then
-			minDiff = diff;
-			closestColor = v;
-		end
-	end
-	return closestColor;
 end
 
 --C_LFGList.GetSearchResultEncounterInfo(self.resultID) returns a table [1 to n] = Boss Name or Encounter Name?
@@ -1596,8 +1572,6 @@ local function PGF_LFGListSearchEntry_Update(self)
 end
 
 hooksecurefunc("LFGListSearchEntry_Update", PGF_LFGListSearchEntry_Update);
-
-local roleIndex = {["TANK"] = 1, ["HEALER"] = 2, ["DAMAGER"] = 3};
 
 local function sortRoles(pl1, pl2)
 	return roleIndex[pl1.role] < roleIndex[pl2.role];

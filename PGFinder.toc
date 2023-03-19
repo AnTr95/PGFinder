@@ -1,33 +1,12 @@
-## Interface: 90207
+## Interface: 100005
 ## Title: Premade Group Finder
-## Version: 6.55
-## Notes: Finds premade groups of your choice
-## Author: Ant-Kazzak
-## SavedVariables: PGF_profiles
-## SavedVariables: PGF_activeKeywords
-## SavedVariables: PGF_inactiveKeywords
-## SavedVariables: PGF_blacklist
-## SavedVariables: PGF_interval
-## SavedVariables: PGF_enabled
-## SavedVariables: PGF_notification_sound
-## SavedVariables: PGF_notification_guild
-## SavedVariables: PGF_autoSign
-## SavedVariables: PGF_autoSignState
-## SavedVariables: PGF_searchLogin
-## SavedVariables: PGF_latestCategory
-## SavedVariables: PGF_notification_popup
-## SavedVariables: PGF_notification_flashTaskbar
-## SavedVariables: PGF_changeMinimapColor
-## SavedVariables: PGF_SearchBinding
+## Version: 10.0
+## Notes: Made finding groups quick and easy
+## Author: Ant-Kazzak / Antmage-Ragnaros
 ## SavedVariables: PGF_DevAllActivityIDs
 ## SavedVariables: PGF_DevDungeonsActivityIDs
 ## SavedVariables: PGF_DevRaidActivityIDs
 ## SavedVariablesPerCharacter: PGF_roles
-## SavedVariablesPerCharacter: playerName
-## SavedVariablesPerCharacter: PGF_latestProfile
-## SavedVariablesPerCharacter: PGF_popupPoint
-## SavedVariablesPerCharacter: PGF_minimapDegree
-## SavedVariablesPerCharacter: PGF_minimapButtonMode
 
 Localization\Localization.enUS.lua
 ActivityDatabase.lua
