@@ -15,8 +15,6 @@ f:Hide();
 local LFGListFrame = LFGListFrame;
 local PVEFrame = PVEFrame;
 
-local C_LFGList = C_LFGList;
-local C_ChallengeMode = C_ChallengeMode;
 local LFGListSearchPanel_UpdateResults = LFGListSearchPanel_UpdateResults;
 local LFGListGroupDataDisplay_Update = LFGListGroupDataDisplay_Update;
 local GetAchievementInfo = GetAchievementInfo;
@@ -559,7 +557,7 @@ raidFrame:Hide();
 --C_LFGList.GetSearchResultMemberInfo(resultID, playerIndex); returns: [1] = role, [2] = classUNIVERSAL, [3] = classLocal, [4] = spec
 
 f:RegisterEvent("PLAYER_LOGIN");
-f:RegisterEvent("ADDON_LOADED");
+f:RegisterEvent("PLAYER_ENTERING_WORLD");
 
 --[[
 	Checking if a table PGF_Contains a given value and if it does, what index is the value located at
@@ -627,8 +625,8 @@ local function saveOriginalUI()
 end
 
 local function restoreOriginalUI()
-	PVE_FRAME_BASE_WIDTH = 563;
-	PVEFrame:SetSize(originalUI["PVEFrame"].width, originalUI["PVEFrame"].height);
+	PVE_FRAME_BASE_WIDTH = 600;
+	PVEFrame:SetSize(600, originalUI["PVEFrame"].height);
 	LFGListFrame.SearchPanel.SearchBox:ClearAllPoints();
 	LFGListFrame.SearchPanel.RefreshButton:ClearAllPoints();
 	LFGListFrame.SearchPanel.FilterButton:ClearAllPoints();
@@ -645,6 +643,9 @@ local function restoreOriginalUI()
 	LFGListApplicationDialog.Description:SetPoint(originalUI["LFGListApplicationDialog.Description"].position[1], originalUI["LFGListApplicationDialog.Description"].position[2], originalUI["LFGListApplicationDialog.Description"].position[3], originalUI["LFGListApplicationDialog.Description"].position[4], originalUI["LFGListApplicationDialog.Description"].position[5]);
 	LFGListApplicationDialog.Description:SetSize(originalUI["LFGListApplicationDialog.Description"].size[1], originalUI["LFGListApplicationDialog.Description"].size[2]);
 	LFGListApplicationDialog.Description.EditBox:SetSize(originalUI["LFGListApplicationDialog.Description.EditBox"].size[1], originalUI["LFGListApplicationDialog.Description.EditBox"].size[2]);
+	LFGListFrame:ClearAllPoints(); 
+	LFGListFrame:SetPoint(originalUI["LFGListFrame"].position[1], originalUI["LFGListFrame"].position[2], originalUI["LFGListFrame"].position[3], originalUI["LFGListFrame"].position[4], originalUI["LFGListFrame"].position[5]);
+	LFGListFrame:SetSize(368, LFGListFrame:GetHeight());
 end
 
 -- define the getColorForScoreLookup function
@@ -859,6 +860,11 @@ local function updateRaidDifficulty()
 					UIDropDownMenu_SetSelectedName(dropDown, lastSelectedRaidState);
 				end
 			end
+		end
+	end
+	for index, widgets in pairs(GUI) do
+		if (type(index) ~= "number") then
+			local checkbox = widgets.checkbox;
 			if (PGF_roles[index]) then
 				checkbox:SetChecked(true);
 			end
@@ -1211,11 +1217,9 @@ local function initDungeon()
 			PlaySound(857);
 		end
 	end);
-	--[[
 	GUI["DAMAGER"] = {["texture"] = dpsTexture, ["checkbox"] = dpsButton};
 	GUI["HEALER"] = {["texture"] = healerTexture, ["checkbox"] = healerButon};
 	GUI["TANK"] = {["texture"] = tankTexture, ["checkbox"] = tankButton};
-	]]
 end
 
 local function initRaid()
@@ -1335,6 +1339,13 @@ local function initRaid()
 	--Use input:GetNumber() to ensure its a number, returns 0 if not a number which is fine in this case
 end
 
+PVEFrame:HookScript("OnShow", function(self)
+	if(next(GUI) == nil) then
+		initDungeon();
+		initRaid();
+	end
+end);
+
 f:SetScript("OnEvent", function(self, event, ...) 
 	if (event == "PLAYER_LOGIN") then
 		if (PGF_roles == nil) then 
@@ -1342,11 +1353,9 @@ f:SetScript("OnEvent", function(self, event, ...)
 			PGF_roles = {["TANK"] = false, ["HEALER"] = false, ["DAMAGER"] = false};
 			PGF_roles[playerRole] = true;
 		end
-	elseif (event == "ADDON_LOADED") then
-		local addon = ...;
-		if (addon == "PGFinder") then
-			initDungeon();
-			initRaid();
+	elseif (event == "PLAYER_ENTERING_WORLD") then
+		if (next(GUI) == nil) then
+			
 		end
 	end
 end);
@@ -1372,6 +1381,11 @@ LFGListFrame.SearchPanel:HookScript("OnShow", function(self)
 		if(next(selectedInfo.bosses)) then
 			updateSearch();
 		end
+	else
+		if (next(originalUI) == nil) then
+			saveOriginalUI();
+		end
+		restoreOriginalUI();
 	end
 end);
 
@@ -1465,110 +1479,108 @@ end
 --C_LFGList.GetSearchResultEncounterInfo(self.resultID) returns a table [1 to n] = Boss Name or Encounter Name?
 
 local function PGF_LFGListSearchEntry_Update(self)
-	if (LFGListFrame.SearchPanel.categoryID == 2 or LFGListFrame.SearchPanel.categoryID == 3) then
-		local resultID = self.resultID;
-		if not C_LFGList.HasSearchResultInfo(resultID) then
-			return;
-		end
-
-		local _, appStatus, pendingStatus, appDuration = C_LFGList.GetApplicationInfo(resultID);
-
-		local isApplication = (appStatus ~= "none" or pendingStatus);
-
-		--Update visibility based on whether we're an application or not
-		self.DataDisplay:SetShown(true);
-		if (pendingStatus == "applied" and C_LFGList.GetRoleCheckInfo()) then
-			self.PendingLabel:SetText(LFG_LIST_ROLE_CHECK);
-			self.PendingLabel:SetTextColor(NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b);
-			self.PendingLabel:Show();
-			self.ExpirationTime:Hide();
-			self.CancelButton:Hide();
-		elseif (pendingStatus == "cancelled" or appStatus == "cancelled" or appStatus == "failed") then
-			self.PendingLabel:SetText(LFG_LIST_APP_CANCELLED);
-			self.PendingLabel:SetTextColor(RED_FONT_COLOR.r, RED_FONT_COLOR.g, RED_FONT_COLOR.b);
-			self.PendingLabel:Show();
-			self.ExpirationTime:Hide();
-			self.CancelButton:Hide();
-		elseif (appStatus == "declined" or appStatus == "declined_full" or appStatus == "declined_delisted") then
-			if (appStatus == "declined_delisted") then
-				self.PendingLabel:SetText("Delisted");
-			elseif (appStatus == "declined_full") then
-				self.PendingLabel:SetText(LFG_LIST_APP_FULL);
-			elseif (appStatus == "declined") then
-				self.PendingLabel:SetText(LFG_LIST_APP_DECLINED);
-			end
-			self.PendingLabel:SetTextColor(RED_FONT_COLOR.r, RED_FONT_COLOR.g, RED_FONT_COLOR.b);
-			self.PendingLabel:Show();
-			self.ExpirationTime:Hide();
-			self.CancelButton:Hide();
-		elseif (appStatus == "timedout") then
-			self.PendingLabel:SetText(LFG_LIST_APP_TIMED_OUT);
-			self.PendingLabel:SetTextColor(RED_FONT_COLOR.r, RED_FONT_COLOR.g, RED_FONT_COLOR.b);
-			self.PendingLabel:Show();
-			self.ExpirationTime:Hide();
-			self.CancelButton:Hide();
-		elseif (appStatus == "invited") then
-			self.PendingLabel:SetText(LFG_LIST_APP_INVITED);
-			self.PendingLabel:SetTextColor(GREEN_FONT_COLOR.r, GREEN_FONT_COLOR.g, GREEN_FONT_COLOR.b);
-			self.PendingLabel:Show();
-			self.ExpirationTime:Hide();
-			self.CancelButton:Hide();
-		elseif (appStatus == "inviteaccepted") then
-			self.PendingLabel:SetText(LFG_LIST_APP_INVITE_ACCEPTED);
-			self.PendingLabel:SetTextColor(GREEN_FONT_COLOR.r, GREEN_FONT_COLOR.g, GREEN_FONT_COLOR.b);
-			self.PendingLabel:Show();
-			self.ExpirationTime:Hide();
-			self.CancelButton:Hide();
-		elseif (appStatus == "invitedeclined") then
-			self.PendingLabel:SetText(LFG_LIST_APP_INVITE_DECLINED);
-			self.PendingLabel:SetTextColor(RED_FONT_COLOR.r, RED_FONT_COLOR.g, RED_FONT_COLOR.b);
-			self.PendingLabel:Show();
-			self.ExpirationTime:Hide();
-			self.CancelButton:Hide();
-		elseif (isApplication and pendingStatus ~= "applied") then
-			self.PendingLabel:SetText(LFG_LIST_PENDING);
-			self.PendingLabel:SetTextColor(GREEN_FONT_COLOR.r, GREEN_FONT_COLOR.g, GREEN_FONT_COLOR.b);
-			self.PendingLabel:SetSize(self:GetWidth()-30, self:GetHeight())
-			self.PendingLabel:Hide();
-			self.ExpirationTime:Show();
-			if (LFGListFrame.SearchPanel.categoryID == GROUP_FINDER_CATEGORY_ID_DUNGEONS) then
-				self.ExpirationTime:SetPoint("LEFT", self.DataDisplay, "LEFT", -30, 0);
-			else
-				self.ExpirationTime:SetPoint("LEFT", self.DataDisplay, "LEFT", -50, 0);
-			end
-			self.CancelButton:Show();
-			self.CancelButton:ClearAllPoints();
-			self.CancelButton:SetPoint("RIGHT", self.DataDisplay, "RIGHT", -10, 0);
-			self.CancelButton:SetSize(19,19);
-		else
-			self.PendingLabel:Hide();
-			self.ExpirationTime:Hide();
-			self.CancelButton:Hide();
-		end
-
-
-		--Change the anchor of the label depending on whether we have the expiration time
-		self.PendingLabel:SetPoint("LEFT", self.DataDisplay, "LEFT", -200, 5);
-		self.PendingLabel:SetJustifyH("Center");
-
-
-		local searchResultInfo = C_LFGList.GetSearchResultInfo(resultID);
-
-		self.resultID = resultID;
-		if (LFGListFrame.SearchPanel.categoryID == GROUP_FINDER_CATEGORY_ID_DUNGEONS) then
-			local leaderOverallDungeonScore = searchResultInfo.leaderOverallDungeonScore;
-			if (leaderOverallDungeonScore == nil) then
-				leaderOverallDungeonScore = 0;
-			end
-			local r, g, b = unpack(getColorForScoreLookup(leaderOverallDungeonScore));
-		    local color = format("%02x%02x%02x", r*255,g*255,b*255);
-		    local scoreText = format("|cFF%s%s|r", color, leaderOverallDungeonScore);
-			self.Name:SetText(searchResultInfo.name .. " (" .. scoreText .. ")");
-		end
-
-		local displayData = C_LFGList.GetSearchResultMemberCounts(resultID);
-		LFGListGroupDataDisplay_Update(self.DataDisplay, searchResultInfo.activityID, displayData, searchResultInfo.isDelisted);
+	local resultID = self.resultID;
+	if not C_LFGList.HasSearchResultInfo(resultID) then
+		return;
 	end
+
+	local _, appStatus, pendingStatus, appDuration = C_LFGList.GetApplicationInfo(resultID);
+
+	local isApplication = (appStatus ~= "none" or pendingStatus);
+
+	--Update visibility based on whether we're an application or not
+	self.DataDisplay:SetShown(true);
+	if (pendingStatus == "applied" and C_LFGList.GetRoleCheckInfo()) then
+		self.PendingLabel:SetText(LFG_LIST_ROLE_CHECK);
+		self.PendingLabel:SetTextColor(NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b);
+		self.PendingLabel:Show();
+		self.ExpirationTime:Hide();
+		self.CancelButton:Hide();
+	elseif (pendingStatus == "cancelled" or appStatus == "cancelled" or appStatus == "failed") then
+		self.PendingLabel:SetText(LFG_LIST_APP_CANCELLED);
+		self.PendingLabel:SetTextColor(RED_FONT_COLOR.r, RED_FONT_COLOR.g, RED_FONT_COLOR.b);
+		self.PendingLabel:Show();
+		self.ExpirationTime:Hide();
+		self.CancelButton:Hide();
+	elseif (appStatus == "declined" or appStatus == "declined_full" or appStatus == "declined_delisted") then
+		if (appStatus == "declined_delisted") then
+			self.PendingLabel:SetText("Delisted");
+		elseif (appStatus == "declined_full") then
+			self.PendingLabel:SetText(LFG_LIST_APP_FULL);
+		elseif (appStatus == "declined") then
+			self.PendingLabel:SetText(LFG_LIST_APP_DECLINED);
+		end
+		self.PendingLabel:SetTextColor(RED_FONT_COLOR.r, RED_FONT_COLOR.g, RED_FONT_COLOR.b);
+		self.PendingLabel:Show();
+		self.ExpirationTime:Hide();
+		self.CancelButton:Hide();
+	elseif (appStatus == "timedout") then
+		self.PendingLabel:SetText(LFG_LIST_APP_TIMED_OUT);
+		self.PendingLabel:SetTextColor(RED_FONT_COLOR.r, RED_FONT_COLOR.g, RED_FONT_COLOR.b);
+		self.PendingLabel:Show();
+		self.ExpirationTime:Hide();
+		self.CancelButton:Hide();
+	elseif (appStatus == "invited") then
+		self.PendingLabel:SetText(LFG_LIST_APP_INVITED);
+		self.PendingLabel:SetTextColor(GREEN_FONT_COLOR.r, GREEN_FONT_COLOR.g, GREEN_FONT_COLOR.b);
+		self.PendingLabel:Show();
+		self.ExpirationTime:Hide();
+		self.CancelButton:Hide();
+	elseif (appStatus == "inviteaccepted") then
+		self.PendingLabel:SetText(LFG_LIST_APP_INVITE_ACCEPTED);
+		self.PendingLabel:SetTextColor(GREEN_FONT_COLOR.r, GREEN_FONT_COLOR.g, GREEN_FONT_COLOR.b);
+		self.PendingLabel:Show();
+		self.ExpirationTime:Hide();
+		self.CancelButton:Hide();
+	elseif (appStatus == "invitedeclined") then
+		self.PendingLabel:SetText(LFG_LIST_APP_INVITE_DECLINED);
+		self.PendingLabel:SetTextColor(RED_FONT_COLOR.r, RED_FONT_COLOR.g, RED_FONT_COLOR.b);
+		self.PendingLabel:Show();
+		self.ExpirationTime:Hide();
+		self.CancelButton:Hide();
+	elseif (isApplication and pendingStatus ~= "applied") then
+		self.PendingLabel:SetText(LFG_LIST_PENDING);
+		self.PendingLabel:SetTextColor(GREEN_FONT_COLOR.r, GREEN_FONT_COLOR.g, GREEN_FONT_COLOR.b);
+		self.PendingLabel:SetSize(self:GetWidth()-30, self:GetHeight())
+		self.PendingLabel:Hide();
+		self.ExpirationTime:Show();
+		if (LFGListFrame.SearchPanel.categoryID == GROUP_FINDER_CATEGORY_ID_DUNGEONS) then
+			self.ExpirationTime:SetPoint("LEFT", self.DataDisplay, "LEFT", -30, 0);
+		else
+			self.ExpirationTime:SetPoint("LEFT", self.DataDisplay, "LEFT", -50, 0);
+		end
+		self.CancelButton:Show();
+		self.CancelButton:ClearAllPoints();
+		self.CancelButton:SetPoint("RIGHT", self.DataDisplay, "RIGHT", -10, 0);
+		self.CancelButton:SetSize(19,19);
+	else
+		self.PendingLabel:Hide();
+		self.ExpirationTime:Hide();
+		self.CancelButton:Hide();
+	end
+
+
+	--Change the anchor of the label depending on whether we have the expiration time
+	self.PendingLabel:SetPoint("LEFT", self.DataDisplay, "LEFT", -200, 5);
+	self.PendingLabel:SetJustifyH("Center");
+
+
+	local searchResultInfo = C_LFGList.GetSearchResultInfo(resultID);
+
+	self.resultID = resultID;
+	if (LFGListFrame.SearchPanel.categoryID == GROUP_FINDER_CATEGORY_ID_DUNGEONS) then
+		local leaderOverallDungeonScore = searchResultInfo.leaderOverallDungeonScore;
+		if (leaderOverallDungeonScore == nil) then
+			leaderOverallDungeonScore = 0;
+		end
+		local r, g, b = unpack(getColorForScoreLookup(leaderOverallDungeonScore));
+	    local color = format("%02x%02x%02x", r*255,g*255,b*255);
+	    local scoreText = format("|cFF%s%s|r", color, leaderOverallDungeonScore);
+		self.Name:SetText(searchResultInfo.name .. " (" .. scoreText .. ")");
+	end
+
+	local displayData = C_LFGList.GetSearchResultMemberCounts(resultID);
+	LFGListGroupDataDisplay_Update(self.DataDisplay, searchResultInfo.activityID, displayData, searchResultInfo.isDelisted);
 end
 
 hooksecurefunc("LFGListSearchEntry_Update", PGF_LFGListSearchEntry_Update);
