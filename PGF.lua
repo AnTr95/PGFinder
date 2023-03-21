@@ -707,6 +707,29 @@ local function updateSearch()
 	end
 end
 
+local function HasRemainingSlotsForLocalPlayerRole(lfgSearchResultID)
+	local roles = C_LFGList.GetSearchResultMemberCounts(lfgSearchResultID);
+	local playerRole = GetSpecializationRole(GetSpecialization());
+	local groupRoles = {["TANK"] = 0, ["HEALER"] = 0, ["DAMAGER"] = 0};
+	groupRoles[playerRole] = groupRoles[playerRole] + 1;
+	if (IsInGroup()) then
+		for i = 1, GetNumGroupMembers()-1 do --excludes the player
+			local role = UnitGroupRolesAssigned("party"..i);
+			if (role and role ~= "NONE") then
+				groupRoles[role] = groupRoles[role] + 1;
+			end
+		end
+		for role, amount in pairs(groupRoles) do
+			if (roles[roleRemainingKeyLookup[role]] < amount) then
+				return false;
+			end
+		end
+		return true;
+	else
+		return roles[roleRemainingKeyLookup[playerRole]] > 0;
+	end
+end
+
 PVEFrame:HookScript("OnUpdate", function(self, elapsed)
 	ticks = ticks + elapsed;
 	if (ticks >= refreshTimeReset and not searchAvailable) then
@@ -752,6 +775,8 @@ local function updateDungeonDifficulty()
 			checkbox:SetChecked(false);
 		elseif (PGF_roles[index]) then
 			checkbox:SetChecked(true);
+		elseif (index == "FilterRoles") then
+			checkbox:SetChecked(PGF_FilterRemaningRoles);
 		end
 	end
 	for index, widgets in pairs(GUI) do
@@ -1119,9 +1144,27 @@ local function initDungeon()
 	--LFGListApplicationDialog.Description.EditBox:SetFont(LFGListApplicationDialog.Description.EditBox:GetFont(), 7);
 	GUI["dungeonDifficulty"] = {["dropDown"] = dungeonDifficultyDropDown, ["text"] = dungeonDifficultyText};
 	dungeonDifficultyText:SetText(L.OPTIONS_DUNGEON_DIFFICULTY);
+	local filterRolesText = dungeonFrame:CreateFontString(nil, "ARTWORK", "GameFontNormalTiny2");
+	filterRolesText:SetFont(filterRolesText:GetFont(), 10);
+	filterRolesText:SetPoint("TOPLEFT", slowSearchtext, "TOPLEFT", -20, -30);
+	filterRolesText:SetText("Hide incompatible(role) groups");
+	local filterRolesCheckButton = CreateFrame("CheckButton", nil, dungeonFrame, "UICheckButtonTemplate");
+	filterRolesCheckButton:SetSize(20, 20);
+	filterRolesCheckButton:SetPoint("RIGHT", filterRolesText, "RIGHT", 25, 0);
+	filterRolesCheckButton:HookScript("OnClick", function(self)
+		if (self:GetChecked()) then
+			PGF_FilterRemaningRoles = true;
+			updateSearch();
+			PlaySound(856);
+		else
+			PGF_FilterRemaningRoles = false;
+			updateSearch();
+			PlaySound(857);
+		end
+	end);
 	local minLeaderScoreText = dungeonFrame:CreateFontString(nil, "ARTWORK", "GameFontNormalTiny2");
 	minLeaderScoreText:SetFont(minLeaderScoreText:GetFont(), 10);
-	minLeaderScoreText:SetPoint("TOPLEFT", slowSearchtext, "TOPLEFT", -20, -50);
+	minLeaderScoreText:SetPoint("TOPLEFT", filterRolesText, "TOPLEFT", 0, -25);
 	minLeaderScoreText:SetText(L.OPTIONS_MIN_LEADER_SCORE);
 	local minLeaderScoreEditBox = CreateFrame("EditBox", nil, dungeonFrame, "InputBoxTemplate");
 	minLeaderScoreEditBox:SetPoint("RIGHT", minLeaderScoreText, "RIGHT", 100, 0);
@@ -1225,6 +1268,7 @@ local function initDungeon()
 	GUI["DAMAGER"] = {["texture"] = dpsTexture, ["checkbox"] = dpsButton};
 	GUI["HEALER"] = {["texture"] = healerTexture, ["checkbox"] = healerButon};
 	GUI["TANK"] = {["texture"] = tankTexture, ["checkbox"] = tankButton};
+	GUI["FilterRoles"] = {["text"] = filterRolesText, ["checkbox"] = filterRolesCheckButton};
 end
 
 local function initRaid()
@@ -1358,6 +1402,7 @@ f:SetScript("OnEvent", function(self, event, ...)
 			PGF_roles = {["TANK"] = false, ["HEALER"] = false, ["DAMAGER"] = false};
 			PGF_roles[playerRole] = true;
 		end
+		if (PGF_FilterRemaningRoles == nil) then PGF_FilterRemaningRoles = true; end
 	elseif (event == "PLAYER_ENTERING_WORLD") then
 		if (next(GUI) == nil) then
 			
@@ -1680,7 +1725,7 @@ end
 
 function LFGListSearchPanel_UpdateResultList(self)
 	if (LFGListFrame.SearchPanel.categoryID == GROUP_FINDER_CATEGORY_ID_DUNGEONS) then
-		if(next(selectedInfo.dungeons) == nil and selectedInfo["leaderScore"] == 0) then
+		if(next(selectedInfo.dungeons) == nil and selectedInfo["leaderScore"] == 0 and not PGF_FilterRemaningRoles) then
 			LFGListFrame.SearchPanel.RefreshButton:SetScript("OnClick", function() end);
 			LFGListFrame.SearchPanel.RefreshButton.Icon:SetTexture("Interface\\AddOns\\PGFinder\\Res\\RedRefresh.tga");
 			searchAvailable = false;
@@ -1720,12 +1765,16 @@ function LFGListSearchPanel_UpdateResultList(self)
 				if (leaderOverallDungeonScore == nil) then
 					leaderOverallDungeonScore = 0;
 				end
-				if (selectedInfo.dungeons[activityID]) then
-					if ((requiredDungeonScore == nil or C_ChallengeMode.GetOverallDungeonScore() >= requiredDungeonScore) and (selectedInfo["leaderScore"] == 0 or selectedInfo["leaderScore"] < leaderOverallDungeonScore)) then
+				if (next(selectedInfo.dungeons) ~= nil) then
+					if (selectedInfo.dungeons[activityID] and (requiredDungeonScore == nil or C_ChallengeMode.GetOverallDungeonScore() >= requiredDungeonScore) and (selectedInfo["leaderScore"] == 0 or selectedInfo["leaderScore"] < leaderOverallDungeonScore) and (not PGF_FilterRemaningRoles or HasRemainingSlotsForLocalPlayerRole(self.results[i]))) then
 						table.insert(newResults, self.results[i]);
 					end
-				elseif (selectedInfo["leaderScore"] > 0 and next(selectedInfo.dungeons) == nil) then
-					if ((requiredDungeonScore == nil or C_ChallengeMode.GetOverallDungeonScore() >= requiredDungeonScore) and selectedInfo["leaderScore"] < leaderOverallDungeonScore) then
+				elseif (selectedInfo["leaderScore"] > 0) then
+					if ((requiredDungeonScore == nil or C_ChallengeMode.GetOverallDungeonScore() >= requiredDungeonScore) and selectedInfo["leaderScore"] < leaderOverallDungeonScore and (not HasRemainingSlotsForLocalPlayerRole or HasRemainingSlotsForLocalPlayerRole(self.results[i]))) then
+						table.insert(newResults, self.results[i]);
+					end
+				elseif (PGF_FilterRemaningRoles) then
+					if ((requiredDungeonScore == nil or C_ChallengeMode.GetOverallDungeonScore() >= requiredDungeonScore) and HasRemainingSlotsForLocalPlayerRole(self.results[i])) then
 						table.insert(newResults, self.results[i]);
 					end
 				end
@@ -1961,29 +2010,6 @@ LFGListApplicationDialog:HookScript("OnShow", function(self)
 		LFGListApplicationDialog:Hide();
 	end
 end);
-
-local function HasRemainingSlotsForLocalPlayerRole(lfgSearchResultID)
-	local roles = C_LFGList.GetSearchResultMemberCounts(lfgSearchResultID);
-	local playerRole = GetSpecializationRole(GetSpecialization());
-	local groupRoles = {["TANK"] = 0, ["HEALER"] = 0, ["DAMAGER"] = 0};
-	groupRoles[playerRole] = groupRoles[playerRole] + 1;
-	if (IsInGroup()) then
-		for i = 1, GetNumGroupMembers()-1 do --excludes the player
-			local role = UnitGroupRolesAssigned("party"..i);
-			if (role and role ~= "NONE") then
-				groupRoles[role] = groupRoles[role] + 1;
-			end
-		end
-		for role, amount in pairs(groupRoles) do
-			if (roles[roleRemainingKeyLookup[role]] < amount) then
-				return false;
-			end
-		end
-		return true;
-	else
-		return roles[roleRemainingKeyLookup[playerRole]] > 0;
-	end
-end
 
 --[[
 	Overrides Blizzards function, sorting by date rather than ID
