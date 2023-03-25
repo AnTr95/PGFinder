@@ -16,4 +16,6 @@ L.OPTIONS_RAID_SELECT = "Select Raid";
 L.OPTIONS_BLIZZARD_SEARCH_INFO = "Blizzard caps all search results to ~100 so the more specific you can be in the search the more results you will get.\n\n For example adding key levels, selecting 1 dungeon/raid because then it searches for only that activity. This cap exists even in their own version without addons.";
 L.OPTIONS_REFRESH_BUTTON_DISABLED = "New Refresh Available In: ";
 
+L.WARNING_OUTOFDATEMESSAGE = "There is a newer version of Premade Group Finder available on curse!";
+
 L.ADDON = "PGF: ";

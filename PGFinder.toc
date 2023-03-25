@@ -1,11 +1,12 @@
 ## Interface: 100007
 ## Title: Premade Group Finder
-## Version: 10.04
+## Version: 10.05
 ## Notes: Made finding groups quick and easy
 ## Author: Ant-Kazzak / Antmage-Ragnaros
 ## SavedVariables: PGF_DevAllActivityIDs
 ## SavedVariables: PGF_DevDungeonsActivityIDs
 ## SavedVariables: PGF_DevRaidActivityIDs
+## SavedVariables: PGF_DetailedDataDisplay
 ## SavedVariablesPerCharacter: PGF_roles
 ## SavedVariablesPerCharacter: PGF_FilterRemaningRoles
 

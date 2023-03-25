@@ -1,6 +1,10 @@
 local addon = ...; -- The name of the addon folder
 local L = PGFinderLocals; -- Strings
 
+--[[
+	Documentation: Creating the main frame that is always showed regardless of category
+]]
+
 local f = CreateFrame("Frame", nil, PVEFrame);
 f:SetFrameStrata("HIGH");
 f:SetPoint("RIGHT", LFGListFrame.SearchPanel.ResultsInset, "RIGHT", 395, 55);
@@ -10,8 +14,9 @@ f:Hide();
 
 
 --[[
-	Lets do some caching
+	Documentation: Lets cache all of the global functions that are heavily used to improve perforrmance
 ]]
+
 local LFGListFrame = LFGListFrame;
 local PVEFrame = PVEFrame;
 
@@ -54,9 +59,26 @@ local math = math;
 local table = table;
 local string = string;
 local strlower = strlower;
+local refreshButtonClick = LFGListFrame.SearchPanel.RefreshButton:GetScript("OnClick"); --save the OnClick functionality to be able to temporarily move it and put it back when needed
+
 --[[
-	Creating some local variables
+	Documentation: Creating all local variables.
+	To add a new raid:
+	Update the dropdownMenuStates
+	Add the activityID to the raidStateMap
+	Add the abbreviated version of the raid name to the bossNameMap and all of the bosses long and short names
+	Add the abbreviated version of the raid name to the bossOrderMap and all long names of the bosses in the prefered order
+	Add the boss paths to the PATHs graph
+	Add the abbreviated name of the raid to the raidAbbrerviations
+	Add all achievement IDs to the achievementID array using the generic raid name (without difficulty)
+	Update isNextBoss function to cover first boss and post multiple wing bosses i.e Broodkeeper
+	Add the activityIDs of all difficulties to PGF_allRaidsActivityIDs
+
+	To add a new dungeon:
+	Add the abbreviated name of the dungeon to the dungeonAbbrerviations
+	Add the activityIDs of all difficulties to PGF_allDungeonsActivityIDs
 ]]
+
 local lastCat = nil;
 local slowSearch = false;
 local slowResults = {};
@@ -64,14 +86,19 @@ local slowCount = 0;
 local slowTotal = 0;
 local originalUI = {};
 local ticks = 0;
-local refreshTimeReset = 3;
+local refreshTimeReset = 3; --defines the time that must pass between searches
 local searchAvailable = true;
-local dungeonStates = {"Normal", "Heroic", "Mythic", "Mythic+ (Keystone)"};
-local raidStates = {"VOTI Normal", "VOTI Heroic", "VOTI Mythic", "VOTI All"};
+local dungeonStates = {"Normal", "Heroic", "Mythic", "Mythic+ (Keystone)"}; --visible states for the dropdown
+local raidStates = {"VOTI Normal", "VOTI Heroic", "VOTI Mythic", "VOTI All"}; --visible states for the dropdown
 local lastSelectedDungeonState = "";
 local lastSelectedRaidState = "";
 local performanceTimeStamp = 0;
-local refreshButtonClick = LFGListFrame.SearchPanel.RefreshButton:GetScript("OnClick");
+local version = GetAddOnMetadata(addon, "Version");
+local recievedOutOfDateMessage = false;
+local FRIEND_ONLINE = ERR_FRIEND_ONLINE_SS:match("%s(.+)") -- Converts "[%s] has come online". to "has come online".
+--[[
+	Documentation: These maps changes the visible state that the user selects and converts it to match the dungeon/raids actual difficulty name/activityID
+]]
 local dungeonStateMap = {
 	["Normal"] = "(Normal)",
 	["Heroic"] = "(Heroic)",
@@ -84,19 +111,9 @@ local raidStateMap = {
 	["VOTI Mythic"] = 1191,
 	["VOTI All"] = 1191, --no activity ID for this so lets take the boss data from mythic
 };
-local bossNameMap = {
-	["VOTI"] = {
-		["Eranog"] = "Eranog",
-		["Terros"] = "Terros",
-		["The Primal Council"] = "Council",
-		["Dathea, Ascended"] = "Dathea",
-		["Sennarth, The Cold Breath"] = "Sennarth",
-		["Kurog Grimtotem"] = "Kurog",
-		["Broodkeeper Diurna"] = "Broodkeeper",
-		["Raszageth the Storm-Eater"] = "Raszageth",
-		["Fresh"] = "Fresh Run",
-	},
-};
+--[[
+	Documentation: This sets the order of that the bosses will show in the UI
+]]
 local bossOrderMap = {
 	["VOTI"] = {
 		"Eranog",
@@ -110,6 +127,47 @@ local bossOrderMap = {
 		"Fresh"
 	};
 };
+--[[
+	Documentation: This converts the names used in the GUIs for the user to see with the actual names in the code.
+]]
+local bossNameMap = {
+	["VOTI"] = {
+		["Eranog"] = "Eranog",
+		["Terros"] = "Terros",
+		["The Primal Council"] = "Council",
+		["Dathea, Ascended"] = "Dathea",
+		["Sennarth, The Cold Breath"] = "Sennarth",
+		["Kurog Grimtotem"] = "Kurog",
+		["Broodkeeper Diurna"] = "Broodkeeper",
+		["Raszageth the Storm-Eater"] = "Raszageth",
+		["Fresh"] = "Fresh Run",
+	},
+};
+local dungeonAbbreviations = {
+	["The Nokhud Offensive"] = "NO",
+	["Court of Stars"] = "COS",
+	["Halls of Valor"] = "HOV",
+	["Algeth'ar Academy"] = "AA",
+	["Shadowmoon Burial Grounds"] = "SBG",
+	["The Azure Vault"] = "AV",
+	["Ruby Life Pools"] = "RLP",
+	["Temple of the Jade Serpent"] = "TJS",
+	["Brackenhide Hollow"] = "BH",
+	["Halls of Infusion"] = "HOI",
+	["Uldaman: Legacy of Tyr"] = "ULT",
+	["Neltharus"] = "NEL",
+	["Neltharion's Lair"] = "NL",
+	["Freehold"] = "FH",
+	["Temple of Sethraliss"] = "TOS",
+	["The Vortex Pinnacle"] = "VP",
+};
+
+local raidAbbreviations = {
+	["Vault of the Incarnates"] = "VOTI",
+};
+--[[
+	Documentation: This is DAG that defines which bosses are after and which are before the selected boss and is used for figuring out what boss is next based on the raid lockout
+]]
 local VOTI_Path = {
 	["Eranog"] = {
 		["children_paths"] = {
@@ -189,34 +247,18 @@ local VOTI_Path = {
 	}
 };
 
-local dungeonAbbreviations = {
-	["The Nokhud Offensive"] = "NO",
-	["Court of Stars"] = "COS",
-	["Halls of Valor"] = "HOV",
-	["Algeth'ar Academy"] = "AA",
-	["Shadowmoon Burial Grounds"] = "SBG",
-	["The Azure Vault"] = "AV",
-	["Ruby Life Pools"] = "RLP",
-	["Temple of the Jade Serpent"] = "TJS",
-	["Brackenhide Hollow"] = "BH",
-	["Halls of Infusion"] = "HOI",
-	["Uldaman: Legacy of Tyr"] = "ULT",
-	["Neltharus"] = "NEL",
-	["Neltharion's Lair"] = "NL",
-	["Freehold"] = "FH",
-	["Temple of Sethraliss"] = "TOS",
-	["The Vortex Pinnacle"] = "VP",
-};
-
-local raidAbbreviations = {
-	["Vault of the Incarnates"] = "VOTI",
-};
-
+--[[
+	Documentation: This is a blizzard variable that is used in the HasRemainingSlotsForLocalPlayerRole function
+]]
 local roleRemainingKeyLookup = {
 	["TANK"] = "TANK_REMAINING",
 	["HEALER"] = "HEALER_REMAINING",
 	["DAMAGER"] = "DAMAGER_REMAINING",
 };
+
+--[[
+	Documentation: This is an array that converts a class name and specilization name to an ID used to fetch the textures for that spec
+]]
 
 local classSpecilizationMap = {
     ["DEATHKNIGHT"] = {
@@ -298,14 +340,18 @@ local classSpecilizationMap = {
     }
 };
 
-local roleIndex = {["TANK"] = 1, ["HEALER"] = 2, ["DAMAGER"] = 3};
+local roleIndex = {["TANK"] = 1, ["HEALER"] = 2, ["DAMAGER"] = 3}; --Syncs the order of displayData to ensure tanks are always most left etc
 
 --[[
-SelectedInfo
-	dungeons - saves which dungeons are selected
-	levels - saves which levels are selected
-	score - saves which score is required from the leader
-	eligible - saves if the search should check for if the current roles in the players group is eligible with the slots left in the listed groups 
+	Documentation:
+		dungeons(arr) - saves which dungeons are selected
+		levels(arr) - saves which levels are selected
+		score(arr) - saves which score is required from the leader
+		eligible(arr) - saves if the search should check for if the current roles in the players group is eligible with the slots left in the listed groups 
+		description(string) - saves the description used when applying to groups
+		leaderScore(int) - saves the lowest allowed score of the leader in dungeon groups
+		raids(arr) - saves which raids are selected
+		bosses(arr) - saves which bosses are selected
 ]]--
 local selectedInfo = {
 	["dungeons"] = {},
@@ -318,10 +364,16 @@ local selectedInfo = {
 	["bosses"] = {},
 };
 
+--[[
+	Documentation: All of the achievementIDs for CE, Mythic Boss, AOTC, Normal Clear. Order decides which one is best, lower key = better
+]]
 local achievementIDs = {
 	["Vault of the Incarnates"] = {17108, 16352, 16350, 16351, 16349, 16347, 16346, 16348, 16346, 17107, 16343},
 };
 
+--[[
+	Documentation: All of the red, green, blue values for the leader score. The score must be equal or above the key to use the r, g, b value
+]]
 local scoreColors = {
 	[3450] = {1.00, 0.50, 0.00},
 	[3385] = {1.00, 0.49, 0.08},
@@ -457,7 +509,10 @@ local scoreColors = {
 	[0] = {0.62, 0.62, 0.62},
 };
 
--- precompute the lookup table for reducing the complexity to O(1)
+--[[
+	Documentation: Lets precompute the scoreColor table to a lookup table to reduce the time complexity to O(1) as this is called extremly frequently.
+	Creates a table from 0-3450 as keys with the r,g,b value of the scoreTable for each score that is between 2 scoreTable keys
+]]
 local colorLookup = {};
 local lastScore = 0;
 for i = 0, 3450 do
@@ -469,6 +524,55 @@ for i = 0, 3450 do
 	end
 end
 
+--[[
+	Documentation: Looks up the r, g, b values from the coreLookup table or sends a default value if it is out of range. O(1)
+]] 
+local function getColorForScoreLookup(score)
+	return colorLookup[score] or {0.62, 0.62, 0.62};
+end
+
+--[[
+	Deprecated
+]]
+local function getScoreColor(score)
+	local minDiff = math.huge;
+	local closestColor = nil;
+	for k, v in pairs(scoreColors) do
+		local diff = math.abs(score - k);
+		if (diff < minDiff) then
+			minDiff = diff;
+			closestColor = v;
+		end
+	end
+	return closestColor;
+end
+
+--[[
+	Documentation: Get the best achievement by looping through the list of achievementIDs lower key is more prestigeous
+
+	Payload:
+	raid param(string) - the generic name of the raid without difficulty
+	
+	Returr:
+	CASE no completed achievement: nil
+	CASE 1 >= completed achievements: string AchievementLink colored and clickable
+]]
+local function getBestAchievement(raid)
+	for i, achievementIDs in ipairs(achievementIDs[raid]) do
+		if (select(4, GetAchievementInfo(achievementIDs))) then
+			return GetAchievementLink(achievementIDs);
+		end
+	end
+	return nil;
+end
+
+--[[
+	Documentation: A blizzard value used in LFGListUtil_GetSearchEntryMenu that is called when right clicking on a group in premade groups.
+	This version overwrites it and adds a new button in position 5 in the dropdown.
+	text (string) that is shown in the dropdown
+	func - onClick function that takes custom parrams and are passed form the LFGListUtil_GetSearchEntryMenu function
+	disable - if the button is disabled
+]]
 local LFG_LIST_SEARCH_ENTRY_MENU = {
 	{
 		text = nil,	--Group name goes here
@@ -518,14 +622,16 @@ local LFG_LIST_SEARCH_ENTRY_MENU = {
 		notCheckable = true,
 	},
 };
-
+--[[
+	Documentation: Prefills arrays to improve performance as we know they will be filled later on
+]]
 local dungeonTextures = {true, true, true, true, true, true, true, true, true, true};
 local raidTextures = {true, true, true, true};
+local GUI = {}; -- array to store all widgets for dungeons and also generic widgets
+local rGUI = {}; -- array to store all widgets for raids
 
-local GUI = {};
-local rGUI = {};
-local currentDungeonsActivityIDs = {["(Mythic Keystone)"] = {}, ["(Mythic)"] = {}, ["(Heroic)"] = {}, ["(Normal)"] = {}};
-local currentRaidsActivityIDs = {};
+local currentDungeonsActivityIDs = {["(Mythic Keystone)"] = {}, ["(Mythic)"] = {}, ["(Heroic)"] = {}, ["(Normal)"] = {}}; --dungeons dropdown is using difficulties to show dungeons for that difficulty as the first filter
+local currentRaidsActivityIDs = {}; --raids dropdown is using the specific raid + difficulty which in form of activityID to show bosses in the first filter
 
 --[[
 	Checking if a table PGF_Contains a given value and if it does, what index is the value located at
@@ -560,7 +666,20 @@ local function PGF_GetSize(arr)
 	end
 	return count
 end
+--[[
+	Documentation: A function to figure out if the boss param is the next boss based on the raid lockout and graph for that raid
+	CASE post all wings boss: If it is a boss that unlocks after 2 or more wings or there is a skip to the boss we need to check for all 3 scenarios. In the case it is a skip only check if first boss is defeated and not the 2nd boss as they are probably not skipping then 
+	CASE any other case: check if the boss just before the current boss is defeated
 
+	Payload:
+	graph parram(table/graph) - a graph that contains all of the bosses and the orders they can be reached
+	boss parram(string) - the boss we are checking if it is next
+	bosses parram(table) - a table with all of the bosses that are defeated key is bossName, value is true and if it is not defeated the key will be nill for that boss
+
+	Returns:
+	bool - true if it is the next boss
+	bool - false if it is not
+]]
 local function isNextBoss(graph, boss, bosses)
 	if (boss and graph) then
 		if (boss == "Broodkeeper") then
@@ -575,20 +694,17 @@ local function isNextBoss(graph, boss, bosses)
 	end
 	return false
 end
-
-local function getBestAchievement(raid)
-	for i, achievementIDs in ipairs(achievementIDs[raid]) do
-		if (select(4, GetAchievementInfo(achievementIDs))) then
-			return GetAchievementLink(achievementIDs);
-		end
-	end
-	return nil;
-end
+--[[
+	Documentation: Create the dungeonFrame shown only in category 2
+]]
 local dungeonFrame = CreateFrame("Frame", nil, f);
 dungeonFrame:Hide();
 dungeonFrame:SetPoint("TOPLEFT", 0, 0);
 dungeonFrame:SetSize(f:GetWidth(), f:GetHeight());
 
+--[[
+	Documentation: Create the raidFrame shown only in category 3
+]]
 local raidFrame = CreateFrame("Frame", nil, f);
 raidFrame:SetPoint("TOPLEFT", 0, 0);
 raidFrame:SetSize(f:GetWidth(), f:GetHeight());
@@ -598,7 +714,13 @@ raidFrame:Hide();
 
 f:RegisterEvent("PLAYER_LOGIN");
 f:RegisterEvent("PLAYER_ENTERING_WORLD");
-
+f:RegisterEvent("CHAT_MSG_ADDON");
+f:RegisterEvent("GROUP_ROSTER_UPDATE");
+f:RegisterEvent("CHAT_MSG_SYSTEM");
+C_ChatInfo.RegisterAddonMessagePrefix("PGF_VERSIONCHECK")
+--[[
+	Documentation: Save all of the Blizzard UI elements that we move for when no PGF frame is shown
+]]
 local function saveOriginalUI()
 	originalUI = {
 		["PVEFrame"] = {["width"] = 0, ["height"] = 0}, 
@@ -630,6 +752,9 @@ local function saveOriginalUI()
 	originalUI["LFGListApplicationDialog.Description.EditBox"].size[1], originalUI["LFGListApplicationDialog.Description.EditBox"].size[2] = LFGListApplicationDialog.Description.EditBox:GetSize();
 end
 
+--[[
+	Documentation: Restore all of the Blizzard UI elements that was moved by PGF to its original position when no PGF frame is shown
+]]
 local function restoreOriginalUI()
 	PVE_FRAME_BASE_WIDTH = 600;
 	PVEFrame:SetSize(600, originalUI["PVEFrame"].height);
@@ -654,24 +779,18 @@ local function restoreOriginalUI()
 	LFGListFrame:SetSize(368, LFGListFrame:GetHeight());
 end
 
--- define the getColorForScoreLookup function
-local function getColorForScoreLookup(score)
-	return colorLookup[score] or {0.62, 0.62, 0.62};
-end
 
-local function getScoreColor(score)
-	local minDiff = math.huge;
-	local closestColor = nil;
-	for k, v in pairs(scoreColors) do
-		local diff = math.abs(score - k);
-		if (diff < minDiff) then
-			minDiff = diff;
-			closestColor = v;
-		end
-	end
-	return closestColor;
-end
+--[[
+	Documentation: A blizzard function used to perform C_LFGList.Search and C_LFGList.GetAvailableActivities
+	The function takes the categoryID and if a filter should be applied or not which depends on the category. For raids 0 is for all raids including legacy while 1 is only current raids. For dungeons 
 
+	Payload:
+	categoryID parram(int) - the categoryID of LFGListFrame.SearchPanel.categoryID or the categoryID of the activity
+	filters parram(int) - if a filter for recommended groups should be applied or not
+
+	Returns:
+	filters (int)
+]]
 local function ResolveCategoryFilters(categoryID, filters)
 	-- Dungeons ONLY display recommended groups.
 	if categoryID == GROUP_FINDER_CATEGORY_ID_DUNGEONS then
@@ -680,6 +799,10 @@ local function ResolveCategoryFilters(categoryID, filters)
 
 	return filters;
 end
+
+--[[
+	Documentation: This function performs all of the searches for PGF and makes sure that there has been enough time between searches before making a new one.
+]]
 local function updateSearch()
 	if (searchAvailable) then
 		performanceTimeStamp = GetTimePreciseSec(); 
@@ -707,6 +830,16 @@ local function updateSearch()
 	end
 end
 
+--[[
+	Documentation: This is a Blizzard function used when sorting groups to determine if the player is eligible for each listed group.
+	This version extends it to also work for groups (multiple players) to see if the group as a whole is eliglbe for each listed group.
+
+	Payload:
+	lfgSearchResultID parram(int) - the resultID from GetSearchResult or self
+
+	Returns:
+	bool - that is true if the group/player is eligible and otherwise false
+]]
 local function HasRemainingSlotsForLocalPlayerRole(lfgSearchResultID)
 	local roles = C_LFGList.GetSearchResultMemberCounts(lfgSearchResultID);
 	local playerRole = GetSpecializationRole(GetSpecialization());
@@ -730,6 +863,14 @@ local function HasRemainingSlotsForLocalPlayerRole(lfgSearchResultID)
 	end
 end
 
+--[[
+	Documentation: This scrript will keep track of enough time has passed between the searches to allow for searches again and reset the refresh button texture.
+	While it is disabled the OnClick function is also removed but is readded here when searching is available again.
+
+	Payload:
+	self parram(table/object) - PVEFrame
+	elapsed param(int) - How much time has passed since last call
+]]
 PVEFrame:HookScript("OnUpdate", function(self, elapsed)
 	ticks = ticks + elapsed;
 	if (ticks >= refreshTimeReset and not searchAvailable) then
@@ -745,7 +886,13 @@ PVEFrame:HookScript("OnUpdate", function(self, elapsed)
 		ticks = 0;
 	end
 end);
-
+--[[
+	Documentation: Based on isSameCat all elements will either be hidden because they are no longer relevant as a new category is opened or everything is restored as it is the same category. 
+	First all elements are hidden to force a reset, then all of the generic elements within the dungeonframe and all generic elements for all frames are shown.
+	
+	Payload:
+	isSameCat param(bool) if false we should pass a long to hide all of the old UI
+]]
 local function updateDungeonDifficulty(isSameCat)
 	if (not isSameCat) then
 		raidFrame:Hide();
@@ -831,7 +978,13 @@ local function updateDungeonDifficulty(isSameCat)
 	end
 	updateSearch();
 end
-
+--[[
+	Documentation: Based on isSameCat all elements will either be hidden because they are no longer relevant as a new category is opened or everything is restored as it is the same category. 
+	First all elements are hidden to force a reset, then all of the generic elements within the raid frame are shown and then all generic elements for all frames are shown and lastly all raidFrame specific elements are shown.
+	
+	Payload:
+	isSameCat param(bool) if false we should pass a long to hide all of the old UI
+]]
 local function updateRaidDifficulty(isSameCat)
 	--Hide all
 	if (not isSameCat) then
@@ -921,7 +1074,12 @@ local function updateRaidDifficulty(isSameCat)
 	end
 	updateSearch();
 end
-
+--[[
+	Documentation: Blizzard overwrites the frame size of the PVEFrame with PVE_FRAME_BASE_WIDTH so that is changed. Also moving all of blizzards UI elements to fit the new UI. Certain elements size are based on 2 anchor points TOPLEFT and BOTTOMRIGHT to fix that we need to clear all points and just set the TOPLEFT.
+	
+	Payload:
+	isSameCat param(bool) if false we should pass a long to hide all of the old UI
+]]
 local function PGF_ShowDungeonFrame(isSameCat)
 	dungeonFrame:Show();
 	if (next(originalUI) == nil) then
@@ -952,7 +1110,12 @@ local function PGF_ShowDungeonFrame(isSameCat)
 	LFGListFrame:SetSize(368, LFGListFrame:GetHeight());
 	updateDungeonDifficulty(isSameCat);
 end
-
+--[[
+	Documentation: Blizzard overwrites the frame size of the PVEFrame with PVE_FRAME_BASE_WIDTH so that is changed. Also moving all of blizzards UI elements to fit the new UI. Certain elements size are based on 2 anchor points TOPLEFT and BOTTOMRIGHT to fix that we need to clear all points and just set the TOPLEFT.
+	
+	Payload:
+	isSameCat param(bool) if false we should pass a long to hide all of the old UI
+]]
 local function PGF_ShowRaidFrame(isSameCat)
 	raidFrame:Show();
 	if (next(originalUI) == nil) then
@@ -984,7 +1147,20 @@ local function PGF_ShowRaidFrame(isSameCat)
 	updateRaidDifficulty(isSameCat);
 end
 
---Create GUI
+--[[
+	Documentation: Creates all of the UI elements related to the dungeonFrame including:
+	Difficulty Dropdown
+	Text, checkbox and texture for each boss
+	The dungeons that will show up are the ones we get from recommended activities for that difficulty (same as in the autocomplete in search). All of the bosses will be stored in the dungeonAbbreviations[abbrevatedDungeonName]
+
+	All of the generic frames are also stored and created here including:
+	performanceText
+	slowSearch
+	leaderScore
+	blizzSearchInfo
+	filterOutIneligible groups
+	roles config
+]]
 local function initDungeon()
 	local dungeonDifficultyText = dungeonFrame:CreateFontString(nil, "ARTWORK", "GameFontNormalTiny2");
 	dungeonDifficultyText:SetFont(dungeonDifficultyText:GetFont(), 10);
@@ -1069,7 +1245,7 @@ local function initDungeon()
 					if (dungeonsSelected == 1) then
 						local key, value = next(selectedInfo.dungeons);
 						C_LFGList.SetSearchToActivity(key);
-					else
+					elseif (LFGListFrame.SearchPanel.SearchBox:GetText():match("(Mythic Keystone)")) then
 						C_LFGList.ClearSearchTextFields();
 					end
 					updateSearch();
@@ -1079,7 +1255,7 @@ local function initDungeon()
 					if (dungeonsSelected == 1) then
 						local key, value = next(selectedInfo.dungeons);
 						C_LFGList.SetSearchToActivity(key);
-					else
+					elseif (LFGListFrame.SearchPanel.SearchBox:GetText():match("(Mythic Keystone)")) then
 						C_LFGList.ClearSearchTextFields();
 					end
 					updateSearch();
@@ -1270,7 +1446,12 @@ local function initDungeon()
 	GUI["TANK"] = {["texture"] = tankTexture, ["checkbox"] = tankButton};
 	GUI["FilterRoles"] = {["text"] = filterRolesText, ["checkbox"] = filterRolesCheckButton};
 end
-
+--[[
+	Documentation: Creates all of the UI elements related to the raidFrame including:
+	Difficulty and Raid Dropdown
+	Text, checkbox and texture for each boss
+	The raids that will show up are the ones we get from recommended activities (same as in the autocomplete in search). All of the bosses will be stored in the currentRaidsActivityIDs[abbrevatedRaidName][abbrevatedBossName]
+]]
 local function initRaid()
 	local raidDifficultyText = raidFrame:CreateFontString(nil, "ARTWORK", "GameFontNormalTiny2");
 	raidDifficultyText:SetFont(raidDifficultyText:GetFont(), 10);
@@ -1291,7 +1472,7 @@ local function initRaid()
 	function PGF_RaidState_OnClick(self)
 		UIDropDownMenu_SetSelectedID(raidDifficultyDropDown, self:GetID());
 		lastSelectedRaidState = self:GetText();
-		if (self:GetText():match(" All")) then
+		if (self:GetText():match(" All")) then --there is no activity for All so if there is a previous activity set in the searchbox it needs to be cleared
 			C_LFGList.ClearSearchTextFields();
 		elseif (PGF_allRaidActivityIDs[raidStateMap[lastSelectedRaidState]]) then
 			C_LFGList.SetSearchToActivity(raidStateMap[lastSelectedRaidState]);
@@ -1387,7 +1568,9 @@ local function initRaid()
 	raidDifficultyText:SetText(L.OPTIONS_RAID_SELECT);
 	--Use input:GetNumber() to ensure its a number, returns 0 if not a number which is fine in this case
 end
-
+--[[
+	Documentation: Initiate the UI if it has not been done before.
+]]
 PVEFrame:HookScript("OnShow", function(self)
 	if(next(GUI) == nil) then
 		initDungeon();
@@ -1403,6 +1586,43 @@ f:SetScript("OnEvent", function(self, event, ...)
 			PGF_roles[playerRole] = true;
 		end
 		if (PGF_FilterRemaningRoles == nil) then PGF_FilterRemaningRoles = true; end
+		if (PGF_DetailedDataDisplay == nil) then PGF_DetailedDataDisplay = true; end
+		if IsInGuild() then
+			C_ChatInfo.SendAddonMessage("PGF_VERSIONCHECK", version, "GUILD");
+		end
+	elseif (event == "GROUP_ROSTER_UPDATE") then
+		if (IsInRaid(LE_PARTY_CATEGORY_INSTANCE) or IsInGroup(LE_PARTY_CATEGORY_INSTANCE)) then
+			C_ChatInfo.SendAddonMessage("PGF_VERSIONCHECK", version, "INSTANCE_CHAT");
+		elseif (IsInRaid(LE_PARTY_CATEGORY_HOME)) then
+			C_ChatInfo.SendAddonMessage("PGF_VERSIONCHECK", version, "RAID");
+		elseif (IsInGroup(LE_PARTY_CATEGORY_HOME)) then
+			C_ChatInfo.SendAddonMessage("PGF_VERSIONCHECK", version, "PARTY");
+		end
+	elseif (event == "CHAT_MSG_SYSTEM") then
+		local msg = ...;
+		local sender = msg;
+		msg = msg:match("%s(.+)")
+		if (msg == FRIEND_ONLINE) then
+			sender = sender:match("%[(.+)%]");
+			if (sender ~= UnitName("player")) then
+				C_Timer.After(5, function() 
+					if (sender ~= nil and UnitIsConnected(sender)) then
+						C_ChatInfo.SendAddonMessage("PGF_VERSIONCHECK", version, "WHISPER", sender);
+					end
+				end);
+			end
+		end
+	elseif (event == "CHAT_MSG_ADDON") then
+		local prefix, msg, channel, sender = ...;
+		local sender = Ambiguate(sender, "none");
+		if (prefix == "PGF_VERSIONCHECK" and not recievedOutOfDateMessage and not UnitIsUnit(UnitName("player"), sender)) then
+			if (tonumber(msg) ~= nil) then
+				if (tonumber(msg) > tonumber(version)) then
+					DEFAULT_CHAT_FRAME:AddMessage("\124T|cFFFFFF00\124t" .. L.WARNING_OUTOFDATEMESSAGE);
+					recievedOutOfDateMessage = true;
+				end
+			end
+		end
 	elseif (event == "PLAYER_ENTERING_WORLD") then
 		if (next(GUI) == nil) then
 			
@@ -1414,7 +1634,9 @@ f:SetScript("OnShow", function()
 	if (LFGListFrame.SearchPanel.categoryID) then
 	end
 end);
-
+--[[
+	Documentation: Based on which category is selected different frames are shown. If the category is different from last time all widgets are first hidden and the selectedInfo is reset for that category otherwise we restore all the options from before.
+]]
 LFGListFrame.SearchPanel:HookScript("OnShow", function(self)
 	local search = LFGListFrame.SearchPanel;
 	search.AutoCompleteFrame:SetFrameStrata("TOOLTIP");
@@ -1453,13 +1675,17 @@ LFGListFrame.SearchPanel:HookScript("OnShow", function(self)
 		restoreOriginalUI();
 	end
 end);
-
+--[[
+	Documentation: Change the texture of the refresh button to show searching is unavailable
+]]
 LFGListFrame.SearchPanel.RefreshButton:HookScript("OnClick", function(self)
 	self:SetScript("OnClick", function() end);
 	self.Icon:SetTexture("Interface\\AddOns\\PGFinder\\Res\\RedRefresh.tga");
 	searchAvailable = false;
 end);
-
+--[[
+	Documentation: This script hooks the OnEnter for the Refresh button to show different tooltips based on if a search is available or not. If a search is unavailable it shows how much time remains until the next search can be done.
+]]
 LFGListFrame.SearchPanel.RefreshButton:HookScript("OnEnter", function(self)
 	if (searchAvailable) then
 		GameTooltip:SetOwner(self);
@@ -1484,6 +1710,14 @@ end);
 
 LFGListFrame.SearchPanel.SearchBox:SetScript("OnEnterPressed", LFGListSearchPanelSearchBox_OnEnterPressed);
 
+--[[
+	Documentation: The function is a blizzard function that is called enter is pressed in the search box.
+	This version overwrites it to prevent it from searching before enough time has passed for a new search to be available.
+
+	Payload:
+	self param(table/object) - LFGListFrame.SearchPanel.SearchBox
+]]
+
 function LFGListSearchPanelSearchBox_OnEnterPressed(self)
 	local parent = self:GetParent();
 	if ( parent.AutoCompleteFrame:IsShown() and parent.AutoCompleteFrame.selected ) then
@@ -1497,6 +1731,15 @@ function LFGListSearchPanelSearchBox_OnEnterPressed(self)
 		self:ClearFocus();
 	end
 end
+
+--[[
+	Documentation: The function is a blizzard function that is called every time the user presses the Find a Group button.
+	This version overwrites it to prevent it from clearing the searchbox every time the frame is opened. Instead we clear it when a category is changed in the frames own Show function.
+
+	Payload:
+	self param(table/object) - LFGListFrame
+	questID parram(int) - the questID if there is one
+]]
 
 function LFGListCategorySelection_StartFindGroup(self, questID)
 	local baseFilters = self:GetParent().baseFilters;
@@ -1521,11 +1764,29 @@ local function PGF_LFGListSearchPanel_UpdateButtonStatus(self)
 end
 hooksecurefunc("LFGListSearchPanel_UpdateButtonStatus", PGF_LFGListSearchPanel_UpdateButtonStatus);
 
+--[[
+	Documentation: The function is a blizzard function that is called every time you are inside a premade group already and new applicants show up.
+	This hooked version allows everyone in the group to browse groups rather than just the leader.
+
+	Payload:
+	param(arr/object) - the application viewer
+]]
+
 local function PGF_LFGListApplicationViewer_UpdateInfo(self)
 	self.BrowseGroupsButton:SetShown(true);
 end
 
 hooksecurefunc("LFGListApplicationViewer_UpdateInfo", PGF_LFGListApplicationViewer_UpdateInfo);
+
+--[[
+	Documentation: The function is a blizzard function that decides all of possible actions when right clicking a group. The function also defines the arguments used in the function defined in the payload. So arg1 is sent to the function as a param.
+	This version overwrites the original because it needs to do a return. So this function changes it so that if it is a raid group you have the option to send your best raiding achievement.
+
+	Payload:
+	param(int) - the resultID from GetSearchResults for that specific group
+
+	Returns(arr) - an array with all of the information and arguments to the necessairy functions and text fields of the right click dropdown.
+]]
 
 function LFGListUtil_GetSearchEntryMenu(resultID)
 	local searchResults = C_LFGList.GetSearchResultInfo(resultID);
@@ -1533,6 +1794,7 @@ function LFGListUtil_GetSearchEntryMenu(resultID)
 	local activityID = searchResults.activityID;
 	local activityInfo = C_LFGList.GetActivityInfoTable(activityID);
 	local activityFullName = activityInfo.fullName;
+	local categoryID = activityInfo.categoryID;
 	local activityShortName = activityFullName:gsub("%s%(.*", "");
 	LFG_LIST_SEARCH_ENTRY_MENU[1].text = searchResults.name;
 	LFG_LIST_SEARCH_ENTRY_MENU[2].arg1 = searchResults.leaderName;
@@ -1546,13 +1808,26 @@ function LFGListUtil_GetSearchEntryMenu(resultID)
 	LFG_LIST_SEARCH_ENTRY_MENU[4].arg2 = searchResults.leaderName;
 	LFG_LIST_SEARCH_ENTRY_MENU[5].arg1 = activityShortName;
 	LFG_LIST_SEARCH_ENTRY_MENU[5].arg2 = searchResults.leaderName;
-	LFG_LIST_SEARCH_ENTRY_MENU[5].disabled = not searchResults.leaderName;
 	LFG_LIST_SEARCH_ENTRY_MENU[5].tooltipTitle = (not applied) and WHISPER;
-	LFG_LIST_SEARCH_ENTRY_MENU[5].tooltipText = (not applied) and LFG_LIST_MUST_SIGN_UP_TO_WHISPER;
+	if (categoryID == 3) then
+		LFG_LIST_SEARCH_ENTRY_MENU[5].disabled = not searchResults.leaderName;
+		LFG_LIST_SEARCH_ENTRY_MENU[5].tooltipText = (not applied) and LFG_LIST_MUST_SIGN_UP_TO_WHISPER;
+	else
+		LFG_LIST_SEARCH_ENTRY_MENU[5].disabled = true;
+		LFG_LIST_SEARCH_ENTRY_MENU[5].tooltipText = "Only applicable for raid groups";
+	end
 	return LFG_LIST_SEARCH_ENTRY_MENU;
 end
 
 --C_LFGList.GetSearchResultEncounterInfo(self.resultID) returns a table [1 to n] = Boss Name or Encounter Name?
+
+--[[
+	Documentation: The function is a blizzard function that decides in which way the displayData should be shown, if it is a raid group it should show roles numerically for example. It also determines when the displayData should be shown and all of the application widgets such as pending texts, cancel buttons etc. It also contains the text name of the groups.
+	The hooked version changes it so that displayData is always shown and moves the pending text, expiration text and the cancel button. While also adding the leaders m+ score to the name of the group if it is a dungeon group.
+
+	Payload:
+	param(arr/object) - the resultsInset nine slice that contains the information of the group
+]]
 
 local function PGF_LFGListSearchEntry_Update(self)
 	local resultID = self.resultID;
@@ -1642,10 +1917,22 @@ local function PGF_LFGListSearchEntry_Update(self)
 
 
 	local searchResultInfo = C_LFGList.GetSearchResultInfo(resultID);
-
+	--possible to take the name here and filter it out here if no match?
 	self.resultID = resultID;
 	if (LFGListFrame.SearchPanel.categoryID == GROUP_FINDER_CATEGORY_ID_DUNGEONS) then
 		local leaderOverallDungeonScore = searchResultInfo.leaderOverallDungeonScore;
+		local leaderDungeonScoreInfo = searchResultInfo.leaderDungeonScoreInfo;
+		local dungeonScoreText = "";
+		--
+		if (leaderDungeonScoreInfo == nil or leaderDungeonScoreInfo.mapScore == 0) then
+			--leaderDungeonScoreInfo.bestRunLevel = 0;
+			--leaderOverallDungeonScore.finishedSuccess = false;
+			dungeonScoreText = "|cffaaaaaa+0|r"
+		elseif (not leaderDungeonScoreInfo.finishedSuccess) then
+			dungeonScoreText = "|cffaaaaaa+" .. leaderDungeonScoreInfo.bestRunLevel .. "|r";
+		else
+			dungeonScoreText = "|cff00aa00+" .. leaderDungeonScoreInfo.bestRunLevel .. "|r";
+		end
 		if (leaderOverallDungeonScore == nil) then
 			leaderOverallDungeonScore = 0;
 		end
@@ -1660,17 +1947,60 @@ local function PGF_LFGListSearchEntry_Update(self)
 end
 
 hooksecurefunc("LFGListSearchEntry_Update", PGF_LFGListSearchEntry_Update);
+--[[
+	Documentation: This is a Blizzard function that is triggered whenever someone applies to the group and controls all of the information displayed about each applicant
+	This hooked version will change the coloring system when the categoryID is dungeons
+]]
+function PGF_LFGListApplicationViewer_UpdateApplicantMember(member, appID, memberIdx, status, pendingStatus)
+	local grayedOut = not pendingStatus and (status == "failed" or status == "cancelled" or status == "declined" or status == "declined_full" or status == "declined_delisted" or status == "invitedeclined" or status == "timedout" or status == "inviteaccepted" or status == "invitedeclined");
+	local name, class, localizedClass, level, itemLevel, honorLevel, tank, healer, damage, assignedRole, relationship, dungeonScore, pvpItemLevel = C_LFGList.GetApplicantMemberInfo(appID, memberIdx);
+	if (not grayedOut and LFGApplicationViewerRatingColumnHeader:IsShown() and dungeonScore) then
+		if (dungeonScore == nil) then
+			dungeonScore = 0;
+		end
+		local r, g, b = unpack(getColorForScoreLookup(dungeonScore));
+		local color = CreateColorFromBytes(r*255,g*255,b*255,1):GenerateHexColor();
+		local activeEntryInfo = C_LFGList.GetActiveEntryInfo();
+		local applicantDungeonScoreInfo = C_LFGList.GetApplicantDungeonScoreForListing(appID, memberIdx, activeEntryInfo.activityID);
+		local dungeonScoreText = "";
+		if (applicantDungeonScoreInfo == nil or applicantDungeonScoreInfo.mapScore == 0) then
+			--leaderDungeonScoreInfo.bestRunLevel = 0;
+			--leaderOverallDungeonScore.finishedSuccess = false;
+			dungeonScoreText = "|cffaaaaaa[+0]|r"
+		elseif (not applicantDungeonScoreInfo.finishedSuccess) then
+			dungeonScoreText = "|cffaaaaaa[+" .. applicantDungeonScoreInfo.bestRunLevel .. "]|r";
+		else
+			dungeonScoreText = "|cff00aa00[+" .. applicantDungeonScoreInfo.bestRunLevel .. "]|r";
+		end
+		member.Rating:SetText(WrapTextInColorCode(dungeonScore, color) .. dungeonScoreText);
+		member.Rating:Show();
+	end
+end
+
+hooksecurefunc("LFGListApplicationViewer_UpdateApplicantMember", PGF_LFGListApplicationViewer_UpdateApplicantMember);
+
+--[[
+	Documentation: This is a sort function for returning a table that is sorted by role putting tanks first, then healers and lastly DPS defined in the roleIndex array.
+
+	Payload:
+	param(arr) - contains the name, spec and class of the player to be used post sort of the first player.
+	param(arr) - contains the name, spec and class of the player to be used post sort of the 2nd player.
+]]
 
 local function sortRoles(pl1, pl2)
 	return roleIndex[pl1.role] < roleIndex[pl2.role];
 end
 
 --[[
-	@self -
-	@numPlayers - always 5 (max groupSize?)
-	@displayData - keeps the amount of each roles, remaining roles and amount of each classes in the group example ["DAMAGER"] = 1, ["DAMAGER_REMAINING"] = 2, ["MAGE"] = 1
-	@disabled - group is delisted
-	@iconOrder - [1] = TANK, [2] = HEALER, [3] = DAMAGER
+	Documentation: The function is a blizzard function that decides how to display the displayData for groups just showing how many of roles there are in the group but it displays it by showing 1 icon per player in group (i.e dungeon groups).
+	The hooked version moves the displayData to the left to fit a cancel button to the right of it but also iterates through the specs in the group and sorts them by iconOrder (tank, healer, dps from left to right) and shows their spec icons.
+	The loops is backwards because icon[1] is mosts right and we want to show available slots at the right side. Once iterating over all the players in the group we fill the remaning slots with custom tank/healer/dps icons showing which spots are still available.
+
+	Payload:
+	param(arr/object) - the resultsInset nine slice that contains the information of the group
+	param(arr) - keeps the amount of each roles, remaining roles and amount of each classes in the group example ["DAMAGER"] = 1, ["DAMAGER_REMAINING"] = 2, ["MAGE"] = 1
+	param(bool) - if the group is delisted
+	param(arr) - keeps track of the order it should display the icons, [1] = TANK, [2] = HEALER, [3] = DAMAGER
 ]]
 local function PGF_LFGListGroupDataDisplayEnumerate_Update(self, numPlayers, displayData, disabled, iconOrder)
 	local players = {};
@@ -1700,8 +2030,13 @@ local function PGF_LFGListGroupDataDisplayEnumerate_Update(self, numPlayers, dis
 	--Another implementation for evokers
 	for i = 1, searchResults.numMembers do
 		if (true or players[i].class == "EVOKER") then
-			self.Icons[6-i]:SetTexture(select(4, GetSpecializationInfoByID(classSpecilizationMap[players[i].class][players[i].spec])));
-			self.Icons[6-i]:SetTexCoord(0,1,0,1);
+			if (PGF_DetailedDataDisplay) then
+				self.Icons[6-i]:SetTexture(select(4, GetSpecializationInfoByID(classSpecilizationMap[players[i].class][players[i].spec])));
+				self.Icons[6-i]:SetTexCoord(0,1,0,1);
+			else
+				self.Icons[6-i]:SetAtlas(LFG_LIST_GROUP_DATA_ATLASES[players[i].role], false);
+				a = self
+			end
 		else
 			self.Icons[6-i]:SetAtlas("GarrMission_ClassIcon-"..strlower(players[i].class).."-"..players[i].spec, false);
 		end
@@ -1709,14 +2044,27 @@ local function PGF_LFGListGroupDataDisplayEnumerate_Update(self, numPlayers, dis
 	local count = 1;
 	for i = 3, 1, -1 do
 		for j = 1, displayData[roleRemainingKeyLookup[iconOrder[i]]] do
-			self.Icons[count]:SetTexture("Interface\\addons\\PGFinder\\Res\\" .. roleRemainingKeyLookup[iconOrder[i]]);
-			self.Icons[count]:SetTexCoord(0,1,0,1);
+			if (PGF_DetailedDataDisplay) then
+				self.Icons[count]:SetTexture("Interface\\addons\\PGFinder\\Res\\" .. roleRemainingKeyLookup[iconOrder[i]]);
+				self.Icons[count]:SetTexCoord(0,1,0,1);
+			else
+				self.Icons[count]:SetAtlas("groupfinder-icon-emptyslot", false);
+			end
 			count = count + 1;
 		end
 	end
 end
 
 hooksecurefunc("LFGListGroupDataDisplayEnumerate_Update", PGF_LFGListGroupDataDisplayEnumerate_Update);
+
+--[[
+	Documentation: The function is a blizzard function that decides how to display the displayData for groups just showing how many of each role there are numerically (i.e raid groups)
+	The hooked version moves the displayData to the left to fit a cancel button to the right of it.
+
+	param(arr/object) - the resultsInset nine slice that contains the information of the group
+	param(arr) - keeps the amount of each roles, remaining roles and amount of each classes in the group example ["DAMAGER"] = 1, ["DAMAGER_REMAINING"] = 2, ["MAGE"] = 1
+	param(bool) - if the group is delisted
+]]
 
 local function PGF_LFGListGroupDataDisplayRoleCount_Update(self, displayData, disabled)
 	self:SetSize(125, 24);
@@ -1744,6 +2092,16 @@ end
 
 hooksecurefunc("LFGListGroupDataDisplayRoleCount_Update", PGF_LFGListGroupDataDisplayRoleCount_Update);
 
+
+--[[
+	Documentation: The function is a blizzard function that decides how to display the displayData for groups just showing how many players are in the groups (i.e quest groups)
+	The hooked version moves the displayData to the left to fit a cancel button to the right of it.
+
+	param(arr/object) - the resultsInset nine slice that contains the information of the group
+	param(arr) - keeps the amount of each roles, remaining roles and amount of each classes in the group example ["DAMAGER"] = 1, ["DAMAGER_REMAINING"] = 2, ["MAGE"] = 1
+	param(bool) - if the group is delisted
+]]
+
 function PGF_LFGListGroupDataDisplayPlayerCount_Update(self, displayData, disabled)
 	self:SetSize(125, 24);
 	local p1, p2, p3, p4, p5 = self:GetPoint(1);
@@ -1759,12 +2117,29 @@ end
 
 hooksecurefunc("LFGListGroupDataDisplayPlayerCount_Update", PGF_LFGListGroupDataDisplayPlayerCount_Update);
 
+--[[
+	Documentation: Calculates the time it took to start the search and when results are ready to be presented to the user as well as how many there are
+
+	Payload:
+	numResults parram(int) - how many results were found after filtering
+	time parram(int) - the current time of when the filtering was completed
+]]
 local function updatePerformanceText(numResults, time)
 	local calc = string.format("%.3fs", time - performanceTimeStamp);
 	PGF_SetPerformanceText("[PGF] Found " .. numResults .. " results in " .. calc);
 	performanceTimeStamp = time;
 end
 
+
+--[[
+	Documentation: This is a blizzard function that decides which results that should be shown by adding them to self as well as how many results there are. Blizzard has a cap on ~100 results so not all results are available here.
+	This function overrides the blizzard function and sorts out groups based on the users config. User can filter out groups based on dungeons, bosses, leaderScore and if the group is eligible based on the roles of the player/current group
+
+	Payload:
+	self parram(table/object) - the LFGListFrame.SearchPanel
+	Return:
+	bool - true if there are results
+]]
 function LFGListSearchPanel_UpdateResultList(self)
 	if (LFGListFrame.SearchPanel.categoryID == GROUP_FINDER_CATEGORY_ID_DUNGEONS) then
 		if(next(selectedInfo.dungeons) == nil and selectedInfo["leaderScore"] == 0 and not PGF_FilterRemaningRoles) then
@@ -1981,7 +2356,9 @@ function LFGListSearchPanel_UpdateResultList(self)
 		return true;
 	end
 end
-
+--[[
+	Documenation: A function to fetch all activity names from the activityIDs 1-1400 and stores them in the WTF that can be used to update the addon with new dungeons/raids.
+]]
 function PGF_DevGenerateAllActivityIDs()
 	PGF_DevAllActivityIDs = {
 		["dungeons"] = {},
@@ -2010,13 +2387,18 @@ function PGF_DevGenerateAllActivityIDs()
 	end
 end
 --hooksecurefunc("LFGListSearchPanel_UpdateResultList", PGF_Search);
+
+--[[
+	Documentation: This is a blizzard function for selecting a result of the resultsInsets and extends self with the resultID.
+	This function overrides it and instead makes the user instantly apply to the group if they are the leader or not in a group.
+
+	self parram(table/object) -- the resultInset
+	resultID parram(int) -- the resultID
+]]
 function LFGListSearchPanel_SelectResult(self, resultID)
 	self.selectedResult = resultID;
 	LFGListSearchPanel_UpdateResults(self);
 	if ((true or PGF_autoSign) and (IsInGroup() == false or UnitIsGroupLeader("player"))) then
-		if (selectedInfo["description"]) then
-
-		end
 		C_LFGList.ApplyToGroup(LFGListFrame.SearchPanel.selectedResult, PGF_roles["TANK"], PGF_roles["HEALER"], PGF_roles["DAMAGER"]);
 	end
 end
@@ -2027,7 +2409,10 @@ LFGListSearchEntry:HookScript("OnClick", function(self)
 	end
 end);
 ]]
-
+--[[
+	Documentation: This function automatically accepts the role sign up when you are in a party and not the leader by setting your role to the users selected role(s) in the UI. 
+	If the user is not in a group or are is the leader this window closes isntantly as ApplyToGroup is used instead to initiate the sign up directly skipping this step.
+]]
 LFGListApplicationDialog:HookScript("OnShow", function(self)
 	local apps = C_LFGList.GetApplications();
 	if(IsInGroup() and not UnitIsGroupLeader("player")) then
@@ -2054,8 +2439,24 @@ LFGListApplicationDialog:HookScript("OnShow", function(self)
 end);
 
 --[[
-	Overrides Blizzards function, sorting by date rather than ID
+	Documentation: Overrides Blizzards sort function, sorting by age rather than ID.
+	Returns groups in the following order:
+	Priority 1: Groups that the user applied to
+	Priority 2: Battle.net friends
+	Priority 3: Friends
+	Priority 4: Guild mates
+	Priority 5: Groups that the user/group is eligible to join
+	Priority 6: Age of the group (lower is higher)
+	Priority 7: Arbitrary ID
+
+	Payload:
+	id1 parram(int) - the resultID of the first group
+	id2 parram(int) - the resutltID of the second group
+
+	Return:
+	bool - true priorities id1 and false priorities id2
 --]]
+
 function LFGListUtil_SortSearchResultsCB(id1, id2)
 	local result1 = C_LFGList.GetSearchResultInfo(id1);
 	local result2 = C_LFGList.GetSearchResultInfo(id2);
@@ -2090,6 +2491,10 @@ function LFGListUtil_SortSearchResultsCB(id1, id2)
 	end
 	return id1 < id2;
 end
+
+--[[
+	Documentation: If a player does not have 2FA they will not be able to create a group if a playStyleString is returned so check if the player has the authenticatior connected before procceding. 
+]]
 function PGF_GetPlaystyleString(playstyle, activityInfo)
 	local activityID = 1164;
 	if (not C_LFGList.IsPlayerAuthenticatedForLFG(activityID)) then
@@ -2111,7 +2516,9 @@ function PGF_GetPlaystyleString(playstyle, activityInfo)
 		return nil;
 	end
 end
-
+--[[
+	Documentation: Override Blizzards function with the new one
+]]
 C_LFGList.GetPlaystyleString = function(playstyle,activityInfo)
 	return PGF_GetPlaystyleString(playstyle, activityInfo);
 end
