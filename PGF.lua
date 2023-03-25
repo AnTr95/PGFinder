@@ -746,96 +746,12 @@ PVEFrame:HookScript("OnUpdate", function(self, elapsed)
 	end
 end);
 
-local function updateDungeonDifficulty()
-	raidFrame:Hide();
-	--Hide all
-	for index, widgets in pairs(GUI) do
-		local text = widgets.text;
-		local checkbox = widgets.checkbox;
-		local texture = widgets.texture;
-		local editBox = widgets.editBox;
-		local dropDown = widgets.dropDown;
-		if (text) then
-			text:Hide();
-		end
-		if (checkbox) then
-			checkbox:Hide();
-		end
-		if (texture) then
-			texture:Hide();
-		end
-		if (editBox) then
-			editBox:Hide();
-		end
-		if (dropDown) then
-			dropDown:Hide();
-		end
-		if (selectedInfo.dungeons[index]) then
-			selectedInfo.dungeons[index] = nil;
-			checkbox:SetChecked(false);
-		elseif (PGF_roles[index]) then
-			checkbox:SetChecked(true);
-		elseif (index == "FilterRoles") then
-			checkbox:SetChecked(PGF_FilterRemaningRoles);
-		end
-	end
-	for index, widgets in pairs(GUI) do
-		if (type(index) ~= "number") then
-			local text = widgets.text;
-			local checkbox = widgets.checkbox;
-			local texture = widgets.texture;
-			local editBox = widgets.editBox;
-			local dropDown = widgets.dropDown;
-			if (text) then
-				text:Show();
-			end
-			if (checkbox) then
-				checkbox:Show();
-			end
-			if (texture) then
-				texture:Show();
-			end
-			if (editBox) then
-				editBox:Show();
-			end
-			if (dropDown) then
-				dropDown:Show();
-					if (lastSelectedDungeonState == "") then --addon just loaded
-						lastSelectedDungeonState = dungeonStates[4];
-					else
-						UIDropDownMenu_SetSelectedName(dropDown, lastSelectedDungeonState);
-					end
-			end
-			if (PGF_roles[index]) then
-				checkbox:SetChecked(true);
-			end
-		end
-	end
-	for aID, name in pairs(currentDungeonsActivityIDs[dungeonStateMap[lastSelectedDungeonState]]) do
-		local text = GUI[aID].text;
-		local checkbox = GUI[aID].checkbox;
-		local texture = GUI[aID].texture;
-		if (text) then
-			text:Show();
-		end
-		if (checkbox) then
-			checkbox:Show();
-		end
-		if (texture) then
-			texture:Show();
-		end
-		if (selectedInfo.dungeons[index]) then
-			checkbox:SetChecked(true);
-		end
-	end
-	updateSearch();
-end
-
-local function updateRaidDifficulty()
-	--Hide all
-	dungeonFrame:Hide();
-	for aID, names in pairs(rGUI) do
-		for name, widgets in pairs(rGUI[aID]) do
+local function updateDungeonDifficulty(isSameCat)
+	if (not isSameCat) then
+		raidFrame:Hide();
+		--Hide all
+		LFGListSearchPanel_Clear(LFGListFrame.SearchPanel);
+		for index, widgets in pairs(GUI) do
 			local text = widgets.text;
 			local checkbox = widgets.checkbox;
 			local texture = widgets.texture;
@@ -856,56 +772,50 @@ local function updateRaidDifficulty()
 			if (dropDown) then
 				dropDown:Hide();
 			end
-			if (selectedInfo.bosses[index]) then
-				selectedInfo.bosses[index] = nil;
+			if (selectedInfo.dungeons[index]) then
+				selectedInfo.dungeons[index] = nil;
 				checkbox:SetChecked(false);
 			elseif (PGF_roles[index]) then
 				checkbox:SetChecked(true);
+			elseif (index == "FilterRoles") then
+				checkbox:SetChecked(PGF_FilterRemaningRoles);
 			end
 		end
-	end
-	for index, widgets in pairs(rGUI) do
-		if (type(index) ~= "number") then
-			local text = widgets.text;
-			local checkbox = widgets.checkbox;
-			local texture = widgets.texture;
-			local editBox = widgets.editBox;
-			local dropDown = widgets.dropDown;
-			if (text) then
-				text:Show();
-			end
-			if (checkbox) then
-				checkbox:Show();
-			end
-			if (texture) then
-				texture:Show();
-			end
-			if (editBox) then
-				editBox:Show();
-			end
-			if (dropDown) then
-				dropDown:Show();
-				if (lastSelectedRaidState == "") then --addon just loaded
-					lastSelectedRaidState = raidStates[4];
-				else
-					UIDropDownMenu_SetSelectedName(dropDown, lastSelectedRaidState);
+		for index, widgets in pairs(GUI) do
+			if (type(index) ~= "number") then
+				local text = widgets.text;
+				local checkbox = widgets.checkbox;
+				local texture = widgets.texture;
+				local editBox = widgets.editBox;
+				local dropDown = widgets.dropDown;
+				if (text) then
+					text:Show();
+				end
+				if (checkbox) then
+					checkbox:Show();
+				end
+				if (texture) then
+					texture:Show();
+				end
+				if (editBox) then
+					editBox:Show();
+				end
+				if (dropDown) then
+					dropDown:Show();
+						if (lastSelectedDungeonState == "") then --addon just loaded
+							lastSelectedDungeonState = dungeonStates[4];
+						end
+				end
+				if (PGF_roles[index]) then
+					checkbox:SetChecked(true);
 				end
 			end
 		end
 	end
-	for index, widgets in pairs(GUI) do
-		if (type(index) ~= "number") then
-			local checkbox = widgets.checkbox;
-			if (PGF_roles[index]) then
-				checkbox:SetChecked(true);
-			end
-		end
-	end
-	for index, name in pairs(currentRaidsActivityIDs[raidStateMap[lastSelectedRaidState]]) do
-		local aID = raidStateMap[lastSelectedRaidState];
-		local text = rGUI[aID][name].text;
-		local checkbox = rGUI[aID][name].checkbox;
-		local texture = rGUI[aID][name].texture;
+	for aID, name in pairs(currentDungeonsActivityIDs[dungeonStateMap[lastSelectedDungeonState]]) do
+		local text = GUI[aID].text;
+		local checkbox = GUI[aID].checkbox;
+		local texture = GUI[aID].texture;
 		if (text) then
 			text:Show();
 		end
@@ -915,14 +825,104 @@ local function updateRaidDifficulty()
 		if (texture) then
 			texture:Show();
 		end
-		if (selectedInfo.bosses[name]) then
+		if (selectedInfo.dungeons[aID]) then
 			checkbox:SetChecked(true);
 		end
 	end
 	updateSearch();
 end
 
-local function PGF_ShowDungeonFrame()
+local function updateRaidDifficulty(isSameCat)
+	--Hide all
+	if (not isSameCat) then
+		dungeonFrame:Hide();
+		LFGListSearchPanel_Clear(LFGListFrame.SearchPanel);
+		for aID, names in pairs(rGUI) do
+			for name, widgets in pairs(rGUI[aID]) do
+				local text = widgets.text;
+				local checkbox = widgets.checkbox;
+				local texture = widgets.texture;
+				local editBox = widgets.editBox;
+				local dropDown = widgets.dropDown;
+				if (text) then
+					text:Hide();
+				end
+				if (checkbox) then
+					checkbox:Hide();
+				end
+				if (texture) then
+					texture:Hide();
+				end
+				if (editBox) then
+					editBox:Hide();
+				end
+				if (dropDown) then
+					dropDown:Hide();
+				end
+				if (selectedInfo.bosses[name]) then
+					selectedInfo.bosses[name] = nil;
+					checkbox:SetChecked(false);
+				end
+			end
+		end
+		for index, widgets in pairs(rGUI) do
+			if (type(index) ~= "number") then
+				local text = widgets.text;
+				local checkbox = widgets.checkbox;
+				local texture = widgets.texture;
+				local editBox = widgets.editBox;
+				local dropDown = widgets.dropDown;
+				if (text) then
+					text:Show();
+				end
+				if (checkbox) then
+					checkbox:Show();
+				end
+				if (texture) then
+					texture:Show();
+				end
+				if (editBox) then
+					editBox:Show();
+				end
+				if (dropDown) then
+					dropDown:Show();
+					if (lastSelectedRaidState == "") then --addon just loaded
+						lastSelectedRaidState = raidStates[4];
+					end
+				end
+			end
+		end
+		for index, widgets in pairs(GUI) do
+			if (type(index) ~= "number") then
+				local checkbox = widgets.checkbox;
+				if (PGF_roles[index]) then
+					checkbox:SetChecked(true);
+				end
+			end
+		end
+		for index, name in pairs(currentRaidsActivityIDs[raidStateMap[lastSelectedRaidState]]) do
+			local aID = raidStateMap[lastSelectedRaidState];
+			local text = rGUI[aID][name].text;
+			local checkbox = rGUI[aID][name].checkbox;
+			local texture = rGUI[aID][name].texture;
+			if (text) then
+				text:Show();
+			end
+			if (checkbox) then
+				checkbox:Show();
+			end
+			if (texture) then
+				texture:Show();
+			end
+			if (selectedInfo.bosses[name]) then
+				checkbox:SetChecked(true);
+			end
+		end
+	end
+	updateSearch();
+end
+
+local function PGF_ShowDungeonFrame(isSameCat)
 	dungeonFrame:Show();
 	if (next(originalUI) == nil) then
 		saveOriginalUI();
@@ -950,10 +950,10 @@ local function PGF_ShowDungeonFrame()
 	LFGListFrame:ClearAllPoints(); 
 	LFGListFrame:SetPoint(originalUI["LFGListFrame"].position[1], originalUI["LFGListFrame"].position[2], originalUI["LFGListFrame"].position[3], originalUI["LFGListFrame"].position[4], originalUI["LFGListFrame"].position[5]);
 	LFGListFrame:SetSize(368, LFGListFrame:GetHeight());
-	updateDungeonDifficulty();
+	updateDungeonDifficulty(isSameCat);
 end
 
-local function PGF_ShowRaidFrame()
+local function PGF_ShowRaidFrame(isSameCat)
 	raidFrame:Show();
 	if (next(originalUI) == nil) then
 		saveOriginalUI();
@@ -981,7 +981,7 @@ local function PGF_ShowRaidFrame()
 	LFGListFrame:ClearAllPoints(); 
 	LFGListFrame:SetPoint(originalUI["LFGListFrame"].position[1], originalUI["LFGListFrame"].position[2], originalUI["LFGListFrame"].position[3], originalUI["LFGListFrame"].position[4], originalUI["LFGListFrame"].position[5]);
 	LFGListFrame:SetSize(368, LFGListFrame:GetHeight());
-	updateRaidDifficulty();
+	updateRaidDifficulty(isSameCat);
 end
 
 --Create GUI
@@ -1420,18 +1420,33 @@ LFGListFrame.SearchPanel:HookScript("OnShow", function(self)
 	search.AutoCompleteFrame:SetFrameStrata("TOOLTIP");
 	local cat = search.categoryID;
 	if (cat and cat == GROUP_FINDER_CATEGORY_ID_DUNGEONS) then
+		if (cat ~= lastCat) then
+			PGF_ShowDungeonFrame(false);
+			lastCat = cat;
+		else
+			PGF_ShowDungeonFrame(true);
+		end
 		f:Show();
-		PGF_ShowDungeonFrame();
 		if (next(selectedInfo.dungeons)) then
 			updateSearch();
 		end
 	elseif (cat and cat == 3) then
+		if (cat ~= lastCat) then
+			lastCat = cat;
+			PGF_ShowRaidFrame(false);
+		else
+			PGF_ShowRaidFrame(true);
+		end
 		f:Show();
-		PGF_ShowRaidFrame();
 		if(next(selectedInfo.bosses)) then
 			updateSearch();
 		end
 	else
+		LFGListSearchPanel_Clear(LFGListFrame.SearchPanel);
+		if (cat ~= lastCat) then
+			lastCat = cat;
+		else
+		end
 		if (next(originalUI) == nil) then
 			saveOriginalUI();
 		end
@@ -1483,6 +1498,17 @@ function LFGListSearchPanelSearchBox_OnEnterPressed(self)
 	end
 end
 
+function LFGListCategorySelection_StartFindGroup(self, questID)
+	local baseFilters = self:GetParent().baseFilters;
+
+	local searchPanel = self:GetParent().SearchPanel;
+	if (questID) then
+		C_LFGList.SetSearchToQuestID(questID);
+	end
+	LFGListSearchPanel_SetCategory(searchPanel, self.selectedCategory, self.selectedFilters, baseFilters);
+	LFGListSearchPanel_DoSearch(searchPanel);
+	LFGListFrame_SetActivePanel(self:GetParent(), searchPanel);
+end
 
 local function PGF_LFGListSearchPanel_UpdateButtonStatus(self)
 	--Update the SignUpButton
@@ -1648,7 +1674,7 @@ end
 ]]
 local function PGF_LFGListGroupDataDisplayEnumerate_Update(self, numPlayers, displayData, disabled, iconOrder)
 	local players = {};
-	self:SetSize(125, 24)
+	self:SetSize(125, 24);
 	local p1, p2, p3, p4, p5 = self:GetPoint(1);
 	self:ClearAllPoints();
 	self:SetPoint(p1, p2, p3, -25, p5);
@@ -1691,8 +1717,9 @@ local function PGF_LFGListGroupDataDisplayEnumerate_Update(self, numPlayers, dis
 end
 
 hooksecurefunc("LFGListGroupDataDisplayEnumerate_Update", PGF_LFGListGroupDataDisplayEnumerate_Update);
+
 local function PGF_LFGListGroupDataDisplayRoleCount_Update(self, displayData, disabled)
-	self:SetSize(125, 24)
+	self:SetSize(125, 24);
 	local p1, p2, p3, p4, p5 = self:GetPoint(1);
 	self:ClearAllPoints();
 	self:SetPoint(p1, p2, p3, -25, p5);
@@ -1716,6 +1743,21 @@ local function PGF_LFGListGroupDataDisplayRoleCount_Update(self, displayData, di
 end
 
 hooksecurefunc("LFGListGroupDataDisplayRoleCount_Update", PGF_LFGListGroupDataDisplayRoleCount_Update);
+
+function PGF_LFGListGroupDataDisplayPlayerCount_Update(self, displayData, disabled)
+	self:SetSize(125, 24);
+	local p1, p2, p3, p4, p5 = self:GetPoint(1);
+	self:ClearAllPoints();
+	self:SetPoint(p1, p2, p3, -25, p5);
+	local numPlayers = displayData.TANK + displayData.HEALER + displayData.DAMAGER + displayData.NOROLE;
+	local color = disabled and LFG_LIST_DELISTED_FONT_COLOR or HIGHLIGHT_FONT_COLOR;
+	self.Count:SetText(numPlayers);
+	self.Count:SetTextColor(color.r, color.g, color.b);
+	self.Icon:SetDesaturated(disabled);
+	self.Icon:SetAlpha(disabled and 0.5 or 1);
+end
+
+hooksecurefunc("LFGListGroupDataDisplayPlayerCount_Update", PGF_LFGListGroupDataDisplayPlayerCount_Update);
 
 local function updatePerformanceText(numResults, time)
 	local calc = string.format("%.3fs", time - performanceTimeStamp);
