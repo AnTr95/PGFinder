@@ -1494,7 +1494,7 @@ local function initDungeon()
 	local showDetailedDataText = dungeonOptionsFrame:CreateFontString(nil, "ARTWORK", "GameFontNormalTiny2");
 	showDetailedDataText:SetFont(showDetailedDataText:GetFont(), 10);
 	showDetailedDataText:SetPoint("TOPLEFT", showLeaderScoreForDungeonText, "TOPLEFT", 0, -18);
-	showDetailedDataText:SetText("Show Detailed Roles");
+	--showDetailedDataText:SetText("Show Detailed Roles");
 	local showDetailedDataButton = CreateFrame("CheckButton", nil, dungeonOptionsFrame, "UICheckButtonTemplate");
 	showDetailedDataButton:SetSize(20, 20);
 	showDetailedDataButton:SetPoint("RIGHT", showDetailedDataText, "RIGHT", 20, -1);
@@ -1510,6 +1510,8 @@ local function initDungeon()
 			PlaySound(857);
 		end
 	end);
+	showDetailedDataButton:Hide();
+	showDetailedDataText:Hide();
 	local sortingText = dungeonOptionsFrame:CreateFontString(nil, "ARTWORK", "GameFontNormalTiny2");
 	sortingText:SetFont(sortingText:GetFont(), 10);
 	sortingText:SetPoint("TOPLEFT", showDetailedDataText, "TOPLEFT", 0, -28);
@@ -1579,7 +1581,7 @@ local function initRaid()
 		elseif (PGF_allRaidActivityIDs[raidStateMap[lastSelectedRaidState]]) then
 			C_LFGList.SetSearchToActivity(raidStateMap[lastSelectedRaidState]);
 		end
-		updateRaidDifficulty();
+		updateRaidDifficulty(true);
 	end
 
 	UIDropDownMenu_SetWidth(raidDifficultyDropDown, 100);
