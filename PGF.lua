@@ -12,7 +12,6 @@ f:SetFrameLevel(800);
 f:SetSize(400, 300);
 f:Hide();
 
-
 --[[
 	Documentation: Lets cache all of the global functions that are heavily used to improve perforrmance
 ]]
@@ -90,6 +89,7 @@ local refreshTimeReset = 3; --defines the time that must pass between searches
 local searchAvailable = true;
 local dungeonStates = {"Normal", "Heroic", "Mythic", "Mythic+ (Keystone)"}; --visible states for the dropdown
 local raidStates = {"VOTI Normal", "VOTI Heroic", "VOTI Mythic", "VOTI All"}; --visible states for the dropdown
+local sortingStates = {[1] = "Age", [2] = "Score"};
 local lastSelectedDungeonState = "";
 local lastSelectedRaidState = "";
 local performanceTimeStamp = 0;
@@ -627,7 +627,8 @@ local LFG_LIST_SEARCH_ENTRY_MENU = {
 ]]
 local dungeonTextures = {true, true, true, true, true, true, true, true, true, true};
 local raidTextures = {true, true, true, true};
-local GUI = {}; -- array to store all widgets for dungeons and also generic widgets
+local GUI = {}; -- array to store all generic widgets
+local dGUI = {}; -- array to store all widgets for dungeons
 local rGUI = {}; -- array to store all widgets for raids
 
 local currentDungeonsActivityIDs = {["(Mythic Keystone)"] = {}, ["(Mythic)"] = {}, ["(Heroic)"] = {}, ["(Normal)"] = {}}; --dungeons dropdown is using difficulties to show dungeons for that difficulty as the first filter
@@ -701,6 +702,10 @@ local dungeonFrame = CreateFrame("Frame", nil, f);
 dungeonFrame:Hide();
 dungeonFrame:SetPoint("TOPLEFT", 0, 0);
 dungeonFrame:SetSize(f:GetWidth(), f:GetHeight());
+
+local dungeonOptionsFrame = CreateFrame("Frame", nil, dungeonFrame, BackdropTemplateMixin and "BackdropTemplate");
+dungeonOptionsFrame:SetPoint("BOTTOMRIGHT", PVEFrame, "BOTTOMRIGHT", -1,-80);
+dungeonOptionsFrame:SetSize(242,80);
 
 --[[
 	Documentation: Create the raidFrame shown only in category 3
@@ -898,7 +903,7 @@ local function updateDungeonDifficulty(isSameCat)
 		raidFrame:Hide();
 		--Hide all
 		LFGListSearchPanel_Clear(LFGListFrame.SearchPanel);
-		for index, widgets in pairs(GUI) do
+		for index, widgets in pairs(dGUI) do
 			local text = widgets.text;
 			local checkbox = widgets.checkbox;
 			local texture = widgets.texture;
@@ -928,7 +933,7 @@ local function updateDungeonDifficulty(isSameCat)
 				checkbox:SetChecked(PGF_FilterRemaningRoles);
 			end
 		end
-		for index, widgets in pairs(GUI) do
+		for index, widgets in pairs(dGUI) do
 			if (type(index) ~= "number") then
 				local text = widgets.text;
 				local checkbox = widgets.checkbox;
@@ -960,9 +965,9 @@ local function updateDungeonDifficulty(isSameCat)
 		end
 	end
 	for aID, name in pairs(currentDungeonsActivityIDs[dungeonStateMap[lastSelectedDungeonState]]) do
-		local text = GUI[aID].text;
-		local checkbox = GUI[aID].checkbox;
-		local texture = GUI[aID].texture;
+		local text = dGUI[aID].text;
+		local checkbox = dGUI[aID].checkbox;
+		local texture = dGUI[aID].texture;
 		if (text) then
 			text:Show();
 		end
@@ -1045,7 +1050,7 @@ local function updateRaidDifficulty(isSameCat)
 				end
 			end
 		end
-		for index, widgets in pairs(GUI) do
+		for index, widgets in pairs(dGUI) do
 			if (type(index) ~= "number") then
 				local checkbox = widgets.checkbox;
 				if (PGF_roles[index]) then
@@ -1162,6 +1167,11 @@ end
 	roles config
 ]]
 local function initDungeon()
+	dungeonOptionsFrame:SetBackdrop(PVEFrame:GetBackdrop());
+	local r,g,b,a = PVEFrame:GetBackdropColor();
+	dungeonOptionsFrame:SetBackdropColor(r,g,b,a);
+	r,g,b,a = PVEFrame:GetBackdropBorderColor();
+	dungeonOptionsFrame:SetBackdropBorderColor(r,g,b,a);
 	local dungeonDifficultyText = dungeonFrame:CreateFontString(nil, "ARTWORK", "GameFontNormalTiny2");
 	dungeonDifficultyText:SetFont(dungeonDifficultyText:GetFont(), 10);
 	dungeonDifficultyText:SetPoint("TOPLEFT", 30, -40);
@@ -1268,10 +1278,10 @@ local function initDungeon()
 			text:SetText(name);
 			text:SetFont(text:GetFont(), 12);
 			text:SetTextColor(1,1,1,1);
-			GUI[aID] = {};
-			GUI[aID].text = text;
-			GUI[aID].checkbox = checkbox;
-			GUI[aID].texture = texture;
+			dGUI[aID] = {};
+			dGUI[aID].text = text;
+			dGUI[aID].checkbox = checkbox;
+			dGUI[aID].texture = texture;
 			text:Hide();
 			checkbox:Hide();
 		end
@@ -1318,7 +1328,7 @@ local function initDungeon()
 		GameTooltip:Hide();
 	end);
 	--LFGListApplicationDialog.Description.EditBox:SetFont(LFGListApplicationDialog.Description.EditBox:GetFont(), 7);
-	GUI["dungeonDifficulty"] = {["dropDown"] = dungeonDifficultyDropDown, ["text"] = dungeonDifficultyText};
+	dGUI["dungeonDifficulty"] = {["dropDown"] = dungeonDifficultyDropDown, ["text"] = dungeonDifficultyText};
 	dungeonDifficultyText:SetText(L.OPTIONS_DUNGEON_DIFFICULTY);
 	local filterRolesText = dungeonFrame:CreateFontString(nil, "ARTWORK", "GameFontNormalTiny2");
 	filterRolesText:SetFont(filterRolesText:GetFont(), 10);
@@ -1441,10 +1451,102 @@ local function initDungeon()
 			PlaySound(857);
 		end
 	end);
-	GUI["DAMAGER"] = {["texture"] = dpsTexture, ["checkbox"] = dpsButton};
-	GUI["HEALER"] = {["texture"] = healerTexture, ["checkbox"] = healerButon};
-	GUI["TANK"] = {["texture"] = tankTexture, ["checkbox"] = tankButton};
-	GUI["FilterRoles"] = {["text"] = filterRolesText, ["checkbox"] = filterRolesCheckButton};
+	local showMoreText = dungeonFrame:CreateFontString(nil, "ARTWORK", "GameFontNormalTiny2");
+	showMoreText:SetFont(showMoreText:GetFont(), 10);
+	showMoreText:SetPoint("BOTTOMRIGHT", PVEFrame, "BOTTOMRIGHT", -20, 2);
+	showMoreText:SetText("Show Less");
+	local showMoreButton = CreateFrame("Button", nil, dungeonFrame);
+	showMoreButton:SetNormalTexture("Interface\\Buttons\\Arrow-Up-Up.PNG");
+	showMoreButton:SetPoint("BOTTOMRIGHT", PVEFrame, "BOTTOMRIGHT", 0, 0);
+	showMoreButton:SetSize(18,18);
+	showMoreButton:SetScript("OnClick", function(self)
+		if (dungeonOptionsFrame:IsShown()) then
+			dungeonOptionsFrame:Hide();
+			showMoreButton:SetNormalTexture("Interface\\Buttons\\Arrow-Down-Down.PNG");
+			showMoreButton:SetPoint("BOTTOMRIGHT", PVEFrame, "BOTTOMRIGHT", 0, -7);
+			showMoreText:SetText("Show More");
+		else
+			dungeonOptionsFrame:Show();
+			showMoreButton:SetNormalTexture("Interface\\Buttons\\Arrow-Up-Up.PNG");
+			showMoreButton:SetPoint("BOTTOMRIGHT", PVEFrame, "BOTTOMRIGHT", 0, 0);
+			showMoreText:SetText("Show Less");
+		end
+	end);
+	local showLeaderScoreForDungeonText = dungeonOptionsFrame:CreateFontString(nil, "ARTWORK", "GameFontNormalTiny2");
+	showLeaderScoreForDungeonText:SetFont(showLeaderScoreForDungeonText:GetFont(), 10);
+	showLeaderScoreForDungeonText:SetPoint("TOPLEFT", 15, -5);
+	showLeaderScoreForDungeonText:SetText("Show Best Key");
+	local showLeaderScoreForDungeonButton = CreateFrame("CheckButton", nil, dungeonOptionsFrame, "UICheckButtonTemplate");
+	showLeaderScoreForDungeonButton:SetSize(20, 20);
+	showLeaderScoreForDungeonButton:SetPoint("RIGHT", showLeaderScoreForDungeonText, "RIGHT", 20, -1);
+	showLeaderScoreForDungeonButton:SetChecked(PGF_ShowLeaderDungeonKey);
+	showLeaderScoreForDungeonButton:HookScript("OnClick", function(self)
+		if (self:GetChecked()) then
+			PGF_ShowLeaderDungeonKey = true;
+			updateSearch();
+			PlaySound(856);
+		else
+			PGF_ShowLeaderDungeonKey = false;
+			updateSearch();
+			PlaySound(857);
+		end
+	end);
+	local showDetailedDataText = dungeonOptionsFrame:CreateFontString(nil, "ARTWORK", "GameFontNormalTiny2");
+	showDetailedDataText:SetFont(showDetailedDataText:GetFont(), 10);
+	showDetailedDataText:SetPoint("TOPLEFT", showLeaderScoreForDungeonText, "TOPLEFT", 0, -18);
+	showDetailedDataText:SetText("Show Detailed Roles");
+	local showDetailedDataButton = CreateFrame("CheckButton", nil, dungeonOptionsFrame, "UICheckButtonTemplate");
+	showDetailedDataButton:SetSize(20, 20);
+	showDetailedDataButton:SetPoint("RIGHT", showDetailedDataText, "RIGHT", 20, -1);
+	showDetailedDataButton:SetChecked(PGF_DetailedDataDisplay);
+	showDetailedDataButton:HookScript("OnClick", function(self)
+		if (self:GetChecked()) then
+			PGF_DetailedDataDisplay = true;
+			updateSearch();
+			PlaySound(856);
+		else
+			PGF_DetailedDataDisplay = false;
+			updateSearch();
+			PlaySound(857);
+		end
+	end);
+	local sortingText = dungeonOptionsFrame:CreateFontString(nil, "ARTWORK", "GameFontNormalTiny2");
+	sortingText:SetFont(sortingText:GetFont(), 10);
+	sortingText:SetPoint("TOPLEFT", showDetailedDataText, "TOPLEFT", 0, -28);
+	sortingText:SetText("Sort by:");
+	local sortingDropdown = CreateFrame("Button", nil, dungeonOptionsFrame, "UIDropDownMenuTemplate");
+	sortingDropdown:SetPoint("LEFT", sortingText, "RIGHT", -12, -2);
+	local function Initialize_SortingStates(self, level)
+		local info = UIDropDownMenu_CreateInfo();
+		for k,v in pairs(sortingStates) do
+			info = UIDropDownMenu_CreateInfo();
+			info.text = v;
+			info.value = v;
+			info.func = PGF_SortingState_OnClick;
+			UIDropDownMenu_AddButton(info, level);
+		end
+	end
+
+	function PGF_SortingState_OnClick(self)
+		UIDropDownMenu_SetSelectedID(sortingDropdown, self:GetID());
+		PGF_SortingVariable = self:GetID();
+		updateSearch();
+	end
+
+	UIDropDownMenu_SetWidth(sortingDropdown, 100);
+	UIDropDownMenu_SetButtonWidth(sortingDropdown, 100);
+	UIDropDownMenu_JustifyText(sortingDropdown, "CENTER");
+	UIDropDownMenu_Initialize(sortingDropdown, Initialize_SortingStates);
+	UIDropDownMenu_SetSelectedID(sortingDropdown, PGF_SortingVariable);
+	
+	dGUI["DAMAGER"] = {["texture"] = dpsTexture, ["checkbox"] = dpsButton};
+	dGUI["HEALER"] = {["texture"] = healerTexture, ["checkbox"] = healerButon};
+	dGUI["TANK"] = {["texture"] = tankTexture, ["checkbox"] = tankButton};
+	dGUI["FilterRoles"] = {["text"] = filterRolesText, ["checkbox"] = filterRolesCheckButton};
+	dGUI["MoreOptions"] = {["text"] = showMoreText, ["button"] = showMoreButton};
+	dGUI["Sorting"] = {["text"]= sortingText, ["dropDown"] = sortingDropdown};
+	dGUI["LeaderScore"] = {["text"] = showLeaderScoreForDungeonText, ["checkbox"] = showLeaderScoreForDungeonButton};
+	dGUI["DetailedData"] = {["text"] = showDetailedDataText, ["checkbox"] = showDetailedDataText};
 end
 --[[
 	Documentation: Creates all of the UI elements related to the raidFrame including:
@@ -1572,7 +1674,7 @@ end
 	Documentation: Initiate the UI if it has not been done before.
 ]]
 PVEFrame:HookScript("OnShow", function(self)
-	if(next(GUI) == nil) then
+	if(next(dGUI) == nil) then
 		initDungeon();
 		initRaid();
 	end
@@ -1587,6 +1689,8 @@ f:SetScript("OnEvent", function(self, event, ...)
 		end
 		if (PGF_FilterRemaningRoles == nil) then PGF_FilterRemaningRoles = true; end
 		if (PGF_DetailedDataDisplay == nil) then PGF_DetailedDataDisplay = true; end
+		if (PGF_ShowLeaderDungeonKey == nil) then PGF_ShowLeaderDungeonKey = false; end
+		if (PGF_SortingVariable == nil) then PGF_SortingVariable = 1; end
 		if IsInGuild() then
 			C_ChatInfo.SendAddonMessage("PGF_VERSIONCHECK", version, "GUILD");
 		end
@@ -1939,7 +2043,11 @@ local function PGF_LFGListSearchEntry_Update(self)
 		local r, g, b = unpack(getColorForScoreLookup(leaderOverallDungeonScore));
 	    local color = format("%02x%02x%02x", r*255,g*255,b*255);
 	    local scoreText = format("|cFF%s%s|r", color, leaderOverallDungeonScore);
-		self.Name:SetText(searchResultInfo.name .. " (" .. scoreText .. ")");
+	    if (PGF_ShowLeaderDungeonKey) then
+			self.Name:SetText(searchResultInfo.name .. " (" .. scoreText .. ")" .. "[" .. dungeonScoreText .. "]");
+		else
+			self.Name:SetText(searchResultInfo.name .. " (" .. scoreText .. ")");
+		end
 	end
 
 	local displayData = C_LFGList.GetSearchResultMemberCounts(resultID);
@@ -2485,7 +2593,21 @@ function LFGListUtil_SortSearchResultsCB(id1, id2)
 	if (hasRemainingRole1 ~= hasRemainingRole2) then
 		return hasRemainingRole1;
 	end
-	
+	if (PGF_SortingVariable == 1) then
+		if (result1.age ~= result2.age) then
+			return result1.age < result2.age;
+		end
+	elseif (PGF_SortingVariable == 2) then
+		if (result1.leaderOverallDungeonScore == nil) then
+			result1.leaderOverallDungeonScore = 0;
+		end
+		if (result2.leaderOverallDungeonScore == nil) then
+			result2.leaderOverallDungeonScore = 0;
+		end
+		if (result1.leaderOverallDungeonScore ~= result2.leaderOverallDungeonScore) then
+			return result1.leaderOverallDungeonScore > result2.leaderOverallDungeonScore;
+		end
+	end
 	if (result1.age ~= result2.age) then
 		return result1.age < result2.age;
 	end

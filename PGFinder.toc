@@ -7,6 +7,8 @@
 ## SavedVariables: PGF_DevDungeonsActivityIDs
 ## SavedVariables: PGF_DevRaidActivityIDs
 ## SavedVariables: PGF_DetailedDataDisplay
+## SavedVariables: PGF_SortingVariable
+## SavedVariables: PGF_ShowLeaderDungeonKey
 ## SavedVariablesPerCharacter: PGF_roles
 ## SavedVariablesPerCharacter: PGF_FilterRemaningRoles
 
