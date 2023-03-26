@@ -11,7 +11,7 @@
 ## SavedVariables: PGF_ShowLeaderDungeonKey
 ## SavedVariablesPerCharacter: PGF_roles
 ## SavedVariablesPerCharacter: PGF_FilterRemaningRoles
-
+## SavedVariablesPerCharacter: PGF_OnlyShowMyRole
 Localization\Localization.enUS.lua
 ActivityDatabase.lua
 PGF.lua

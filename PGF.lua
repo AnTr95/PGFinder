@@ -602,7 +602,7 @@ local LFG_LIST_SEARCH_ENTRY_MENU = {
 		text = REPORT_GROUP_FINDER_ADVERTISEMENT,
 		notCheckable = true,
 		func = function(_, id, name) 
-			LFGList_ReportAdvertisement(id, name); 
+			LFGList_ReportListing(id, name); 
 			LFGListSearchPanel_UpdateResultList(LFGListFrame.SearchPanel); 
 		end;
 	},
@@ -704,8 +704,8 @@ dungeonFrame:SetPoint("TOPLEFT", 0, 0);
 dungeonFrame:SetSize(f:GetWidth(), f:GetHeight());
 
 local dungeonOptionsFrame = CreateFrame("Frame", nil, dungeonFrame, BackdropTemplateMixin and "BackdropTemplate");
-dungeonOptionsFrame:SetPoint("BOTTOMRIGHT", PVEFrame, "BOTTOMRIGHT", -1,-80);
-dungeonOptionsFrame:SetSize(242,80);
+dungeonOptionsFrame:SetPoint("BOTTOMRIGHT", PVEFrame, "BOTTOMRIGHT", -1,-100);
+dungeonOptionsFrame:SetSize(242,100);
 
 --[[
 	Documentation: Create the raidFrame shown only in category 3
@@ -864,7 +864,18 @@ local function HasRemainingSlotsForLocalPlayerRole(lfgSearchResultID)
 		end
 		return true;
 	else
-		return roles[roleRemainingKeyLookup[playerRole]] > 0;
+		if (PGF_OnlyShowMyRole) then
+			for k, v in pairs(groupRoles) do
+				if (k ~= playerRole) then
+					if (roles[roleRemainingKeyLookup[k]] > 0) then
+						return false;
+					end
+				end
+			end
+			return true;
+		else
+			return roles[roleRemainingKeyLookup[playerRole]] > 0;
+		end
 	end
 end
 
@@ -1184,7 +1195,7 @@ local function initDungeon()
 		texture:SetTexture(PVEFrameBg:GetTexture());
 		texture:SetAllPoints();
 		dungeonOptionsFrame:SetBackdropBorderColor(0.1,0.1,0.1,1);
-		dungeonOptionsFrame:SetPoint("BOTTOMRIGHT", PVEFrame, "BOTTOMRIGHT", -1,-78);
+		dungeonOptionsFrame:SetPoint("BOTTOMRIGHT", PVEFrame, "BOTTOMRIGHT", -1,-98);
 	end
 	local dungeonDifficultyText = dungeonFrame:CreateFontString(nil, "ARTWORK", "GameFontNormalTiny2");
 	dungeonDifficultyText:SetFont(dungeonDifficultyText:GetFont(), 10);
@@ -1524,9 +1535,28 @@ local function initDungeon()
 			PlaySound(857);
 		end
 	end);
+	local showGroupsForYourRoleText = dungeonOptionsFrame:CreateFontString(nil, "ARTWORK", "GameFontNormalTiny2");
+	showGroupsForYourRoleText:SetFont(showGroupsForYourRoleText:GetFont(), 10);
+	showGroupsForYourRoleText:SetPoint("TOPLEFT", showDetailedDataText, "TOPLEFT", 0, -18);
+	showGroupsForYourRoleText:SetText("Show Groups Only Missing My Role");
+	local showGroupsForYourRoleButton = CreateFrame("CheckButton", nil, dungeonOptionsFrame, "UICheckButtonTemplate");
+	showGroupsForYourRoleButton:SetSize(20, 20);
+	showGroupsForYourRoleButton:SetPoint("RIGHT", showGroupsForYourRoleText, "RIGHT", 20, -1);
+	showGroupsForYourRoleButton:SetChecked(PGF_OnlyShowMyRole);
+	showGroupsForYourRoleButton:HookScript("OnClick", function(self)
+		if (self:GetChecked()) then
+			PGF_OnlyShowMyRole = true;
+			updateSearch();
+			PlaySound(856);
+		else
+			PGF_OnlyShowMyRole = false;
+			updateSearch();
+			PlaySound(857);
+		end
+	end);
 	local sortingText = dungeonOptionsFrame:CreateFontString(nil, "ARTWORK", "GameFontNormalTiny2");
 	sortingText:SetFont(sortingText:GetFont(), 10);
-	sortingText:SetPoint("TOPLEFT", showDetailedDataText, "TOPLEFT", 0, -28);
+	sortingText:SetPoint("TOPLEFT", showGroupsForYourRoleText, "TOPLEFT", 0, -28);
 	sortingText:SetText("Sort by:");
 	local sortingDropdown = CreateFrame("Button", nil, dungeonOptionsFrame, "UIDropDownMenuTemplate");
 	sortingDropdown:SetPoint("LEFT", sortingText, "RIGHT", -12, -2);
@@ -1561,6 +1591,7 @@ local function initDungeon()
 	dGUI["Sorting"] = {["text"]= sortingText, ["dropDown"] = sortingDropdown};
 	dGUI["LeaderScore"] = {["text"] = showLeaderScoreForDungeonText, ["checkbox"] = showLeaderScoreForDungeonButton};
 	dGUI["DetailedData"] = {["text"] = showDetailedDataText, ["checkbox"] = showDetailedDataText};
+	dGUI["OnlyMyRole"]= {["text"] = showGroupsForYourRoleText, ["checkbox"] = showGroupsForYourRoleButton};
 end
 --[[
 	Documentation: Creates all of the UI elements related to the raidFrame including:
@@ -1705,6 +1736,7 @@ f:SetScript("OnEvent", function(self, event, ...)
 		if (PGF_DetailedDataDisplay == nil) then PGF_DetailedDataDisplay = true; end
 		if (PGF_ShowLeaderDungeonKey == nil) then PGF_ShowLeaderDungeonKey = false; end
 		if (PGF_SortingVariable == nil) then PGF_SortingVariable = 1; end
+		if (PGF_OnlyShowMyRole == nil) then PGF_OnlyShowMyRole = false; end
 		if IsInGuild() then
 			C_ChatInfo.SendAddonMessage("PGF_VERSIONCHECK", version, "GUILD");
 		end
@@ -2304,14 +2336,14 @@ function LFGListSearchPanel_UpdateResultList(self)
 					leaderOverallDungeonScore = 0;
 				end
 				if (next(selectedInfo.dungeons) ~= nil) then
-					if (selectedInfo.dungeons[activityID] and (requiredDungeonScore == nil or C_ChallengeMode.GetOverallDungeonScore() >= requiredDungeonScore) and (selectedInfo["leaderScore"] == 0 or selectedInfo["leaderScore"] < leaderOverallDungeonScore) and (not PGF_FilterRemaningRoles or HasRemainingSlotsForLocalPlayerRole(self.results[i]))) then
+					if (selectedInfo.dungeons[activityID] and (requiredDungeonScore == nil or C_ChallengeMode.GetOverallDungeonScore() >= requiredDungeonScore) and (selectedInfo["leaderScore"] == 0 or selectedInfo["leaderScore"] < leaderOverallDungeonScore) and ((not PGF_FilterRemaningRoles and not PGF_OnlyShowMyRole) or HasRemainingSlotsForLocalPlayerRole(self.results[i]))) then
 						table.insert(newResults, self.results[i]);
 					end
 				elseif (selectedInfo["leaderScore"] > 0) then
-					if ((requiredDungeonScore == nil or C_ChallengeMode.GetOverallDungeonScore() >= requiredDungeonScore) and selectedInfo["leaderScore"] < leaderOverallDungeonScore and (not HasRemainingSlotsForLocalPlayerRole or HasRemainingSlotsForLocalPlayerRole(self.results[i]))) then
+					if ((requiredDungeonScore == nil or C_ChallengeMode.GetOverallDungeonScore() >= requiredDungeonScore) and selectedInfo["leaderScore"] < leaderOverallDungeonScore and ((not HasRemainingSlotsForLocalPlayerRole and not PGF_OnlyShowMyRole) or HasRemainingSlotsForLocalPlayerRole(self.results[i]))) then
 						table.insert(newResults, self.results[i]);
 					end
-				elseif (PGF_FilterRemaningRoles) then
+				elseif (PGF_FilterRemaningRoles or PGF_OnlyShowMyRole) then
 					if ((requiredDungeonScore == nil or C_ChallengeMode.GetOverallDungeonScore() >= requiredDungeonScore) and HasRemainingSlotsForLocalPlayerRole(self.results[i])) then
 						table.insert(newResults, self.results[i]);
 					end
