@@ -352,7 +352,7 @@ local roleIndex = {["TANK"] = 1, ["HEALER"] = 2, ["DAMAGER"] = 3}; --Syncs the o
 		leaderScore(int) - saves the lowest allowed score of the leader in dungeon groups
 		raids(arr) - saves which raids are selected
 		bosses(arr) - saves which bosses are selected
-]]--
+]]
 local selectedInfo = {
 	["dungeons"] = {},
 	["levels"] = {},
@@ -1494,7 +1494,7 @@ local function initDungeon()
 	local showDetailedDataText = dungeonOptionsFrame:CreateFontString(nil, "ARTWORK", "GameFontNormalTiny2");
 	showDetailedDataText:SetFont(showDetailedDataText:GetFont(), 10);
 	showDetailedDataText:SetPoint("TOPLEFT", showLeaderScoreForDungeonText, "TOPLEFT", 0, -18);
-	--showDetailedDataText:SetText("Show Detailed Roles");
+	showDetailedDataText:SetText("Show Detailed Roles");
 	local showDetailedDataButton = CreateFrame("CheckButton", nil, dungeonOptionsFrame, "UICheckButtonTemplate");
 	showDetailedDataButton:SetSize(20, 20);
 	showDetailedDataButton:SetPoint("RIGHT", showDetailedDataText, "RIGHT", 20, -1);
@@ -1510,8 +1510,6 @@ local function initDungeon()
 			PlaySound(857);
 		end
 	end);
-	showDetailedDataButton:Hide();
-	showDetailedDataText:Hide();
 	local sortingText = dungeonOptionsFrame:CreateFontString(nil, "ARTWORK", "GameFontNormalTiny2");
 	sortingText:SetFont(sortingText:GetFont(), 10);
 	sortingText:SetPoint("TOPLEFT", showDetailedDataText, "TOPLEFT", 0, -28);
@@ -2144,8 +2142,7 @@ local function PGF_LFGListGroupDataDisplayEnumerate_Update(self, numPlayers, dis
 				self.Icons[6-i]:SetTexture(select(4, GetSpecializationInfoByID(classSpecilizationMap[players[i].class][players[i].spec])));
 				self.Icons[6-i]:SetTexCoord(0,1,0,1);
 			else
-				self.Icons[6-i]:SetAtlas(LFG_LIST_GROUP_DATA_ATLASES[players[i].role], false);
-				a = self
+				self.Icons[6-i]:SetTexture("Interface\\AddOns\\PGFinder\\Res\\" .. players[i].class .. "_" .. players[i].role .. ".tga");
 			end
 		else
 			self.Icons[6-i]:SetAtlas("GarrMission_ClassIcon-"..strlower(players[i].class).."-"..players[i].spec, false);
