@@ -89,7 +89,7 @@ local refreshTimeReset = 3; --defines the time that must pass between searches
 local searchAvailable = true;
 local dungeonStates = {"Normal", "Heroic", "Mythic", "Mythic+ (Keystone)"}; --visible states for the dropdown
 local raidStates = {"VOTI Normal", "VOTI Heroic", "VOTI Mythic", "VOTI All"}; --visible states for the dropdown
-local sortingStates = {[1] = "Age", [2] = "Score"};
+local sortingStates = {[1] = "Time", [2] = "Score"};
 local lastSelectedDungeonState = "";
 local lastSelectedRaidState = "";
 local performanceTimeStamp = 0;
@@ -1167,11 +1167,25 @@ end
 	roles config
 ]]
 local function initDungeon()
-	dungeonOptionsFrame:SetBackdrop(PVEFrame:GetBackdrop());
-	local r,g,b,a = PVEFrame:GetBackdropColor();
-	dungeonOptionsFrame:SetBackdropColor(r,g,b,a);
-	r,g,b,a = PVEFrame:GetBackdropBorderColor();
-	dungeonOptionsFrame:SetBackdropBorderColor(r,g,b,a);
+	if (PVEFrame.GetBackdrop) then
+		dungeonOptionsFrame:SetBackdrop(PVEFrame:GetBackdrop());
+		local r,g,b,a = PVEFrame:GetBackdropColor();
+		dungeonOptionsFrame:SetBackdropColor(r,g,b,a);
+		r,g,b,a = PVEFrame:GetBackdropBorderColor();
+		dungeonOptionsFrame:SetBackdropBorderColor(r,g,b,a);
+	elseif (PVEFrameBg:GetTexture()) then
+		local texture = dungeonOptionsFrame:CreateTexture(nil, "BACKGROUND");
+		dungeonOptionsFrame:SetBackdrop({
+			bgFile = "",
+			edgeFile = "Interface/Tooltips/UI-Tooltip-Border",
+			edgeSize = 16,
+			insets = { left = 4, right = 4, top = 4, bottom = 4 },
+		});
+		texture:SetTexture(PVEFrameBg:GetTexture());
+		texture:SetAllPoints();
+		dungeonOptionsFrame:SetBackdropBorderColor(0.1,0.1,0.1,1);
+		dungeonOptionsFrame:SetPoint("BOTTOMRIGHT", PVEFrame, "BOTTOMRIGHT", -1,-78);
+	end
 	local dungeonDifficultyText = dungeonFrame:CreateFontString(nil, "ARTWORK", "GameFontNormalTiny2");
 	dungeonDifficultyText:SetFont(dungeonDifficultyText:GetFont(), 10);
 	dungeonDifficultyText:SetPoint("TOPLEFT", 30, -40);
@@ -2562,7 +2576,7 @@ end);
 
 	Return:
 	bool - true priorities id1 and false priorities id2
---]]
+]]
 
 function LFGListUtil_SortSearchResultsCB(id1, id2)
 	local result1 = C_LFGList.GetSearchResultInfo(id1);
