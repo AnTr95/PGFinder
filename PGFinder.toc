@@ -1,6 +1,6 @@
 ## Interface: 100007
 ## Title: Premade Group Finder
-## Version: 10.06
+## Version: 10.08
 ## Notes: Made finding groups quick and easy
 ## Author: Ant-Kazzak / Antmage-Ragnaros
 ## SavedVariables: PGF_DevAllActivityIDs
@@ -11,7 +11,7 @@
 ## SavedVariables: PGF_ShowLeaderDungeonKey
 ## SavedVariablesPerCharacter: PGF_roles
 ## SavedVariablesPerCharacter: PGF_FilterRemaningRoles
-## SavedVariablesPerCharacter: PGF_OnlyShowMyRole
+## SavedVariablesPerCharacter: PGF_OnlyShowMyRole2
 Localization\Localization.enUS.lua
 ActivityDatabase.lua
 PGF.lua

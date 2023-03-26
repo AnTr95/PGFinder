@@ -1,3 +1,4 @@
+if (GetLocale() ~= "deDE") then return; end
 PGFinderLocals = {};
 local L = PGFinderLocals;
 local addon = ...;

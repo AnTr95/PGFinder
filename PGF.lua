@@ -96,6 +96,7 @@ local performanceTimeStamp = 0;
 local version = GetAddOnMetadata(addon, "Version");
 local recievedOutOfDateMessage = false;
 local FRIEND_ONLINE = ERR_FRIEND_ONLINE_SS:match("%s(.+)") -- Converts "[%s] has come online". to "has come online".
+local locale = GetLocale();
 --[[
 	Documentation: These maps changes the visible state that the user selects and converts it to match the dungeon/raids actual difficulty name/activityID
 ]]
@@ -667,6 +668,15 @@ local function PGF_GetSize(arr)
 	end
 	return count
 end
+
+local function isAnyValueTrue(array)
+	for k, v in pairs(array) do
+		if (v == true) then
+			return true;
+		end
+	end
+	return false;
+end
 --[[
 	Documentation: A function to figure out if the boss param is the next boss based on the raid lockout and graph for that raid
 	CASE post all wings boss: If it is a boss that unlocks after 2 or more wings or there is a skip to the boss we need to check for all 3 scenarios. In the case it is a skip only check if first boss is defeated and not the 2nd boss as they are probably not skipping then 
@@ -864,11 +874,17 @@ local function HasRemainingSlotsForLocalPlayerRole(lfgSearchResultID)
 		end
 		return true;
 	else
-		if (PGF_OnlyShowMyRole) then
-			for k, v in pairs(groupRoles) do
-				if (k ~= playerRole) then
-					if (roles[roleRemainingKeyLookup[k]] > 0) then
-						return false;
+		if (isAnyValueTrue(PGF_OnlyShowMyRole2)) then
+			for role, bool in pairs(PGF_OnlyShowMyRole2) do
+				if (bool) then
+					if (role == "DAMAGER") then
+						if (roles[roleRemainingKeyLookup[role]] >= 3) then
+							return false;
+						end
+					else
+						if (roles[roleRemainingKeyLookup[role]] > 0) then
+							return false;
+						end
 					end
 				end
 			end
@@ -1244,10 +1260,12 @@ local function initDungeon()
 	end
 	--create all buttons, have updateDifficulty display different buttons
 	--super expensive function, made cheaper
-	for index, challengeID in ipairs(C_ChallengeMode.GetMapTable()) do
-		local name, id, timeLimit, texture, backgroundTexture = C_ChallengeMode.GetMapUIInfo(challengeID);
-		local shortName = name:gsub("%s%(.*", "");
-		dungeonTextures[dungeonAbbreviations[name] .. " (Mythic Keystone)"] = texture;
+	if (GetLocale() == "enGB" or GetLocale() == "enUS") then
+		for index, challengeID in ipairs(C_ChallengeMode.GetMapTable()) do
+			local name, id, timeLimit, texture, backgroundTexture = C_ChallengeMode.GetMapUIInfo(challengeID);
+			local shortName = name:gsub("%s%(.*", "");
+			dungeonTextures[dungeonAbbreviations[name] .. " (Mythic Keystone)"] = texture;
+		end
 	end
 	for i = 1, 2500 do
 		local name, typeID, subtypeID, minLevel, maxLevel, recLevel, minRecLevel, maxRecLevel, expansionLevel, groupID, textureFilename, difficulty, maxPlayers, description, isHoliday, bonusRepAmount, minPlayers, isTimeWalker, name2, minGearLevel, isScalingDungeon, lfgMapID = GetLFGDungeonInfo(i);
@@ -1265,7 +1283,7 @@ local function initDungeon()
 			local texture = dungeonFrame:CreateTexture(nil, "OVERLAY");
 			local shortName = name:gsub("%s%(.*", ""); 
 			texture:SetTexture(dungeonTextures[shortName]);
-			if (difficulty == "(Mythic Keystone)") then
+			if (difficulty == "(Mythic Keystone)" and (GetLocale() == "enGB" or GetLocale() == "enUS")) then
 				texture:SetTexture(dungeonTextures[name]);
 			end
 			texture:SetPoint("TOPLEFT", 30,-65-((count-1)*24));
@@ -1280,7 +1298,7 @@ local function initDungeon()
 					if (dungeonsSelected == 1) then
 						local key, value = next(selectedInfo.dungeons);
 						C_LFGList.SetSearchToActivity(key);
-					elseif (LFGListFrame.SearchPanel.SearchBox:GetText():match("(Mythic Keystone)")) then
+					elseif (LFGListFrame.SearchPanel.SearchBox:GetText():match("(%a.)")) then
 						C_LFGList.ClearSearchTextFields();
 					end
 					updateSearch();
@@ -1290,7 +1308,7 @@ local function initDungeon()
 					if (dungeonsSelected == 1) then
 						local key, value = next(selectedInfo.dungeons);
 						C_LFGList.SetSearchToActivity(key);
-					elseif (LFGListFrame.SearchPanel.SearchBox:GetText():match("(Mythic Keystone)")) then
+					elseif (LFGListFrame.SearchPanel.SearchBox:GetText():match("(%a.)")) then
 						C_LFGList.ClearSearchTextFields();
 					end
 					updateSearch();
@@ -1516,44 +1534,91 @@ local function initDungeon()
 			PlaySound(857);
 		end
 	end);
-	local showDetailedDataText = dungeonOptionsFrame:CreateFontString(nil, "ARTWORK", "GameFontNormalTiny2");
-	showDetailedDataText:SetFont(showDetailedDataText:GetFont(), 10);
-	showDetailedDataText:SetPoint("TOPLEFT", showLeaderScoreForDungeonText, "TOPLEFT", 0, -18);
-	showDetailedDataText:SetText("Show Detailed Roles");
-	local showDetailedDataButton = CreateFrame("CheckButton", nil, dungeonOptionsFrame, "UICheckButtonTemplate");
-	showDetailedDataButton:SetSize(20, 20);
-	showDetailedDataButton:SetPoint("RIGHT", showDetailedDataText, "RIGHT", 20, -1);
-	showDetailedDataButton:SetChecked(PGF_DetailedDataDisplay);
-	showDetailedDataButton:HookScript("OnClick", function(self)
-		if (self:GetChecked()) then
-			PGF_DetailedDataDisplay = true;
-			updateSearch();
-			PlaySound(856);
-		else
-			PGF_DetailedDataDisplay = false;
-			updateSearch();
-			PlaySound(857);
-		end
-	end);
+	if (locale == "enGB" or locale == "enUS") then
+		local showDetailedDataText = dungeonOptionsFrame:CreateFontString(nil, "ARTWORK", "GameFontNormalTiny2");
+		showDetailedDataText:SetFont(showDetailedDataText:GetFont(), 10);
+		showDetailedDataText:SetPoint("TOPLEFT", showLeaderScoreForDungeonText, "TOPLEFT", 0, -18);
+		showDetailedDataText:SetText("Show Detailed Roles");
+		local showDetailedDataButton = CreateFrame("CheckButton", nil, dungeonOptionsFrame, "UICheckButtonTemplate");
+		showDetailedDataButton:SetSize(20, 20);
+		showDetailedDataButton:SetPoint("RIGHT", showDetailedDataText, "RIGHT", 20, -1);
+		showDetailedDataButton:SetChecked(PGF_DetailedDataDisplay);
+		showDetailedDataButton:HookScript("OnClick", function(self)
+			if (self:GetChecked()) then
+				PGF_DetailedDataDisplay = true;
+				updateSearch();
+				PlaySound(856);
+			else
+				PGF_DetailedDataDisplay = false;
+				updateSearch();
+				PlaySound(857);
+			end
+		end);
+	end
 	local showGroupsForYourRoleText = dungeonOptionsFrame:CreateFontString(nil, "ARTWORK", "GameFontNormalTiny2");
 	showGroupsForYourRoleText:SetFont(showGroupsForYourRoleText:GetFont(), 10);
-	showGroupsForYourRoleText:SetPoint("TOPLEFT", showDetailedDataText, "TOPLEFT", 0, -18);
-	showGroupsForYourRoleText:SetText("Show Groups Only Missing My Role");
-	local showGroupsForYourRoleButton = CreateFrame("CheckButton", nil, dungeonOptionsFrame, "UICheckButtonTemplate");
-	showGroupsForYourRoleButton:SetSize(20, 20);
-	showGroupsForYourRoleButton:SetPoint("RIGHT", showGroupsForYourRoleText, "RIGHT", 20, -1);
-	showGroupsForYourRoleButton:SetChecked(PGF_OnlyShowMyRole);
-	showGroupsForYourRoleButton:HookScript("OnClick", function(self)
+	showGroupsForYourRoleText:SetPoint("TOPLEFT", showLeaderScoreForDungeonText, "TOPLEFT", 0, -36);
+	showGroupsForYourRoleText:SetText("Show groups that has atleast 1:");
+	local showGroupsForYourRoleButtonTank = CreateFrame("CheckButton", nil, dungeonOptionsFrame, "UICheckButtonTemplate");
+	showGroupsForYourRoleButtonTank:SetSize(20, 20);
+	showGroupsForYourRoleButtonTank:SetPoint("RIGHT", showGroupsForYourRoleText, "RIGHT", 20, -1);
+	showGroupsForYourRoleButtonTank:SetChecked(PGF_OnlyShowMyRole2["TANK"]);
+	showGroupsForYourRoleButtonTank:HookScript("OnClick", function(self)
 		if (self:GetChecked()) then
-			PGF_OnlyShowMyRole = true;
+			PGF_OnlyShowMyRole2["TANK"] = true;
 			updateSearch();
 			PlaySound(856);
 		else
-			PGF_OnlyShowMyRole = false;
+			PGF_OnlyShowMyRole2["TANK"] = false;
 			updateSearch();
 			PlaySound(857);
 		end
 	end);
+	local tankTexture2 = dungeonOptionsFrame:CreateTexture(nil, "OVERLAY");
+	tankTexture2:SetTexture("Interface\\LFGFrame\\UI-LFG-ICON-ROLES");
+	tankTexture2:SetPoint("TOP", showGroupsForYourRoleButtonTank, "TOP", 0, 15);
+	tankTexture2:SetSize(16, 16);
+	tankTexture2:SetTexCoord(GetTexCoordsForRole("TANK"));
+	local showGroupsForYourRoleButtonHealer = CreateFrame("CheckButton", nil, dungeonOptionsFrame, "UICheckButtonTemplate");
+	showGroupsForYourRoleButtonHealer:SetSize(20, 20);
+	showGroupsForYourRoleButtonHealer:SetPoint("RIGHT", showGroupsForYourRoleButtonTank, "RIGHT", 20, 0);
+	showGroupsForYourRoleButtonHealer:SetChecked(PGF_OnlyShowMyRole2["HEALER"]);
+	showGroupsForYourRoleButtonHealer:HookScript("OnClick", function(self)
+		if (self:GetChecked()) then
+			PGF_OnlyShowMyRole2["HEALER"] = true;
+			updateSearch();
+			PlaySound(856);
+		else
+			PGF_OnlyShowMyRole2["HEALER"] = false;
+			updateSearch();
+			PlaySound(857);
+		end
+	end);
+	local healerTexture2 = dungeonOptionsFrame:CreateTexture(nil, "OVERLAY");
+	healerTexture2:SetTexture("Interface\\LFGFrame\\UI-LFG-ICON-ROLES");
+	healerTexture2:SetPoint("TOP", showGroupsForYourRoleButtonHealer, "TOP", 0, 15);
+	healerTexture2:SetSize(16, 16);
+	healerTexture2:SetTexCoord(GetTexCoordsForRole("HEALER"));
+	local showGroupsForYourRoleButtonDPS = CreateFrame("CheckButton", nil, dungeonOptionsFrame, "UICheckButtonTemplate");
+	showGroupsForYourRoleButtonDPS:SetSize(20, 20);
+	showGroupsForYourRoleButtonDPS:SetPoint("RIGHT", showGroupsForYourRoleButtonHealer, "RIGHT", 20, 0);
+	showGroupsForYourRoleButtonDPS:SetChecked(PGF_OnlyShowMyRole2["DAMAGER"]);
+	showGroupsForYourRoleButtonDPS:HookScript("OnClick", function(self)
+		if (self:GetChecked()) then
+			PGF_OnlyShowMyRole2["DAMAGER"] = true;
+			updateSearch();
+			PlaySound(856);
+		else
+			PGF_OnlyShowMyRole2["DAMAGER"] = false;
+			updateSearch();
+			PlaySound(857);
+		end
+	end);
+	local dpsTexture2 = dungeonOptionsFrame:CreateTexture(nil, "OVERLAY");
+	dpsTexture2:SetTexture("Interface\\LFGFrame\\UI-LFG-ICON-ROLES");
+	dpsTexture2:SetPoint("TOP", showGroupsForYourRoleButtonDPS, "TOP", 0, 15);
+	dpsTexture2:SetSize(16, 16);
+	dpsTexture2:SetTexCoord(GetTexCoordsForRole("DAMAGER"));
 	local sortingText = dungeonOptionsFrame:CreateFontString(nil, "ARTWORK", "GameFontNormalTiny2");
 	sortingText:SetFont(sortingText:GetFont(), 10);
 	sortingText:SetPoint("TOPLEFT", showGroupsForYourRoleText, "TOPLEFT", 0, -28);
@@ -1734,9 +1799,12 @@ f:SetScript("OnEvent", function(self, event, ...)
 		end
 		if (PGF_FilterRemaningRoles == nil) then PGF_FilterRemaningRoles = true; end
 		if (PGF_DetailedDataDisplay == nil) then PGF_DetailedDataDisplay = true; end
+		if (locale ~= "enGB" and locale ~= "enUS") then 
+			PGF_DetailedDataDisplay = false; 
+		end
 		if (PGF_ShowLeaderDungeonKey == nil) then PGF_ShowLeaderDungeonKey = false; end
 		if (PGF_SortingVariable == nil) then PGF_SortingVariable = 1; end
-		if (PGF_OnlyShowMyRole == nil) then PGF_OnlyShowMyRole = false; end
+		if (PGF_OnlyShowMyRole2 == nil) then PGF_OnlyShowMyRole2 = {["TANK"] = false, ["HEALER"] = false, ["DAMAGER"] = false}; end
 		if IsInGuild() then
 			C_ChatInfo.SendAddonMessage("PGF_VERSIONCHECK", version, "GUILD");
 		end
@@ -2279,10 +2347,11 @@ hooksecurefunc("LFGListGroupDataDisplayPlayerCount_Update", PGF_LFGListGroupData
 ]]
 local function updatePerformanceText(numResults, time)
 	local calc = string.format("%.3fs", time - performanceTimeStamp);
-	PGF_SetPerformanceText("[PGF] Found " .. numResults .. " results in " .. calc);
+	if (PGF_SetPerformanceText) then
+		PGF_SetPerformanceText("[PGF] Found " .. numResults .. " results in " .. calc);
+	end
 	performanceTimeStamp = time;
 end
-
 
 --[[
 	Documentation: This is a blizzard function that decides which results that should be shown by adding them to self as well as how many results there are. Blizzard has a cap on ~100 results so not all results are available here.
@@ -2336,14 +2405,14 @@ function LFGListSearchPanel_UpdateResultList(self)
 					leaderOverallDungeonScore = 0;
 				end
 				if (next(selectedInfo.dungeons) ~= nil) then
-					if (selectedInfo.dungeons[activityID] and (requiredDungeonScore == nil or C_ChallengeMode.GetOverallDungeonScore() >= requiredDungeonScore) and (selectedInfo["leaderScore"] == 0 or selectedInfo["leaderScore"] < leaderOverallDungeonScore) and ((not PGF_FilterRemaningRoles and not PGF_OnlyShowMyRole) or HasRemainingSlotsForLocalPlayerRole(self.results[i]))) then
+					if (selectedInfo.dungeons[activityID] and (requiredDungeonScore == nil or C_ChallengeMode.GetOverallDungeonScore() >= requiredDungeonScore) and (selectedInfo["leaderScore"] == 0 or selectedInfo["leaderScore"] < leaderOverallDungeonScore) and ((not PGF_FilterRemaningRoles and not isAnyValueTrue(PGF_OnlyShowMyRole2)) or HasRemainingSlotsForLocalPlayerRole(self.results[i]))) then
 						table.insert(newResults, self.results[i]);
 					end
 				elseif (selectedInfo["leaderScore"] > 0) then
-					if ((requiredDungeonScore == nil or C_ChallengeMode.GetOverallDungeonScore() >= requiredDungeonScore) and selectedInfo["leaderScore"] < leaderOverallDungeonScore and ((not HasRemainingSlotsForLocalPlayerRole and not PGF_OnlyShowMyRole) or HasRemainingSlotsForLocalPlayerRole(self.results[i]))) then
+					if ((requiredDungeonScore == nil or C_ChallengeMode.GetOverallDungeonScore() >= requiredDungeonScore) and selectedInfo["leaderScore"] < leaderOverallDungeonScore and ((not HasRemainingSlotsForLocalPlayerRole and not isAnyValueTrue(PGF_OnlyShowMyRole2)) or HasRemainingSlotsForLocalPlayerRole(self.results[i]))) then
 						table.insert(newResults, self.results[i]);
 					end
-				elseif (PGF_FilterRemaningRoles or PGF_OnlyShowMyRole) then
+				elseif (PGF_FilterRemaningRoles or isAnyValueTrue(PGF_OnlyShowMyRole2)) then
 					if ((requiredDungeonScore == nil or C_ChallengeMode.GetOverallDungeonScore() >= requiredDungeonScore) and HasRemainingSlotsForLocalPlayerRole(self.results[i])) then
 						table.insert(newResults, self.results[i]);
 					end
