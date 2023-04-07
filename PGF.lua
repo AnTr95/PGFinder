@@ -79,6 +79,7 @@ local refreshButtonClick = LFGListFrame.SearchPanel.RefreshButton:GetScript("OnC
 ]]
 
 local lastCat = nil;
+local playerClass = nil;
 local slowSearch = false;
 local slowResults = {};
 local slowCount = 0;
@@ -93,6 +94,7 @@ local sortingStates = {[1] = "Time", [2] = "Score"};
 local lastSelectedDungeonState = "";
 local lastSelectedRaidState = "";
 local performanceTimeStamp = 0;
+ declinedGroups = {};
 local version = GetAddOnMetadata(addon, "Version");
 local recievedOutOfDateMessage = false;
 local FRIEND_ONLINE = ERR_FRIEND_ONLINE_SS:match("%s(.+)") -- Converts "[%s] has come online". to "has come online".
@@ -363,6 +365,7 @@ local selectedInfo = {
 	["leaderScore"] = 0,
 	["raids"] = {},
 	["bosses"] = {},
+	["showMyClass"] = false,
 };
 
 --[[
@@ -714,8 +717,8 @@ dungeonFrame:SetPoint("TOPLEFT", 0, 0);
 dungeonFrame:SetSize(f:GetWidth(), f:GetHeight());
 
 local dungeonOptionsFrame = CreateFrame("Frame", nil, dungeonFrame, BackdropTemplateMixin and "BackdropTemplate");
-dungeonOptionsFrame:SetPoint("BOTTOMRIGHT", PVEFrame, "BOTTOMRIGHT", -1,-100);
-dungeonOptionsFrame:SetSize(242,100);
+dungeonOptionsFrame:SetPoint("BOTTOMRIGHT", PVEFrame, "BOTTOMRIGHT", -1,-140);
+dungeonOptionsFrame:SetSize(242,140);
 
 --[[
 	Documentation: Create the raidFrame shown only in category 3
@@ -1620,9 +1623,47 @@ local function initDungeon()
 	dpsTexture2:SetPoint("TOP", showGroupsForYourRoleButtonDPS, "TOP", 0, 15);
 	dpsTexture2:SetSize(16, 16);
 	dpsTexture2:SetTexCoord(GetTexCoordsForRole("DAMAGER"));
+	local showGroupsWithoutMyClassText = dungeonOptionsFrame:CreateFontString(nil, "ARTWORK", "GameFontNormalTiny2");
+	showGroupsWithoutMyClassText:SetFont(showGroupsWithoutMyClassText:GetFont(), 10);
+	showGroupsWithoutMyClassText:SetPoint("TOPLEFT", showGroupsForYourRoleText, "TOPLEFT", 0, -18);
+	showGroupsWithoutMyClassText:SetText("Hide groups with " .. strlower(playerClass));
+	local showGroupsWithoutMyClassButton = CreateFrame("CheckButton", nil, dungeonOptionsFrame, "UICheckButtonTemplate");
+	showGroupsWithoutMyClassButton:SetSize(20, 20);
+	showGroupsWithoutMyClassButton:SetPoint("RIGHT", showGroupsWithoutMyClassText, "RIGHT", 20, -1);
+	showGroupsWithoutMyClassButton:SetChecked(PGF_DontShowMyClass);
+	showGroupsWithoutMyClassButton:HookScript("OnClick", function(self)
+		if (self:GetChecked()) then
+			PGF_DontShowMyClass = true;
+			updateSearch();
+			PlaySound(856);
+		else
+			PGF_DontShowMyClass = false;
+			updateSearch();
+			PlaySound(857);
+		end
+	end);
+	local showDeclinedGroupsText = dungeonOptionsFrame:CreateFontString(nil, "ARTWORK", "GameFontNormalTiny2");
+	showDeclinedGroupsText:SetFont(showDeclinedGroupsText:GetFont(), 10);
+	showDeclinedGroupsText:SetPoint("TOPLEFT", showGroupsWithoutMyClassText, "TOPLEFT", 0, -18);
+	showDeclinedGroupsText:SetText("Hide groups you got declined from");
+	local showDeclinedGroupsButton = CreateFrame("CheckButton", nil, dungeonOptionsFrame, "UICheckButtonTemplate");
+	showDeclinedGroupsButton:SetSize(20, 20);
+	showDeclinedGroupsButton:SetPoint("RIGHT", showDeclinedGroupsText, "RIGHT", 20, -1);
+	showDeclinedGroupsButton:SetChecked(PGF_DontShowDeclinedGroups);
+	showDeclinedGroupsButton:HookScript("OnClick", function(self)
+		if (self:GetChecked()) then
+			PGF_DontShowDeclinedGroups = true;
+			updateSearch();
+			PlaySound(856);
+		else
+			PGF_DontShowDeclinedGroups = false;
+			updateSearch();
+			PlaySound(857);
+		end
+	end);
 	local sortingText = dungeonOptionsFrame:CreateFontString(nil, "ARTWORK", "GameFontNormalTiny2");
 	sortingText:SetFont(sortingText:GetFont(), 10);
-	sortingText:SetPoint("TOPLEFT", showGroupsForYourRoleText, "TOPLEFT", 0, -28);
+	sortingText:SetPoint("TOPLEFT", showDeclinedGroupsText, "TOPLEFT", 0, -28);
 	sortingText:SetText("Sort by:");
 	local sortingDropdown = CreateFrame("Button", nil, dungeonOptionsFrame, "UIDropDownMenuTemplate");
 	sortingDropdown:SetPoint("LEFT", sortingText, "RIGHT", -12, -2);
@@ -1798,6 +1839,8 @@ f:SetScript("OnEvent", function(self, event, ...)
 			PGF_roles = {["TANK"] = false, ["HEALER"] = false, ["DAMAGER"] = false};
 			PGF_roles[playerRole] = true;
 		end
+		if (PGF_DontShowDeclinedGroups == nil) then PGF_DontShowDeclinedGroups = false; end
+		if (PGF_DontShowMyClass == nil) then PGF_DontShowMyClass = false; end
 		if (PGF_FilterRemaningRoles == nil) then PGF_FilterRemaningRoles = true; end
 		if (PGF_DetailedDataDisplay == nil) then PGF_DetailedDataDisplay = true; end
 		if (locale ~= "enGB" and locale ~= "enUS") then 
@@ -1809,6 +1852,7 @@ f:SetScript("OnEvent", function(self, event, ...)
 		if IsInGuild() then
 			C_ChatInfo.SendAddonMessage("PGF_VERSIONCHECK", version, "GUILD");
 		end
+		playerClass = select(2, UnitClass("player"));
 	elseif (event == "GROUP_ROSTER_UPDATE") then
 		if (IsInRaid(LE_PARTY_CATEGORY_INSTANCE) or IsInGroup(LE_PARTY_CATEGORY_INSTANCE)) then
 			C_ChatInfo.SendAddonMessage("PGF_VERSIONCHECK", version, "INSTANCE_CHAT");
@@ -2078,6 +2122,7 @@ local function PGF_LFGListSearchEntry_Update(self)
 		elseif (appStatus == "declined_full") then
 			self.PendingLabel:SetText(LFG_LIST_APP_FULL);
 		elseif (appStatus == "declined") then
+			declinedGroups[resultID] = true;
 			self.PendingLabel:SetText(LFG_LIST_APP_DECLINED);
 		end
 		self.PendingLabel:SetTextColor(RED_FONT_COLOR.r, RED_FONT_COLOR.g, RED_FONT_COLOR.b);
@@ -2355,6 +2400,27 @@ local function updatePerformanceText(numResults, time)
 end
 
 --[[
+	Documentation: Checks if there are others of the same class in your group
+
+	Payload:
+	class parram(int) - the class to compare against
+	searchResults parram(arr) - the searchResults data of the group
+	resultID parram(int) - the resultID of the group to look up
+
+	Returns (int) - the amount players in the group playing the class "class"
+]]
+local function getClassCount(class, searchResults, resultID)
+	local count = 0;
+	for i = 1, searchResults.numMembers do
+		local role, classUniversal, classLocal, spec = C_LFGList.GetSearchResultMemberInfo(resultID, i);
+		if (class == classUniversal) then
+			count = count + 1;
+		end
+	end
+	return count;
+end
+
+--[[
 	Documentation: This is a blizzard function that decides which results that should be shown by adding them to self as well as how many results there are. Blizzard has a cap on ~100 results so not all results are available here.
 	This function overrides the blizzard function and sorts out groups based on the users config. User can filter out groups based on dungeons, bosses, leaderScore and if the group is eligible based on the roles of the player/current group
 
@@ -2365,7 +2431,7 @@ end
 ]]
 function LFGListSearchPanel_UpdateResultList(self)
 	if (LFGListFrame.SearchPanel.categoryID == GROUP_FINDER_CATEGORY_ID_DUNGEONS) then
-		if(next(selectedInfo.dungeons) == nil and selectedInfo["leaderScore"] == 0 and not PGF_FilterRemaningRoles and not isAnyValueTrue(PGF_OnlyShowMyRole2)) then
+		if(next(selectedInfo.dungeons) == nil and selectedInfo["leaderScore"] == 0 and not PGF_FilterRemaningRoles and not isAnyValueTrue(PGF_OnlyShowMyRole2) and not PGF_DontShowMyClass and not PGF_DontShowDeclinedGroups) then
 			LFGListFrame.SearchPanel.RefreshButton:SetScript("OnClick", function() end);
 			LFGListFrame.SearchPanel.RefreshButton.Icon:SetTexture("Interface\\AddOns\\PGFinder\\Res\\RedRefresh.tga");
 			searchAvailable = false;
@@ -2405,7 +2471,17 @@ function LFGListSearchPanel_UpdateResultList(self)
 				if (leaderOverallDungeonScore == nil) then
 					leaderOverallDungeonScore = 0;
 				end
-				if (next(selectedInfo.dungeons) ~= nil) then
+				if (appStatus == "applied") then
+					table.insert(newResults, self.results[i]);
+				elseif (PGF_DontShowDeclinedGroups) then
+					if (declinedGroups[resultID] == nil and (PGF_DontShowMyClass == false or getClassCount(playerClass, searchResults, self.results[i]) == 0) and (next(selectedInfo.dungeons) == nil or selectedInfo.dungeons[activityID]) and (requiredDungeonScore == nil or C_ChallengeMode.GetOverallDungeonScore() >= requiredDungeonScore) and (selectedInfo["leaderScore"] == 0 or selectedInfo["leaderScore"] < leaderOverallDungeonScore) and ((not PGF_FilterRemaningRoles and not isAnyValueTrue(PGF_OnlyShowMyRole2)) or HasRemainingSlotsForLocalPlayerRole(self.results[i], true))) then
+						table.insert(newResults, self.results[i]);
+					end
+				elseif (PGF_DontShowMyClass) then
+					if (getClassCount(playerClass, searchResults, self.results[i]) == 0 and (next(selectedInfo.dungeons) == nil or selectedInfo.dungeons[activityID]) and (requiredDungeonScore == nil or C_ChallengeMode.GetOverallDungeonScore() >= requiredDungeonScore) and (selectedInfo["leaderScore"] == 0 or selectedInfo["leaderScore"] < leaderOverallDungeonScore) and ((not PGF_FilterRemaningRoles and not isAnyValueTrue(PGF_OnlyShowMyRole2)) or HasRemainingSlotsForLocalPlayerRole(self.results[i], true))) then
+						table.insert(newResults, self.results[i]);
+					end
+				elseif (next(selectedInfo.dungeons) ~= nil) then
 					if (selectedInfo.dungeons[activityID] and (requiredDungeonScore == nil or C_ChallengeMode.GetOverallDungeonScore() >= requiredDungeonScore) and (selectedInfo["leaderScore"] == 0 or selectedInfo["leaderScore"] < leaderOverallDungeonScore) and ((not PGF_FilterRemaningRoles and not isAnyValueTrue(PGF_OnlyShowMyRole2)) or HasRemainingSlotsForLocalPlayerRole(self.results[i], true))) then
 						table.insert(newResults, self.results[i]);
 					end

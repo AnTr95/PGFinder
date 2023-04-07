@@ -9,9 +9,11 @@
 ## SavedVariables: PGF_DetailedDataDisplay
 ## SavedVariables: PGF_SortingVariable
 ## SavedVariables: PGF_ShowLeaderDungeonKey
+## SavedVariables: PGF_DontShowDeclinedGroups
 ## SavedVariablesPerCharacter: PGF_roles
 ## SavedVariablesPerCharacter: PGF_FilterRemaningRoles
 ## SavedVariablesPerCharacter: PGF_OnlyShowMyRole2
+## SavedVariablesPerCharacter: PGF_DontShowMyClass
 Localization\Localization.enUS.lua
 ActivityDatabase.lua
 PGF.lua
