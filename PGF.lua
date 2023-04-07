@@ -855,7 +855,7 @@ end
 	Returns:
 	bool - that is true if the group/player is eligible and otherwise false
 ]]
-local function HasRemainingSlotsForLocalPlayerRole(lfgSearchResultID)
+local function HasRemainingSlotsForLocalPlayerRole(lfgSearchResultID, isFiltering)
 	local roles = C_LFGList.GetSearchResultMemberCounts(lfgSearchResultID);
 	local playerRole = GetSpecializationRole(GetSpecialization());
 	local groupRoles = {["TANK"] = 0, ["HEALER"] = 0, ["DAMAGER"] = 0};
@@ -888,10 +888,11 @@ local function HasRemainingSlotsForLocalPlayerRole(lfgSearchResultID)
 					end
 				end
 			end
-			return true;
-		else
+		end
+		if (PGF_FilterRemaningRoles or not isFiltering) then
 			return roles[roleRemainingKeyLookup[playerRole]] > 0;
 		end
+		return true;
 	end
 end
 
@@ -1235,7 +1236,7 @@ local function initDungeon()
 		updateDungeonDifficulty();
 	end
 
-	UIDropDownMenu_SetWidth(dungeonDifficultyDropDown, 100);
+	UIDropDownMenu_SetWidth(dungeonDifficultyDropDown, 130);
 	UIDropDownMenu_SetButtonWidth(dungeonDifficultyDropDown, 100);
 	UIDropDownMenu_JustifyText(dungeonDifficultyDropDown, "CENTER");
 	UIDropDownMenu_Initialize(dungeonDifficultyDropDown, Initialize_DungeonStates);
@@ -2364,7 +2365,7 @@ end
 ]]
 function LFGListSearchPanel_UpdateResultList(self)
 	if (LFGListFrame.SearchPanel.categoryID == GROUP_FINDER_CATEGORY_ID_DUNGEONS) then
-		if(next(selectedInfo.dungeons) == nil and selectedInfo["leaderScore"] == 0 and not PGF_FilterRemaningRoles) then
+		if(next(selectedInfo.dungeons) == nil and selectedInfo["leaderScore"] == 0 and not PGF_FilterRemaningRoles and not isAnyValueTrue(PGF_OnlyShowMyRole2)) then
 			LFGListFrame.SearchPanel.RefreshButton:SetScript("OnClick", function() end);
 			LFGListFrame.SearchPanel.RefreshButton.Icon:SetTexture("Interface\\AddOns\\PGFinder\\Res\\RedRefresh.tga");
 			searchAvailable = false;
@@ -2405,15 +2406,15 @@ function LFGListSearchPanel_UpdateResultList(self)
 					leaderOverallDungeonScore = 0;
 				end
 				if (next(selectedInfo.dungeons) ~= nil) then
-					if (selectedInfo.dungeons[activityID] and (requiredDungeonScore == nil or C_ChallengeMode.GetOverallDungeonScore() >= requiredDungeonScore) and (selectedInfo["leaderScore"] == 0 or selectedInfo["leaderScore"] < leaderOverallDungeonScore) and ((not PGF_FilterRemaningRoles and not isAnyValueTrue(PGF_OnlyShowMyRole2)) or HasRemainingSlotsForLocalPlayerRole(self.results[i]))) then
+					if (selectedInfo.dungeons[activityID] and (requiredDungeonScore == nil or C_ChallengeMode.GetOverallDungeonScore() >= requiredDungeonScore) and (selectedInfo["leaderScore"] == 0 or selectedInfo["leaderScore"] < leaderOverallDungeonScore) and ((not PGF_FilterRemaningRoles and not isAnyValueTrue(PGF_OnlyShowMyRole2)) or HasRemainingSlotsForLocalPlayerRole(self.results[i], true))) then
 						table.insert(newResults, self.results[i]);
 					end
 				elseif (selectedInfo["leaderScore"] > 0) then
-					if ((requiredDungeonScore == nil or C_ChallengeMode.GetOverallDungeonScore() >= requiredDungeonScore) and selectedInfo["leaderScore"] < leaderOverallDungeonScore and ((not HasRemainingSlotsForLocalPlayerRole and not isAnyValueTrue(PGF_OnlyShowMyRole2)) or HasRemainingSlotsForLocalPlayerRole(self.results[i]))) then
+					if ((requiredDungeonScore == nil or C_ChallengeMode.GetOverallDungeonScore() >= requiredDungeonScore) and selectedInfo["leaderScore"] < leaderOverallDungeonScore and ((not PGF_FilterRemaningRoles and not isAnyValueTrue(PGF_OnlyShowMyRole2)) or HasRemainingSlotsForLocalPlayerRole(self.results[i], true))) then
 						table.insert(newResults, self.results[i]);
 					end
 				elseif (PGF_FilterRemaningRoles or isAnyValueTrue(PGF_OnlyShowMyRole2)) then
-					if ((requiredDungeonScore == nil or C_ChallengeMode.GetOverallDungeonScore() >= requiredDungeonScore) and HasRemainingSlotsForLocalPlayerRole(self.results[i])) then
+					if ((requiredDungeonScore == nil or C_ChallengeMode.GetOverallDungeonScore() >= requiredDungeonScore) and HasRemainingSlotsForLocalPlayerRole(self.results[i], true)) then
 						table.insert(newResults, self.results[i]);
 					end
 				end
@@ -2700,8 +2701,8 @@ function LFGListUtil_SortSearchResultsCB(id1, id2)
 	if (result1.numGuildMates ~= result2.numGuildMates) then
 		return result1.numGuildMates > result2.numGuildMates;
 	end
-	local hasRemainingRole1 = HasRemainingSlotsForLocalPlayerRole(id1);
-	local hasRemainingRole2 = HasRemainingSlotsForLocalPlayerRole(id2);
+	local hasRemainingRole1 = HasRemainingSlotsForLocalPlayerRole(id1, false);
+	local hasRemainingRole2 = HasRemainingSlotsForLocalPlayerRole(id2, false);
 
 	-- Groups with your current role available are preferred
 	if (hasRemainingRole1 ~= hasRemainingRole2) then
