@@ -94,7 +94,7 @@ local sortingStates = {[1] = "Time", [2] = "Score"};
 local lastSelectedDungeonState = "";
 local lastSelectedRaidState = "";
 local performanceTimeStamp = 0;
- declinedGroups = {};
+local declinedGroups = {}; -- IN TESTING ADD LOCAL
 local version = GetAddOnMetadata(addon, "Version");
 local recievedOutOfDateMessage = false;
 local FRIEND_ONLINE = ERR_FRIEND_ONLINE_SS:match("%s(.+)") -- Converts "[%s] has come online". to "has come online".
@@ -114,6 +114,23 @@ local raidStateMap = {
 	["VOTI Mythic"] = 1191,
 	["VOTI All"] = 1191, --no activity ID for this so lets take the boss data from mythic
 };
+local tierSetsMap = {
+	["DEATHKNIGHT"] = "Dreadful",
+    ["DEMONHUNTER"] = "Dreadful",
+    ["DRUID"] = "Mystic",
+    ["EVOKER"] = "Zenith",
+    ["HUNTER"] = "Mystic",
+    ["MAGE"] = "Mystic",
+    ["MONK"] = "Zenith",
+    ["PALADIN"] = "Venerated",
+    ["PRIEST"] = "Venerated",
+    ["ROGUE"] = "Zenith",
+    ["SHAMAN"] = "Venerated",
+    ["WARLOCK"] = "Dreadful",
+    ["WARRIOR"] = "Zenith"
+};
+local bestLevelPerDungeonMap = {};
+local challengeIDMap = {};
 --[[
 	Documentation: This sets the order of that the bosses will show in the UI
 ]]
@@ -574,7 +591,7 @@ end
 	Documentation: A blizzard value used in LFGListUtil_GetSearchEntryMenu that is called when right clicking on a group in premade groups.
 	This version overwrites it and adds a new button in position 5 in the dropdown.
 	text (string) that is shown in the dropdown
-	func - onClick function that takes custom parrams and are passed form the LFGListUtil_GetSearchEntryMenu function
+	func - onClick function that takes custom params and are passed form the LFGListUtil_GetSearchEntryMenu function
 	disable - if the button is disabled
 ]]
 local LFG_LIST_SEARCH_ENTRY_MENU = {
@@ -686,9 +703,9 @@ end
 	CASE any other case: check if the boss just before the current boss is defeated
 
 	Payload:
-	graph parram(table/graph) - a graph that contains all of the bosses and the orders they can be reached
-	boss parram(string) - the boss we are checking if it is next
-	bosses parram(table) - a table with all of the bosses that are defeated key is bossName, value is true and if it is not defeated the key will be nill for that boss
+	graph param(table/graph) - a graph that contains all of the bosses and the orders they can be reached
+	boss param(string) - the boss we are checking if it is next
+	bosses param(table) - a table with all of the bosses that are defeated key is bossName, value is true and if it is not defeated the key will be nill for that boss
 
 	Returns:
 	bool - true if it is the next boss
@@ -803,8 +820,8 @@ end
 	The function takes the categoryID and if a filter should be applied or not which depends on the category. For raids 0 is for all raids including legacy while 1 is only current raids. For dungeons 
 
 	Payload:
-	categoryID parram(int) - the categoryID of LFGListFrame.SearchPanel.categoryID or the categoryID of the activity
-	filters parram(int) - if a filter for recommended groups should be applied or not
+	categoryID param(int) - the categoryID of LFGListFrame.SearchPanel.categoryID or the categoryID of the activity
+	filters param(int) - if a filter for recommended groups should be applied or not
 
 	Returns:
 	filters (int)
@@ -818,6 +835,27 @@ local function ResolveCategoryFilters(categoryID, filters)
 	return filters;
 end
 
+--[[
+	Documentation: This function returns the amount of players in a raid that is using the same tier set as the defined unit, defaults to player if nil. Since displayData contains all sorts of information we have to make sure it is a class first.
+	The we can add the value as the key holds the amount of that class which should reduce the time complexity for larger groups.
+
+	Payload:
+	tier param(int) - which tier set name to count
+	displayData param(int) - contains information about how many of each class are in the group but also how many remaining roles are available and such
+
+	Returns:
+	count (int) - amount of players using the tier set named
+]]
+local function getTierCount(tier, displayData)
+	tier = tier or tierSetsMap[playerClass];
+	local count = 0;
+	for k, v in pairs(displayData) do
+		if (tierSetsMap[k] and tierSetsMap[k] == tier) then
+			count = count + v;
+		end
+	end
+	return count;
+end
 --[[
 	Documentation: This function performs all of the searches for PGF and makes sure that there has been enough time between searches before making a new one.
 ]]
@@ -853,7 +891,7 @@ end
 	This version extends it to also work for groups (multiple players) to see if the group as a whole is eliglbe for each listed group.
 
 	Payload:
-	lfgSearchResultID parram(int) - the resultID from GetSearchResult or self
+	lfgSearchResultID param(int) - the resultID from GetSearchResult or self
 
 	Returns:
 	bool - that is true if the group/player is eligible and otherwise false
@@ -904,7 +942,7 @@ end
 	While it is disabled the OnClick function is also removed but is readded here when searching is available again.
 
 	Payload:
-	self parram(table/object) - PVEFrame
+	self param(table/object) - PVEFrame
 	elapsed param(int) - How much time has passed since last call
 ]]
 PVEFrame:HookScript("OnUpdate", function(self, elapsed)
@@ -1832,6 +1870,46 @@ PVEFrame:HookScript("OnShow", function(self)
 	end
 end);
 
+local function initChallengeMap()
+	for index, challengeID in ipairs(C_ChallengeMode.GetMapTable()) do
+		local name, id, timeLimit, texture, backgroundTexture = C_ChallengeMode.GetMapUIInfo(challengeID);
+		local shortName = name:gsub("%s%(.*", "");
+		for aID, aName in pairs(PGF_allDungeonsActivityIDs) do
+			if (aName == shortName .. " (Mythic Keystone)") then
+				challengeIDMap[challengeID] = aID;
+				break;
+			end
+		end
+	end
+end
+-- 9 is tyrannical, 10 is fortified as of 10.0.7, unsure if [1] is always fortified
+local function initBestScores()
+	local weeklyMainAffix = C_MythicPlus.GetCurrentAffixes()[1].id;
+	local isFortifiedWeek = false;
+	if (weeklyMainAffix == 10) then
+		isFortifiedWeek = true;
+	end
+	for index, challengeID in ipairs(C_ChallengeMode.GetMapTable()) do
+		local runs = C_MythicPlus.GetSeasonBestAffixScoreInfoForMap(challengeID);
+		local activityID = challengeIDMap[challengeID];
+		if (runs == nil) then
+			bestLevelPerDungeonMap[activityID] = 0;
+		else
+			if (runs[1] and runs[1].name == L.FORTIFIED and isFortifiedWeek) then
+				bestLevelPerDungeonMap[activityID] = runs[1].level;
+			elseif (runs[1] and runs[1].name == L.TYRANNICAL and not isFortifiedWeek) then
+				bestLevelPerDungeonMap[activityID] = runs[1].level;
+			elseif (runs[2] and runs[2].name == L.TYRANNICAL and not isFortifiedWeek) then
+				bestLevelPerDungeonMap[activityID] = runs[2].level;
+			elseif (runs[2] and runs[2].name == L.FORTIFIED and isFortifiedWeek) then
+				bestLevelPerDungeonMap[activityID] = runs[2].level;
+			else
+				bestLevelPerDungeonMap[activityID] = 0;
+			end
+		end
+	end
+end
+
 f:SetScript("OnEvent", function(self, event, ...) 
 	if (event == "PLAYER_LOGIN") then
 		if (PGF_roles == nil) then 
@@ -1853,6 +1931,8 @@ f:SetScript("OnEvent", function(self, event, ...)
 			C_ChatInfo.SendAddonMessage("PGF_VERSIONCHECK", version, "GUILD");
 		end
 		playerClass = select(2, UnitClass("player"));
+		initChallengeMap();		
+		initBestScores();
 	elseif (event == "GROUP_ROSTER_UPDATE") then
 		if (IsInRaid(LE_PARTY_CATEGORY_INSTANCE) or IsInGroup(LE_PARTY_CATEGORY_INSTANCE)) then
 			C_ChatInfo.SendAddonMessage("PGF_VERSIONCHECK", version, "INSTANCE_CHAT");
@@ -2001,7 +2081,7 @@ end
 
 	Payload:
 	self param(table/object) - LFGListFrame
-	questID parram(int) - the questID if there is one
+	questID param(int) - the questID if there is one
 ]]
 
 function LFGListCategorySelection_StartFindGroup(self, questID)
@@ -2089,9 +2169,8 @@ end
 	The hooked version changes it so that displayData is always shown and moves the pending text, expiration text and the cancel button. While also adding the leaders m+ score to the name of the group if it is a dungeon group.
 
 	Payload:
-	param(arr/object) - the resultsInset nine slice that contains the information of the group
+	param(arr/object) - the entryFrame that contains all of the elements with information of the group 
 ]]
-
 local function PGF_LFGListSearchEntry_Update(self)
 	local resultID = self.resultID;
 	if not C_LFGList.HasSearchResultInfo(resultID) then
@@ -2101,6 +2180,10 @@ local function PGF_LFGListSearchEntry_Update(self)
 	local _, appStatus, pendingStatus, appDuration = C_LFGList.GetApplicationInfo(resultID);
 
 	local isApplication = (appStatus ~= "none" or pendingStatus);
+	--group no longer compatible
+	if (pendingStatus == "applied" and not HasRemainingSlotsForLocalPlayerRole(resultID)) then
+
+	end
 
 	--Update visibility based on whether we're an application or not
 	self.DataDisplay:SetShown(true);
@@ -2341,6 +2424,11 @@ local function PGF_LFGListGroupDataDisplayRoleCount_Update(self, displayData, di
 	self.TankCount:SetText(displayData.TANK);
 	self.HealerCount:SetText(displayData.HEALER);
 	self.DamagerCount:SetText(displayData.DAMAGER);
+	local resultID = self:GetParent():GetParent().resultID;
+	if (not disabled) then
+		--print(self.Name)
+		--print(getTierCount(nil, displayData));
+	end
 
 	--Update for the disabled state
 	local r = disabled and LFG_LIST_DELISTED_FONT_COLOR.r or HIGHLIGHT_FONT_COLOR.r;
@@ -2388,8 +2476,8 @@ hooksecurefunc("LFGListGroupDataDisplayPlayerCount_Update", PGF_LFGListGroupData
 	Documentation: Calculates the time it took to start the search and when results are ready to be presented to the user as well as how many there are
 
 	Payload:
-	numResults parram(int) - how many results were found after filtering
-	time parram(int) - the current time of when the filtering was completed
+	numResults param(int) - how many results were found after filtering
+	time param(int) - the current time of when the filtering was completed
 ]]
 local function updatePerformanceText(numResults, time)
 	local calc = string.format("%.3fs", time - performanceTimeStamp);
@@ -2403,9 +2491,9 @@ end
 	Documentation: Checks if there are others of the same class in your group
 
 	Payload:
-	class parram(int) - the class to compare against
-	searchResults parram(arr) - the searchResults data of the group
-	resultID parram(int) - the resultID of the group to look up
+	class param(int) - the class to compare against
+	searchResults param(arr) - the searchResults data of the group
+	resultID param(int) - the resultID of the group to look up
 
 	Returns (int) - the amount players in the group playing the class "class"
 ]]
@@ -2425,7 +2513,7 @@ end
 	This function overrides the blizzard function and sorts out groups based on the users config. User can filter out groups based on dungeons, bosses, leaderScore and if the group is eligible based on the roles of the player/current group
 
 	Payload:
-	self parram(table/object) - the LFGListFrame.SearchPanel
+	self param(table/object) - the LFGListFrame.SearchPanel
 	Return:
 	bool - true if there are results
 ]]
@@ -2446,6 +2534,7 @@ function LFGListSearchPanel_UpdateResultList(self)
 			LFGListUtil_SortSearchResults(self.results);
 			LFGListSearchPanel_UpdateResults(self);
 			updatePerformanceText(self.totalResults, GetTimePreciseSec());
+			declinedGroups = {};
 			return true;
 		end
 		if (slowSearch == false) then
@@ -2493,6 +2582,9 @@ function LFGListSearchPanel_UpdateResultList(self)
 					if ((requiredDungeonScore == nil or C_ChallengeMode.GetOverallDungeonScore() >= requiredDungeonScore) and HasRemainingSlotsForLocalPlayerRole(self.results[i], true)) then
 						table.insert(newResults, self.results[i]);
 					end
+				end
+				if (isDelisted and declinedGroups[resultID]) then
+					declinedGroups[resultID] = nil;
 				end
 			end
 			LFGListUtil_SortSearchResults(newResults);
@@ -2691,8 +2783,8 @@ end
 	Documentation: This is a blizzard function for selecting a result of the resultsInsets and extends self with the resultID.
 	This function overrides it and instead makes the user instantly apply to the group if they are the leader or not in a group.
 
-	self parram(table/object) -- the resultInset
-	resultID parram(int) -- the resultID
+	self param(table/object) -- the resultInset
+	resultID param(int) -- the resultID
 ]]
 function LFGListSearchPanel_SelectResult(self, resultID)
 	self.selectedResult = resultID;
@@ -2749,8 +2841,8 @@ end);
 	Priority 7: Arbitrary ID
 
 	Payload:
-	id1 parram(int) - the resultID of the first group
-	id2 parram(int) - the resutltID of the second group
+	id1 param(int) - the resultID of the first group
+	id2 param(int) - the resutltID of the second group
 
 	Return:
 	bool - true priorities id1 and false priorities id2

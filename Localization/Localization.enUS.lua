@@ -54,3 +54,6 @@ L.SPEC_FURY = "Fury";
 L.WARNING_OUTOFDATEMESSAGE = "There is a newer version of Premade Group Finder available on curse!";
 
 L.ADDON = "PGF: ";
+
+L.FORTIFIED = "Fortified";
+L.TYRANNICAL = "Tyrannical";
