@@ -85,20 +85,29 @@ local slowResults = {};
 local slowCount = 0;
 local slowTotal = 0;
 local originalUI = {};
+local originalRoleCountUI = {};
 local ticks = 0;
+local addonIndex = 0;
+local debugTicks = 0;
+local debugPerformanceReset = 5;
+local lastSearchTime = 0;
 local refreshTimeReset = 3; --defines the time that must pass between searches
 local searchAvailable = true;
 local dungeonStates = {"Normal", "Heroic", "Mythic", "Mythic+ (Keystone)"}; --visible states for the dropdown
 local raidStates = {"VOTI Normal", "VOTI Heroic", "VOTI Mythic", "VOTI All"}; --visible states for the dropdown
 local sortingStates = {[1] = "Time", [2] = "Score"};
+local sortingRaidStates = {[1] = "Time", [2] = "Few of your class", [3] = "Many of your class", [4] = "Few of your tier", [5] = "Many of your tier"};
 local lastSelectedDungeonState = "";
 local lastSelectedRaidState = "";
 local performanceTimeStamp = 0;
+local declineResetTimer = 1200;
 local declinedGroups = {}; -- IN TESTING ADD LOCAL
+local newGroups = {};
 local version = GetAddOnMetadata(addon, "Version");
 local recievedOutOfDateMessage = false;
 local FRIEND_ONLINE = ERR_FRIEND_ONLINE_SS:match("%s(.+)") -- Converts "[%s] has come online". to "has come online".
 local locale = GetLocale();
+local debugMode = false;
 --[[
 	Documentation: These maps changes the visible state that the user selects and converts it to match the dungeon/raids actual difficulty name/activityID
 ]]
@@ -530,20 +539,45 @@ local scoreColors = {
 	[0] = {0.62, 0.62, 0.62},
 };
 
+
+
 --[[
 	Documentation: Lets precompute the scoreColor table to a lookup table to reduce the time complexity to O(1) as this is called extremly frequently.
 	Creates a table from 0-3450 as keys with the r,g,b value of the scoreTable for each score that is between 2 scoreTable keys
 ]]
 local colorLookup = {};
 local lastScore = 0;
-for i = 0, 3450 do
-	if (scoreColors[i]) then
-		colorLookup[i] = scoreColors[i];
-		lastScore = i;
-	else
-		colorLookup[i] = scoreColors[lastScore];
+do 
+	for i = 0, 3450 do
+		if (scoreColors[i]) then
+			colorLookup[i] = scoreColors[i];
+			lastScore = i;
+		else
+			colorLookup[i] = scoreColors[lastScore];
+		end
 	end
 end
+
+--[[
+	Documentation: Slash command handler
+]]
+local function handler(msg, editbox)
+	local arg = string.lower(msg);
+	if (arg == "debug") then
+		if (not debugMode) then
+			debugMode = true;
+			for i = 1, GetNumAddOns() do
+				local name = GetAddOnInfo(i);
+				if (name == "PGFinder") then
+					addonIndex = i;
+				end
+			end
+		else
+			debugMode = false;
+		end
+	end
+end
+SlashCmdList["PREMADEGROUPFINDER"] = handler;
 
 --[[
 	Documentation: Looks up the r, g, b values from the coreLookup table or sends a default value if it is out of range. O(1)
@@ -725,6 +759,7 @@ local function isNextBoss(graph, boss, bosses)
 	end
 	return false
 end
+
 --[[
 	Documentation: Create the dungeonFrame shown only in category 2
 ]]
@@ -734,8 +769,8 @@ dungeonFrame:SetPoint("TOPLEFT", 0, 0);
 dungeonFrame:SetSize(f:GetWidth(), f:GetHeight());
 
 local dungeonOptionsFrame = CreateFrame("Frame", nil, dungeonFrame, BackdropTemplateMixin and "BackdropTemplate");
-dungeonOptionsFrame:SetPoint("BOTTOMRIGHT", PVEFrame, "BOTTOMRIGHT", -1,-140);
-dungeonOptionsFrame:SetSize(242,140);
+dungeonOptionsFrame:SetSize(242,150);
+
 
 --[[
 	Documentation: Create the raidFrame shown only in category 3
@@ -745,6 +780,8 @@ raidFrame:SetPoint("TOPLEFT", 0, 0);
 raidFrame:SetSize(f:GetWidth(), f:GetHeight());
 raidFrame:Hide();
 
+local raidOptionsFrame = CreateFrame("Frame", nil, raidFrame, BackdropTemplateMixin and "BackdropTemplate");
+raidOptionsFrame:SetSize(242,140);
 --C_LFGList.GetSearchResultMemberInfo(resultID, playerIndex); returns: [1] = role, [2] = classUNIVERSAL, [3] = classLocal, [4] = spec
 
 f:RegisterEvent("PLAYER_LOGIN");
@@ -787,6 +824,24 @@ local function saveOriginalUI()
 	originalUI["LFGListApplicationDialog.Description.EditBox"].size[1], originalUI["LFGListApplicationDialog.Description.EditBox"].size[2] = LFGListApplicationDialog.Description.EditBox:GetSize();
 end
 
+local function updateRaidFrameWidth()
+	local x = 338;
+	local x2 = 800;
+	if (PGF_ShowYourClassAmount) then
+		x = x + 50;
+		x2 = x2 + 50;
+	end
+	if (PGF_ShowYourTierAmount) then
+		x = x + 50;
+		x2 = x2 + 50;
+	end
+	PVEFrame:SetSize(x2,428);
+	PVE_FRAME_BASE_WIDTH = x2; -- blizz is always trying to resize the pveframe based on this value
+	LFGListFrame:ClearAllPoints(); 
+	LFGListFrame:SetPoint(originalUI["LFGListFrame"].position[1], originalUI["LFGListFrame"].position[2], originalUI["LFGListFrame"].position[3], originalUI["LFGListFrame"].position[4], originalUI["LFGListFrame"].position[5]);
+	LFGListFrame:SetSize(x, LFGListFrame:GetHeight());
+	LFGListSearchPanel_UpdateResults(LFGListFrame.SearchPanel);
+end
 --[[
 	Documentation: Restore all of the Blizzard UI elements that was moved by PGF to its original position when no PGF frame is shown
 ]]
@@ -811,7 +866,7 @@ local function restoreOriginalUI()
 	LFGListApplicationDialog.Description.EditBox:SetSize(originalUI["LFGListApplicationDialog.Description.EditBox"].size[1], originalUI["LFGListApplicationDialog.Description.EditBox"].size[2]);
 	LFGListFrame:ClearAllPoints(); 
 	LFGListFrame:SetPoint(originalUI["LFGListFrame"].position[1], originalUI["LFGListFrame"].position[2], originalUI["LFGListFrame"].position[3], originalUI["LFGListFrame"].position[4], originalUI["LFGListFrame"].position[5]);
-	LFGListFrame:SetSize(368, LFGListFrame:GetHeight());
+	LFGListFrame:SetSize(338, LFGListFrame:GetHeight());
 end
 
 
@@ -846,15 +901,37 @@ end
 	Returns:
 	count (int) - amount of players using the tier set named
 ]]
-local function getTierCount(tier, displayData)
-	tier = tier or tierSetsMap[playerClass];
-	local count = 0;
+local function getTierCount(class, displayData)
+	class = class or select(2, UnitClass("player"));
+	local tier = tierSetsMap[class];
+	local tierCount = 0;
+	local classCount = 0;
+	local tierText = tier .. " Tier: ";
 	for k, v in pairs(displayData) do
 		if (tierSetsMap[k] and tierSetsMap[k] == tier) then
-			count = count + v;
+			tierCount = tierCount + v;
+			if (k == class) then
+				classCount = v;
+			end
 		end
 	end
-	return count;
+	return tierCount, classCount, tierText;
+end
+
+local function getTierCountBySearchResult(class, searchResult, resultID)
+	class = class or select(2, UnitClass("player"));
+	local tier = tierSetsMap[class];
+	local tierCount = 0;
+	if (searchResult == nil) then
+		searchResult = C_LFGList.GetSearchResultInfo(resultID);
+	end
+	for i = 1, searchResult.numMembers do
+		local role, classUniversal, classLocal, spec = C_LFGList.GetSearchResultMemberInfo(resultID, i);
+		if (tierSetsMap[classUniversal] == tier) then
+			tierCount = tierCount + 1;
+		end
+	end
+	return tierCount;
 end
 --[[
 	Documentation: This function performs all of the searches for PGF and makes sure that there has been enough time between searches before making a new one.
@@ -883,6 +960,8 @@ local function updateSearch()
 			end
 			print("slow count is: " .. slowTotal);
 		end
+	else
+		LFGListSearchPanel_UpdateResults(LFGListFrame.SearchPanel);
 	end
 end
 
@@ -930,7 +1009,7 @@ local function HasRemainingSlotsForLocalPlayerRole(lfgSearchResultID, isFilterin
 				end
 			end
 		end
-		if (PGF_FilterRemaningRoles or not isFiltering) then
+		if (PGF_FilterRemainingRoles or not isFiltering) then
 			return roles[roleRemainingKeyLookup[playerRole]] > 0;
 		end
 		return true;
@@ -947,6 +1026,14 @@ end
 ]]
 PVEFrame:HookScript("OnUpdate", function(self, elapsed)
 	ticks = ticks + elapsed;
+	if (debugMode) then
+		debugTicks = debugTicks + elapsed;
+		if (debugTicks >= debugPerformanceReset) then
+			UpdateAddOnMemoryUsage();
+			print("PGF: " .. math.floor(GetAddOnMemoryUsage(addonIndex)) .. "kb in use");
+			debugTicks = 0;
+		end
+	end
 	if (ticks >= refreshTimeReset and not searchAvailable) then
 		LFGListFrame.SearchPanel.RefreshButton:SetScript("OnClick", refreshButtonClick);
 		LFGListFrame.SearchPanel.RefreshButton.Icon:SetTexture(851904);
@@ -999,7 +1086,7 @@ local function updateDungeonDifficulty(isSameCat)
 			elseif (PGF_roles[index]) then
 				checkbox:SetChecked(true);
 			elseif (index == "FilterRoles") then
-				checkbox:SetChecked(PGF_FilterRemaningRoles);
+				checkbox:SetChecked(PGF_FilterRemainingRoles);
 			end
 		end
 		for index, widgets in pairs(dGUI) do
@@ -1159,8 +1246,8 @@ local function PGF_ShowDungeonFrame(isSameCat)
 	if (next(originalUI) == nil) then
 		saveOriginalUI();
 	end
-	PVEFrame:SetSize(830,428);
-	PVE_FRAME_BASE_WIDTH = 830; -- blizz is always trying to resize the pveframe based on this value
+	PVEFrame:SetSize(840,428);
+	PVE_FRAME_BASE_WIDTH = 840; -- blizz is always trying to resize the pveframe based on this value
 	LFGListFrame.SearchPanel.SearchBox:ClearAllPoints();
 	LFGListFrame.SearchPanel.RefreshButton:ClearAllPoints();
 	LFGListFrame.SearchPanel.FilterButton:ClearAllPoints();
@@ -1195,8 +1282,8 @@ local function PGF_ShowRaidFrame(isSameCat)
 	if (next(originalUI) == nil) then
 		saveOriginalUI();
 	end
-	PVEFrame:SetSize(830,428);
-	PVE_FRAME_BASE_WIDTH = 830; -- blizz is always trying to resize the pveframe based on this value
+	PVEFrame:SetSize(900,428);
+	PVE_FRAME_BASE_WIDTH = 900; -- blizz is always trying to resize the pveframe based on this value
 	LFGListFrame.SearchPanel.SearchBox:ClearAllPoints();
 	LFGListFrame.SearchPanel.RefreshButton:ClearAllPoints();
 	LFGListFrame.SearchPanel.FilterButton:ClearAllPoints();
@@ -1215,9 +1302,12 @@ local function PGF_ShowRaidFrame(isSameCat)
 	LFGListApplicationDialog.Description.EditBox:SetMaxLetters(50);
 	LFGListApplicationDialog.Description.EditBox:SetSize(LFGListApplicationDialog.Description:GetWidth(), LFGListApplicationDialog.Description:GetHeight());
 	LFGListApplicationDialog.Description.EditBox:SetTextColor(1,1,1,1);
+	updateRaidFrameWidth();
+	--[[
 	LFGListFrame:ClearAllPoints(); 
 	LFGListFrame:SetPoint(originalUI["LFGListFrame"].position[1], originalUI["LFGListFrame"].position[2], originalUI["LFGListFrame"].position[3], originalUI["LFGListFrame"].position[4], originalUI["LFGListFrame"].position[5]);
-	LFGListFrame:SetSize(368, LFGListFrame:GetHeight());
+	LFGListFrame:SetSize(438, LFGListFrame:GetHeight());
+	]]
 	updateRaidDifficulty(isSameCat);
 end
 
@@ -1242,6 +1332,7 @@ local function initDungeon()
 		dungeonOptionsFrame:SetBackdropColor(r,g,b,a);
 		r,g,b,a = PVEFrame:GetBackdropBorderColor();
 		dungeonOptionsFrame:SetBackdropBorderColor(r,g,b,a);
+		dungeonOptionsFrame:SetPoint("BOTTOMRIGHT", PVEFrame, "BOTTOMRIGHT", -1,-150);
 	elseif (PVEFrameBg:GetTexture()) then
 		local texture = dungeonOptionsFrame:CreateTexture(nil, "BACKGROUND");
 		dungeonOptionsFrame:SetBackdrop({
@@ -1253,7 +1344,7 @@ local function initDungeon()
 		texture:SetTexture(PVEFrameBg:GetTexture());
 		texture:SetAllPoints();
 		dungeonOptionsFrame:SetBackdropBorderColor(0.1,0.1,0.1,1);
-		dungeonOptionsFrame:SetPoint("BOTTOMRIGHT", PVEFrame, "BOTTOMRIGHT", -1,-98);
+		dungeonOptionsFrame:SetPoint("BOTTOMRIGHT", PVEFrame, "BOTTOMRIGHT", -1,-148);
 	end
 	local dungeonDifficultyText = dungeonFrame:CreateFontString(nil, "ARTWORK", "GameFontNormalTiny2");
 	dungeonDifficultyText:SetFont(dungeonDifficultyText:GetFont(), 10);
@@ -1424,11 +1515,11 @@ local function initDungeon()
 	filterRolesCheckButton:SetPoint("RIGHT", filterRolesText, "RIGHT", 25, 0);
 	filterRolesCheckButton:HookScript("OnClick", function(self)
 		if (self:GetChecked()) then
-			PGF_FilterRemaningRoles = true;
+			PGF_FilterRemainingRoles = true;
 			updateSearch();
 			PlaySound(856);
 		else
-			PGF_FilterRemaningRoles = false;
+			PGF_FilterRemainingRoles = false;
 			updateSearch();
 			PlaySound(857);
 		end
@@ -1699,15 +1790,34 @@ local function initDungeon()
 			PlaySound(857);
 		end
 	end);
+	local showLeaderIconText = dungeonOptionsFrame:CreateFontString(nil, "ARTWORK", "GameFontNormalTiny2");
+	showLeaderIconText:SetFont(showLeaderIconText:GetFont(), 10);
+	showLeaderIconText:SetPoint("TOPLEFT", showDeclinedGroupsText, "TOPLEFT", 0, -18);
+	showLeaderIconText:SetText("Show who is leader");
+	local showLeaderIconButton = CreateFrame("CheckButton", nil, dungeonOptionsFrame, "UICheckButtonTemplate");
+	showLeaderIconButton:SetSize(20, 20);
+	showLeaderIconButton:SetPoint("RIGHT", showLeaderIconText, "RIGHT", 20, -1);
+	showLeaderIconButton:SetChecked(PGF_ShowLeaderIcon);
+	showLeaderIconButton:HookScript("OnClick", function(self)
+		if (self:GetChecked()) then
+			PGF_ShowLeaderIcon = true;
+			LFGListSearchPanel_UpdateResults(LFGListFrame.SearchPanel);
+			PlaySound(856);
+		else
+			PGF_ShowLeaderIcon = false;
+			LFGListSearchPanel_UpdateResults(LFGListFrame.SearchPanel);
+			PlaySound(857);
+		end
+	end);
 	local sortingText = dungeonOptionsFrame:CreateFontString(nil, "ARTWORK", "GameFontNormalTiny2");
 	sortingText:SetFont(sortingText:GetFont(), 10);
-	sortingText:SetPoint("TOPLEFT", showDeclinedGroupsText, "TOPLEFT", 0, -28);
+	sortingText:SetPoint("TOPLEFT", showLeaderIconText, "TOPLEFT", 0, -28);
 	sortingText:SetText("Sort by:");
 	local sortingDropdown = CreateFrame("Button", nil, dungeonOptionsFrame, "UIDropDownMenuTemplate");
 	sortingDropdown:SetPoint("LEFT", sortingText, "RIGHT", -12, -2);
 	local function Initialize_SortingStates(self, level)
 		local info = UIDropDownMenu_CreateInfo();
-		for k,v in pairs(sortingStates) do
+		for k,v in ipairs(sortingStates) do
 			info = UIDropDownMenu_CreateInfo();
 			info.text = v;
 			info.value = v;
@@ -1745,6 +1855,26 @@ end
 	The raids that will show up are the ones we get from recommended activities (same as in the autocomplete in search). All of the bosses will be stored in the currentRaidsActivityIDs[abbrevatedRaidName][abbrevatedBossName]
 ]]
 local function initRaid()
+	if (PVEFrame.GetBackdrop) then
+		raidOptionsFrame:SetBackdrop(PVEFrame:GetBackdrop());
+		local r,g,b,a = PVEFrame:GetBackdropColor();
+		raidOptionsFrame:SetBackdropColor(r,g,b,a);
+		r,g,b,a = PVEFrame:GetBackdropBorderColor();
+		raidOptionsFrame:SetBackdropBorderColor(r,g,b,a);
+		raidOptionsFrame:SetPoint("BOTTOMRIGHT", PVEFrame, "BOTTOMRIGHT", -1,-140);
+	elseif (PVEFrameBg:GetTexture()) then
+		local texture = raidOptionsFrame:CreateTexture(nil, "BACKGROUND");
+		raidOptionsFrame:SetBackdrop({
+			bgFile = "",
+			edgeFile = "Interface/Tooltips/UI-Tooltip-Border",
+			edgeSize = 16,
+			insets = { left = 4, right = 4, top = 4, bottom = 4 },
+		});
+		texture:SetTexture(PVEFrameBg:GetTexture());
+		texture:SetAllPoints();
+		raidOptionsFrame:SetBackdropBorderColor(0.1,0.1,0.1,1);
+		raidOptionsFrame:SetPoint("BOTTOMRIGHT", PVEFrame, "BOTTOMRIGHT", -1,-138);
+	end
 	local raidDifficultyText = raidFrame:CreateFontString(nil, "ARTWORK", "GameFontNormalTiny2");
 	raidDifficultyText:SetFont(raidDifficultyText:GetFont(), 10);
 	raidDifficultyText:SetPoint("TOPLEFT", 30, -40);
@@ -1859,17 +1989,100 @@ local function initRaid()
 	rGUI["raidDifficulty"] = {["dropDown"] = raidDifficultyDropDown, ["text"] = raidDifficultyText};
 	raidDifficultyText:SetText(L.OPTIONS_RAID_SELECT);
 	--Use input:GetNumber() to ensure its a number, returns 0 if not a number which is fine in this case
-end
---[[
-	Documentation: Initiate the UI if it has not been done before.
-]]
-PVEFrame:HookScript("OnShow", function(self)
-	if(next(dGUI) == nil) then
-		initDungeon();
-		initRaid();
+	local showMoreText = raidFrame:CreateFontString(nil, "ARTWORK", "GameFontNormalTiny2");
+	showMoreText:SetFont(showMoreText:GetFont(), 10);
+	showMoreText:SetPoint("BOTTOMRIGHT", PVEFrame, "BOTTOMRIGHT", -20, 2);
+	showMoreText:SetText("Show Less");
+	local showMoreButton = CreateFrame("Button", nil, raidFrame);
+	showMoreButton:SetNormalTexture("Interface\\Buttons\\Arrow-Up-Up.PNG");
+	showMoreButton:SetPoint("BOTTOMRIGHT", PVEFrame, "BOTTOMRIGHT", 0, 0);
+	showMoreButton:SetSize(18,18);
+	showMoreButton:SetScript("OnClick", function(self)
+		if (raidOptionsFrame:IsShown()) then
+			raidOptionsFrame:Hide();
+			showMoreButton:SetNormalTexture("Interface\\Buttons\\Arrow-Down-Down.PNG");
+			showMoreButton:SetPoint("BOTTOMRIGHT", PVEFrame, "BOTTOMRIGHT", 0, -7);
+			showMoreText:SetText("Show More");
+		else
+			raidOptionsFrame:Show();
+			showMoreButton:SetNormalTexture("Interface\\Buttons\\Arrow-Up-Up.PNG");
+			showMoreButton:SetPoint("BOTTOMRIGHT", PVEFrame, "BOTTOMRIGHT", 0, 0);
+			showMoreText:SetText("Show Less");
+		end
+	end);
+	local showYourClassAmountText = raidOptionsFrame:CreateFontString(nil, "ARTWORK", "GameFontNormalTiny2");
+	showYourClassAmountText:SetFont(showYourClassAmountText:GetFont(), 10);
+	showYourClassAmountText:SetPoint("TOPLEFT", 15, -5);
+	showYourClassAmountText:SetText("Show amount of " .. string.lower(playerClass) .. "s");
+	local showYourClassAmountButton = CreateFrame("CheckButton", nil, raidOptionsFrame, "UICheckButtonTemplate");
+	showYourClassAmountButton:SetSize(20, 20);
+	showYourClassAmountButton:SetPoint("RIGHT", showYourClassAmountText, "RIGHT", 20, -1);
+	showYourClassAmountButton:SetChecked(PGF_ShowYourClassAmount);
+	showYourClassAmountButton:HookScript("OnClick", function(self)
+		if (self:GetChecked()) then
+			PGF_ShowYourClassAmount = true;
+			updateRaidFrameWidth();
+			LFGListSearchPanel_UpdateResults(LFGListFrame.SearchPanel);
+			PlaySound(856);
+		else
+			PGF_ShowYourClassAmount = false;
+			updateRaidFrameWidth();
+			LFGListSearchPanel_UpdateResults(LFGListFrame.SearchPanel);
+			PlaySound(857);
+		end
+	end);
+	local showYourTierAmountText = raidOptionsFrame:CreateFontString(nil, "ARTWORK", "GameFontNormalTiny2");
+	showYourTierAmountText:SetFont(showYourTierAmountText:GetFont(), 10);
+	showYourTierAmountText:SetPoint("TOPLEFT", showYourClassAmountText, "TOPLEFT", 0, -18);
+	showYourTierAmountText:SetText("Show amount of " .. tierSetsMap[playerClass] .. " tier players");
+	local sowYourTierAmountButton = CreateFrame("CheckButton", nil, raidOptionsFrame, "UICheckButtonTemplate");
+	sowYourTierAmountButton:SetSize(20, 20);
+	sowYourTierAmountButton:SetPoint("RIGHT", showYourTierAmountText, "RIGHT", 20, -1);
+	sowYourTierAmountButton:SetChecked(PGF_ShowYourTierAmount);
+	sowYourTierAmountButton:HookScript("OnClick", function(self)
+		if (self:GetChecked()) then
+			PGF_ShowYourTierAmount = true;
+			updateRaidFrameWidth();
+			LFGListSearchPanel_UpdateResults(LFGListFrame.SearchPanel);
+			PlaySound(856);
+		else
+			PGF_ShowYourTierAmount = false;
+			updateRaidFrameWidth();
+			LFGListSearchPanel_UpdateResults(LFGListFrame.SearchPanel);
+			PlaySound(857);
+		end
+	end);
+	local sortingText = raidOptionsFrame:CreateFontString(nil, "ARTWORK", "GameFontNormalTiny2");
+	sortingText:SetFont(sortingText:GetFont(), 10);
+	sortingText:SetPoint("TOPLEFT", showYourTierAmountText, "TOPLEFT", 0, -28);
+	sortingText:SetText("Sort by:");
+	local sortingDropdown = CreateFrame("Button", nil, raidOptionsFrame, "UIDropDownMenuTemplate");
+	sortingDropdown:SetPoint("LEFT", sortingText, "RIGHT", -12, -2);
+	local function Initialize_SortingStates(self, level)
+		local info = UIDropDownMenu_CreateInfo();
+		for k,v in ipairs(sortingRaidStates) do
+			info = UIDropDownMenu_CreateInfo();
+			info.text = v;
+			info.value = v;
+			info.func = PGF_SortingRaidState_OnClick;
+			UIDropDownMenu_AddButton(info, level);
+		end
 	end
-end);
 
+	function PGF_SortingRaidState_OnClick(self)
+		UIDropDownMenu_SetSelectedID(sortingDropdown, self:GetID());
+		PGF_RaidSortingVariable = self:GetID();
+		updateSearch();
+	end
+
+	UIDropDownMenu_SetWidth(sortingDropdown, 120);
+	UIDropDownMenu_SetButtonWidth(sortingDropdown, 120);
+	UIDropDownMenu_JustifyText(sortingDropdown, "CENTER");
+	UIDropDownMenu_Initialize(sortingDropdown, Initialize_SortingStates);
+	UIDropDownMenu_SetSelectedID(sortingDropdown, PGF_RaidSortingVariable);
+
+	rGUI["Sorting"] = {["text"]= sortingText, ["dropDown"] = sortingDropdown};
+end
 local function initChallengeMap()
 	for index, challengeID in ipairs(C_ChallengeMode.GetMapTable()) do
 		local name, id, timeLimit, texture, backgroundTexture = C_ChallengeMode.GetMapUIInfo(challengeID);
@@ -1909,21 +2122,38 @@ local function initBestScores()
 		end
 	end
 end
+--[[
+	Documentation: Initiate the UI if it has not been done before.
+]]
+PVEFrame:HookScript("OnShow", function(self)
+	if(next(dGUI) == nil) then
+		initChallengeMap();		
+		initBestScores();
+		initDungeon();
+		initRaid();
+	end
+end);
+
 
 f:SetScript("OnEvent", function(self, event, ...) 
 	if (event == "PLAYER_LOGIN") then
+		C_MythicPlus.RequestMapInfo();
 		if (PGF_roles == nil) then 
 			local playerRole = GetSpecializationRole(GetSpecialization());
 			PGF_roles = {["TANK"] = false, ["HEALER"] = false, ["DAMAGER"] = false};
 			PGF_roles[playerRole] = true;
 		end
+		if (PGF_RaidSortingVariable == nil) then PGF_RaidSortingVariable = 1; end
 		if (PGF_DontShowDeclinedGroups == nil) then PGF_DontShowDeclinedGroups = false; end
 		if (PGF_DontShowMyClass == nil) then PGF_DontShowMyClass = false; end
-		if (PGF_FilterRemaningRoles == nil) then PGF_FilterRemaningRoles = true; end
+		if (PGF_ShowYourTierAmount == nil) then PGF_ShowYourTierAmount = false; end
+		if (PGF_FilterRemainingRoles == nil) then PGF_FilterRemainingRoles = true; end
 		if (PGF_DetailedDataDisplay == nil) then PGF_DetailedDataDisplay = true; end
+		if (PGF_ShowLeaderIcon == nil) then PGF_ShowLeaderIcon = false; end
 		if (locale ~= "enGB" and locale ~= "enUS") then 
 			PGF_DetailedDataDisplay = false; 
 		end
+		if (PGF_ShowYourClassAmount == nil) then PGF_ShowYourClassAmount = true; end
 		if (PGF_ShowLeaderDungeonKey == nil) then PGF_ShowLeaderDungeonKey = false; end
 		if (PGF_SortingVariable == nil) then PGF_SortingVariable = 1; end
 		if (PGF_OnlyShowMyRole2 == nil) then PGF_OnlyShowMyRole2 = {["TANK"] = false, ["HEALER"] = false, ["DAMAGER"] = false}; end
@@ -1931,8 +2161,6 @@ f:SetScript("OnEvent", function(self, event, ...)
 			C_ChatInfo.SendAddonMessage("PGF_VERSIONCHECK", version, "GUILD");
 		end
 		playerClass = select(2, UnitClass("player"));
-		initChallengeMap();		
-		initBestScores();
 	elseif (event == "GROUP_ROSTER_UPDATE") then
 		if (IsInRaid(LE_PARTY_CATEGORY_INSTANCE) or IsInGroup(LE_PARTY_CATEGORY_INSTANCE)) then
 			C_ChatInfo.SendAddonMessage("PGF_VERSIONCHECK", version, "INSTANCE_CHAT");
@@ -1975,6 +2203,28 @@ end);
 
 f:SetScript("OnShow", function() 
 	if (LFGListFrame.SearchPanel.categoryID) then
+	end
+end);
+
+--[[
+	Documentation: LFGListFrame is automatically setting all points every time it is opened through pressing "I" and not selecting a category. So select a category then hide with "I" and then open again with "I" and it will change size.
+	So to prevent this the size will be changed every time blizzard changes it and they are slow to change it so cant do it on show for some reason. Also this causes the resultlist to break so to fix that we do an updateresults to refresh the list
+	Also need to check for if LFGListFrame.SearchPanel is visible because the categoryID is cached even when going back to the category selector which causes funky UI
+]]
+LFGListFrame:HookScript("OnSizeChanged", function(self)
+	if (LFGListFrame.SearchPanel.categoryID == GROUP_FINDER_CATEGORY_ID_DUNGEONS and LFGListFrame.SearchPanel:IsVisible()) then
+		LFGListFrame:ClearAllPoints(); 
+		LFGListFrame:SetPoint(originalUI["LFGListFrame"].position[1], originalUI["LFGListFrame"].position[2], originalUI["LFGListFrame"].position[3], originalUI["LFGListFrame"].position[4], originalUI["LFGListFrame"].position[5]);
+		LFGListFrame:SetSize(368, LFGListFrame:GetHeight());
+		LFGListSearchPanel_UpdateResults(LFGListFrame.SearchPanel);
+	elseif (LFGListFrame.SearchPanel.categoryID == 3 and LFGListFrame.SearchPanel:IsVisible()) then
+		updateRaidFrameWidth();
+		--[[
+		LFGListFrame:ClearAllPoints(); 
+		LFGListFrame:SetPoint(originalUI["LFGListFrame"].position[1], originalUI["LFGListFrame"].position[2], originalUI["LFGListFrame"].position[3], originalUI["LFGListFrame"].position[4], originalUI["LFGListFrame"].position[5]);
+		LFGListFrame:SetSize(438, LFGListFrame:GetHeight());
+		]]
+		LFGListSearchPanel_UpdateResults(LFGListFrame.SearchPanel);
 	end
 end);
 --[[
@@ -2180,9 +2430,21 @@ local function PGF_LFGListSearchEntry_Update(self)
 	local _, appStatus, pendingStatus, appDuration = C_LFGList.GetApplicationInfo(resultID);
 
 	local isApplication = (appStatus ~= "none" or pendingStatus);
-	--group no longer compatible
-	if (pendingStatus == "applied" and not HasRemainingSlotsForLocalPlayerRole(resultID)) then
+	local searchResultInfo = C_LFGList.GetSearchResultInfo(resultID);
 
+	--group no longer compatible
+	if(self.IncompatibleBG) then
+		self.IncompatibleBG:Hide();
+	else
+		local texture = self:CreateTexture(nil, "OVERLAY");
+		texture:SetColorTexture(0.5,0,0,0.5);
+		texture:SetPoint("TOPLEFT", 0, 0);
+		texture:SetSize(self:GetWidth(), self:GetHeight());
+		texture:Hide();
+		self.IncompatibleBG = texture;
+	end
+	if (appStatus == "applied" and not HasRemainingSlotsForLocalPlayerRole(resultID) and LFGListFrame.SearchPanel.categoryID == GROUP_FINDER_CATEGORY_ID_DUNGEONS) then
+		self.IncompatibleBG:Show();
 	end
 
 	--Update visibility based on whether we're an application or not
@@ -2205,7 +2467,9 @@ local function PGF_LFGListSearchEntry_Update(self)
 		elseif (appStatus == "declined_full") then
 			self.PendingLabel:SetText(LFG_LIST_APP_FULL);
 		elseif (appStatus == "declined") then
-			declinedGroups[resultID] = true;
+			if (searchResultInfo.leaderName and searchResultInfo.leaderName ~= "") then
+				declinedGroups[searchResultInfo.leaderName] = {["activityID"] = searchResultInfo.activityID, ["timeout"] = GetTime()+declineResetTimer};
+			end
 			self.PendingLabel:SetText(LFG_LIST_APP_DECLINED);
 		end
 		self.PendingLabel:SetTextColor(RED_FONT_COLOR.r, RED_FONT_COLOR.g, RED_FONT_COLOR.b);
@@ -2218,6 +2482,9 @@ local function PGF_LFGListSearchEntry_Update(self)
 		self.PendingLabel:Show();
 		self.ExpirationTime:Hide();
 		self.CancelButton:Hide();
+		if (searchResultInfo.leaderName and searchResultInfo.leaderName ~= "") then
+			declinedGroups[searchResultInfo.leaderName] = {["activityID"] = searchResultInfo.activityID, ["timeout"] = GetTime()+declineResetTimer};
+		end
 	elseif (appStatus == "invited") then
 		self.PendingLabel:SetText(LFG_LIST_APP_INVITED);
 		self.PendingLabel:SetTextColor(GREEN_FONT_COLOR.r, GREEN_FONT_COLOR.g, GREEN_FONT_COLOR.b);
@@ -2244,8 +2511,16 @@ local function PGF_LFGListSearchEntry_Update(self)
 		self.ExpirationTime:Show();
 		if (LFGListFrame.SearchPanel.categoryID == GROUP_FINDER_CATEGORY_ID_DUNGEONS) then
 			self.ExpirationTime:SetPoint("LEFT", self.DataDisplay, "LEFT", -30, 0);
+		elseif (LFGListFrame.SearchPanel.categoryID == 3) then
+			local x = -35;
+			if (PGF_ShowYourClassAmount) then
+				x = x - 60;
+			elseif (PGF_ShowYourTierAmount) then
+				x = x - 30;
+			end
+			self.ExpirationTime:SetPoint("LEFT", self.DataDisplay, "LEFT", x, 0);
 		else
-			self.ExpirationTime:SetPoint("LEFT", self.DataDisplay, "LEFT", -50, 0);
+			self.ExpirationTime:SetPoint("LEFT", self.DataDisplay, "LEFT", -35, 0);
 		end
 		self.CancelButton:Show();
 		self.CancelButton:ClearAllPoints();
@@ -2259,11 +2534,10 @@ local function PGF_LFGListSearchEntry_Update(self)
 
 
 	--Change the anchor of the label depending on whether we have the expiration time
-	self.PendingLabel:SetPoint("LEFT", self.DataDisplay, "LEFT", -200, 5);
+	self.PendingLabel:SetPoint("LEFT", self.DataDisplay, "LEFT", -200, 8);
 	self.PendingLabel:SetJustifyH("Center");
 
 
-	local searchResultInfo = C_LFGList.GetSearchResultInfo(resultID);
 	--possible to take the name here and filter it out here if no match?
 	self.resultID = resultID;
 	if (LFGListFrame.SearchPanel.categoryID == GROUP_FINDER_CATEGORY_ID_DUNGEONS) then
@@ -2359,11 +2633,23 @@ local function PGF_LFGListGroupDataDisplayEnumerate_Update(self, numPlayers, dis
 	local p1, p2, p3, p4, p5 = self:GetPoint(1);
 	self:ClearAllPoints();
 	self:SetPoint(p1, p2, p3, -25, p5);
-	for i=1, #self.Icons do
+	if (self.LeaderIcon) then
+		self.LeaderIcon:Hide();
+		self.LeaderIcon:ClearAllPoints();
+	else
+		local texture = self:CreateTexture(nil, "OVERLAY");
+		texture:SetAtlas("groupfinder-icon-leader", false);
+		texture:SetSize(self.Icons[1]:GetWidth()-4, 6);
+		texture:Hide();
+		self.LeaderIcon = texture;
+	end
+	for i = 1, #self.Icons do
 		if (i > numPlayers) then
 			self.Icons[i]:Show();
 			self.Icons[i]:SetDesaturated(disabled);
 			self.Icons[i]:SetAlpha(disabled and 0.5 or 1.0);
+			self.LeaderIcon:SetDesaturated(disabled);
+			self.LeaderIcon:SetAlpha(disabled and 0.5 or 1.0);
 		end
 	end
 	local resultID = self:GetParent():GetParent().resultID;
@@ -2374,16 +2660,25 @@ local function PGF_LFGListGroupDataDisplayEnumerate_Update(self, numPlayers, dis
 	--Note that icons are numbered from right to left
 	for i = 1, searchResults.numMembers do
 		local role, classUniversal, classLocal, spec = C_LFGList.GetSearchResultMemberInfo(resultID, i);
+		local isLeader = false;
+		if (i == 1) then	
+			isLeader = true;
+		end
 		--spec = spec:gsub("%s","");
-		table.insert(players, {["role"] = role, ["class"] = classUniversal, ["spec"] = spec});
+		table.insert(players, {["role"] = role, ["class"] = classUniversal, ["spec"] = spec, ["isLeader"] = isLeader});
 	end
 	table.sort(players, sortRoles);
 	--Another implementation for evokers
 	for i = 1, searchResults.numMembers do
+		if (self.LeaderIcon and players[i].isLeader and PGF_ShowLeaderIcon) then
+			self.LeaderIcon:SetPoint("TOP", self.Icons[6-i], "TOP", -1, 7);
+			self.LeaderIcon:Show();
+		end
 		if (true or players[i].class == "EVOKER") then
 			if (PGF_DetailedDataDisplay) then
 				self.Icons[6-i]:SetTexture(select(4, GetSpecializationInfoByID(classSpecilizationMap[players[i].class][players[i].spec])));
 				self.Icons[6-i]:SetTexCoord(0,1,0,1);
+				--spec-thumbnail-evoker-preservation?
 			else
 				self.Icons[6-i]:SetTexture("Interface\\AddOns\\PGFinder\\Res\\" .. players[i].class .. "_" .. players[i].role .. ".tga");
 			end
@@ -2407,6 +2702,23 @@ end
 
 hooksecurefunc("LFGListGroupDataDisplayEnumerate_Update", PGF_LFGListGroupDataDisplayEnumerate_Update);
 
+local function restoreOriginalRoleCountUI(self)
+	self:ClearAllPoints();
+	self.TankIcon:ClearAllPoints();
+	self.HealerIcon:ClearAllPoints();
+	self.DamagerIcon:ClearAllPoints();
+	self.TankCount:ClearAllPoints();
+	self.HealerCount:ClearAllPoints();
+	self.DamagerCount:ClearAllPoints();
+	self:SetPoint(originalRoleCountUI[self].main[1], originalRoleCountUI[self].main[2], originalRoleCountUI[self].main[3], originalRoleCountUI[self].main[4], originalRoleCountUI[self].main[5]);
+	self.TankIcon:SetPoint(originalRoleCountUI[self].tankIcon[1], originalRoleCountUI[self].tankIcon[2], originalRoleCountUI[self].tankIcon[3], originalRoleCountUI[self].tankIcon[4], originalRoleCountUI[self].tankIcon[5]);
+	self.HealerIcon:SetPoint(originalRoleCountUI[self].healerIcon[1], originalRoleCountUI[self].healerIcon[2], originalRoleCountUI[self].healerIcon[3], originalRoleCountUI[self].healerIcon[4], originalRoleCountUI[self].healerIcon[5]);
+	self.DamagerIcon:SetPoint(originalRoleCountUI[self].damagerIcon[1], originalRoleCountUI[self].damagerIcon[2], originalRoleCountUI[self].damagerIcon[3], originalRoleCountUI[self].damagerIcon[4], originalRoleCountUI[self].damagerIcon[5]);
+	self.TankCount:SetPoint(originalRoleCountUI[self].tankCount[1], originalRoleCountUI[self].tankCount[2], originalRoleCountUI[self].tankCount[3], originalRoleCountUI[self].tankCount[4], originalRoleCountUI[self].tankCount[5]);
+	self.HealerCount:SetPoint(originalRoleCountUI[self].healerCount[1], originalRoleCountUI[self].healerCount[2], originalRoleCountUI[self].healerCount[3], originalRoleCountUI[self].healerCount[4], originalRoleCountUI[self].healerCount[5]);
+	self.DamagerCount:SetPoint(originalRoleCountUI[self].damagerCount[1], originalRoleCountUI[self].damagerCount[2], originalRoleCountUI[self].damagerCount[3], originalRoleCountUI[self].damagerCount[4], originalRoleCountUI[self].damagerCount[5]);
+end
+
 --[[
 	Documentation: The function is a blizzard function that decides how to display the displayData for groups just showing how many of each role there are numerically (i.e raid groups)
 	The hooked version moves the displayData to the left to fit a cancel button to the right of it.
@@ -2417,32 +2729,161 @@ hooksecurefunc("LFGListGroupDataDisplayEnumerate_Update", PGF_LFGListGroupDataDi
 ]]
 
 local function PGF_LFGListGroupDataDisplayRoleCount_Update(self, displayData, disabled)
-	self:SetSize(125, 24);
-	local p1, p2, p3, p4, p5 = self:GetPoint(1);
-	self:ClearAllPoints();
-	self:SetPoint(p1, p2, p3, -25, p5);
-	self.TankCount:SetText(displayData.TANK);
-	self.HealerCount:SetText(displayData.HEALER);
-	self.DamagerCount:SetText(displayData.DAMAGER);
+	if (originalRoleCountUI[self] == nil) then
+		local tAnchor, tParent, tOffsetAnchor, tOffsetX, tOffsetY = self.TankIcon:GetPoint();
+		local hAnchor, hParent, hOffsetAnchor, hOffsetX, hOffsetY = self.HealerIcon:GetPoint();
+		local dAnchor, dParent, dOffsetAnchor, dOffsetX, dOffsetY = self.DamagerIcon:GetPoint();
+		local tCAnchor, tCParent, tCOffsetAnchor, tCOffsetX, tCOffsetY = self.TankCount:GetPoint();
+		local hCAnchor, hCParent, hCOffsetAnchor, hCOffsetX, hCOffsetY = self.HealerCount:GetPoint();
+		local dCAnchor, dCParent, dCOffsetAnchor, dCOffsetX, dCOffsetY = self.DamagerCount:GetPoint();
+		local anchor, parent, offsetAnchor, offsetX, offsetY = self:GetPoint();
+		originalRoleCountUI[self] = {
+			["tankIcon"] = {tAnchor, tParent, tOffsetAnchor, tOffsetX, tOffsetY},
+			["healerIcon"] = {hAnchor, hParent, hOffsetAnchor, hOffsetX, hOffsetY},
+			["damagerIcon"] = {dAnchor, dParent, dOffsetAnchor, dOffsetX, dOffsetY},
+			["tankCount"] = {tCAnchor, tCParent, tCOffsetAnchor, tCOffsetX, tCOffsetY},
+			["healerCount"] = {hCAnchor, hCParent, hCOffsetAnchor, hCOffsetX, hCOffsetY},
+			["damagerCount"] = {dCAnchor, dCParent, dCOffsetAnchor, dCOffsetX, dCOffsetY},
+			["main"] = {anchor, parent, offsetAnchor, offsetX-15, offsetY},
+		};
+	end
+	if (LFGListFrame.SearchPanel.categoryID == 3 and (PGF_ShowYourClassAmount or PGF_ShowYourTierAmount)) then
+	--	self:SetSize(165, 24);
+		local p1, p2, p3, p4, p5 = self:GetPoint(1);
+		self:ClearAllPoints();
+		self:SetPoint(p1, p2, p3, -75, p5);
+		self.TankCount:SetText(displayData.TANK);
+		self.HealerCount:SetText(displayData.HEALER);
+		self.DamagerCount:SetText(displayData.DAMAGER);
+
+		--Update for the disabled state
+		local r = disabled and LFG_LIST_DELISTED_FONT_COLOR.r or HIGHLIGHT_FONT_COLOR.r;
+		local g = disabled and LFG_LIST_DELISTED_FONT_COLOR.g or HIGHLIGHT_FONT_COLOR.g;
+		local b = disabled and LFG_LIST_DELISTED_FONT_COLOR.b or HIGHLIGHT_FONT_COLOR.b;
+		self.TankCount:SetTextColor(r, g, b);
+		self.HealerCount:SetTextColor(r, g, b);
+		self.DamagerCount:SetTextColor(r, g, b);
+		self.TankIcon:SetDesaturated(disabled);
+		self.HealerIcon:SetDesaturated(disabled);
+		self.DamagerIcon:SetDesaturated(disabled);
+		self.TankIcon:SetAlpha(disabled and 0.5 or 0.70);
+		self.HealerIcon:SetAlpha(disabled and 0.5 or 0.70);
+		self.DamagerIcon:SetAlpha(disabled and 0.5 or 0.70);
+
+		self.TankIcon:ClearAllPoints();
+		self.TankIcon:SetPoint("LEFT", 50, 0);
+		self.HealerIcon:ClearAllPoints();
+		self.HealerIcon:SetPoint("RIGHT", self.TankIcon, "RIGHT", 35, 0);
+		self.DamagerIcon:ClearAllPoints();
+		self.DamagerIcon:SetPoint("RIGHT", self.HealerIcon, "RIGHT", 35, 0);
+		self.TankCount:ClearAllPoints();
+		self.TankCount:SetPoint("LEFT", self.TankIcon, "LEFT", -14, 0);
+		self.HealerCount:ClearAllPoints();
+		self.HealerCount:SetPoint("LEFT", self.HealerIcon, "LEFT", -14, 0);
+		self.DamagerCount:ClearAllPoints();
+		self.DamagerCount:SetPoint("LEFT", self.DamagerIcon, "LEFT", -14, 0);
+
+		local tierCount, classCount, tierText = getTierCount(nil, displayData);
+		if (self.ClassIcon) then
+			self.TierText:SetTextColor(r, g, b);
+			self.ClassIcon:SetDesaturated(disabled);
+			self.TierIcon:SetDesaturated(disabled);
+			self.ClassIcon:SetAlpha(disabled and 0.5 or 0.70);
+			self.TierIcon:SetAlpha(disabled and 0.5 or 0.70);
+			if (disabled or RAID_CLASS_COLORS[playerClass] == nil) then
+				self.ClassText:SetTextColor(LFG_LIST_DELISTED_FONT_COLOR.r, LFG_LIST_DELISTED_FONT_COLOR.g, LFG_LIST_DELISTED_FONT_COLOR.b);
+				self.ClassText:SetText(classCount);
+			else
+				self.ClassText:SetText(RAID_CLASS_COLORS[playerClass]:WrapTextInColorCode(classCount));
+			end
+			if (PGF_ShowYourClassAmount) then
+				self.ClassText:ClearAllPoints();
+				self.ClassText:SetPoint("LEFT", self.TankIcon, "LEFT", -40, 0);
+				self.ClassText:Show();
+
+				self.ClassIcon:ClearAllPoints();
+				self.ClassIcon:SetPoint("RIGHT", self.ClassText, "RIGHT", 18, 0);
+				self.ClassIcon:Show();
+			else
+				self.ClassText:Hide();
+				self.ClassIcon:Hide();
+			end
+
+			if (PGF_ShowYourTierAmount) then
+				self.TierText:ClearAllPoints();
+				self.TierText:SetPoint("RIGHT", self.DamagerIcon, "RIGHT", 14, 0);
+				self.TierText:SetText(tierCount);
+				self.TierText:Show();
+
+				self.TierIcon:ClearAllPoints();
+				self.TierIcon:SetPoint("RIGHT", self.TierText, "RIGHT", 18, 0);
+				self.TierIcon:Show();
+
+				self.TierTextInfo:ClearAllPoints();
+				self.TierTextInfo:SetPoint("TOP", self.TierIcon, "TOP", 0, 8);
+				self.TierTextInfo:SetText(tierText);
+				--self.TierTextInfo:Show();
+			else
+				self.TierText:Hide();
+				self.TierIcon:Hide();
+				self.TierTextInfo:Hide();
+			end
+
+		else
+			local fontName, fontHeight, fontFlags = self.DamagerCount:GetFont()
+			local classTexture = self:CreateTexture(nil, "OVERLAY");
+			local atlas = C_Texture.GetAtlasInfo("classicon-"..playerClass);
+			classTexture:SetSize(self.TankIcon:GetWidth(), self.TankIcon:GetHeight());
+			classTexture:SetAtlas("groupfinder-icon-class-"..playerClass, false);
+			if (playerClass == "EVOKER") then
+				classTexture:SetAtlas("classicon-evoker", false);
+			end
+			classTexture:Hide();
+			self.ClassIcon = classTexture;
+
+			local classText = self:CreateFontString(nil, "ARTWORK", "GameFontNormalTiny2");
+			classText:SetFont(fontName, fontHeight, fontFlags);
+			classText:Hide();
+			self.ClassText = classText;
+
+			local tierText = self:CreateFontString(nil, "ARTWORK", "GameFontNormalTiny2");
+			tierText:SetFont(fontName, fontHeight, fontFlags);
+			tierText:SetTextColor(1,1,1,1);
+			tierText:Hide();
+			self.TierText = tierText;
+
+			local tierTextInfo = self:CreateFontString(nil, "ARTWORK", "GameFontNormalTiny2");
+			tierTextInfo:SetFont(tierText:GetFont(), 8);
+			--tierText:SetTextColor(1,1,1,1);
+			tierTextInfo:Hide();
+			self.TierTextInfo = tierTextInfo;
+
+			local tierTexture = self:CreateTexture(nil, "OVERLAY");
+			--tierTexture:SetTexture("Interface\\Icons\\inv_10_jewelcrafting_gem3primal_fire_cut_blue");
+			SetPortraitToTexture(tierTexture, "Interface\\Icons\\inv_10_jewelcrafting_gem3primal_fire_cut_blue");
+			tierTexture:SetSize(self.DamagerIcon:GetWidth(), self.DamagerIcon:GetHeight());
+			tierTexture:Hide();
+			self.TierIcon = tierTexture;
+		end
+	else
+		if (self.ClassIcon) then
+			self.ClassText:Hide();
+			self.ClassIcon:Hide();
+			self.TierText:Hide();
+			self.TierIcon:Hide();
+			self.TierTextInfo:Hide();
+		end
+		local p1, p2, p3, p4, p5 = self:GetPoint(1);
+		self:ClearAllPoints();
+		self:SetPoint(p1, p2, p3, p4, p5);
+		restoreOriginalRoleCountUI(self);
+	end
+
 	local resultID = self:GetParent():GetParent().resultID;
 	if (not disabled) then
 		--print(self.Name)
 		--print(getTierCount(nil, displayData));
 	end
-
-	--Update for the disabled state
-	local r = disabled and LFG_LIST_DELISTED_FONT_COLOR.r or HIGHLIGHT_FONT_COLOR.r;
-	local g = disabled and LFG_LIST_DELISTED_FONT_COLOR.g or HIGHLIGHT_FONT_COLOR.g;
-	local b = disabled and LFG_LIST_DELISTED_FONT_COLOR.b or HIGHLIGHT_FONT_COLOR.b;
-	self.TankCount:SetTextColor(r, g, b);
-	self.HealerCount:SetTextColor(r, g, b);
-	self.DamagerCount:SetTextColor(r, g, b);
-	self.TankIcon:SetDesaturated(disabled);
-	self.HealerIcon:SetDesaturated(disabled);
-	self.DamagerIcon:SetDesaturated(disabled);
-	self.TankIcon:SetAlpha(disabled and 0.5 or 0.70);
-	self.HealerIcon:SetAlpha(disabled and 0.5 or 0.70);
-	self.DamagerIcon:SetAlpha(disabled and 0.5 or 0.70);
 end
 
 hooksecurefunc("LFGListGroupDataDisplayRoleCount_Update", PGF_LFGListGroupDataDisplayRoleCount_Update);
@@ -2497,9 +2938,12 @@ end
 
 	Returns (int) - the amount players in the group playing the class "class"
 ]]
-local function getClassCount(class, searchResults, resultID)
+local function getClassCount(class, searchResult, resultID)
 	local count = 0;
-	for i = 1, searchResults.numMembers do
+	if (searchResult == nil) then
+		searchResult = C_LFGList.GetSearchResultInfo(resultID);
+	end
+	for i = 1, searchResult.numMembers do
 		local role, classUniversal, classLocal, spec = C_LFGList.GetSearchResultMemberInfo(resultID, i);
 		if (class == classUniversal) then
 			count = count + 1;
@@ -2519,7 +2963,7 @@ end
 ]]
 function LFGListSearchPanel_UpdateResultList(self)
 	if (LFGListFrame.SearchPanel.categoryID == GROUP_FINDER_CATEGORY_ID_DUNGEONS) then
-		if(next(selectedInfo.dungeons) == nil and selectedInfo["leaderScore"] == 0 and not PGF_FilterRemaningRoles and not isAnyValueTrue(PGF_OnlyShowMyRole2) and not PGF_DontShowMyClass and not PGF_DontShowDeclinedGroups) then
+		if(next(selectedInfo.dungeons) == nil and selectedInfo["leaderScore"] == 0 and not PGF_FilterRemainingRoles and not isAnyValueTrue(PGF_OnlyShowMyRole2) and not PGF_DontShowMyClass and not PGF_DontShowDeclinedGroups) then
 			LFGListFrame.SearchPanel.RefreshButton:SetScript("OnClick", function() end);
 			LFGListFrame.SearchPanel.RefreshButton.Icon:SetTexture("Interface\\AddOns\\PGFinder\\Res\\RedRefresh.tga");
 			searchAvailable = false;
@@ -2534,7 +2978,7 @@ function LFGListSearchPanel_UpdateResultList(self)
 			LFGListUtil_SortSearchResults(self.results);
 			LFGListSearchPanel_UpdateResults(self);
 			updatePerformanceText(self.totalResults, GetTimePreciseSec());
-			declinedGroups = {};
+			--declinedGroups = {};
 			return true;
 		end
 		if (slowSearch == false) then
@@ -2557,34 +3001,37 @@ function LFGListSearchPanel_UpdateResultList(self)
 				local leaderDungeonScoreInfo = searchResults.leaderDungeonScoreInfo;
 				local requiredDungeonScore = searchResults.requiredDungeonScore;
 				local _, appStatus, pendingStatus, appDuration = C_LFGList.GetApplicationInfo(self.results[i]);
+				if (leaderName == nil) then
+					leaderName = "";
+				end
 				if (leaderOverallDungeonScore == nil) then
 					leaderOverallDungeonScore = 0;
+				end
+				if (declinedGroups[leaderName] and declinedGroups[leaderName].timeout <= GetTime()) then
+					declinedGroups[leaderName] = nil;
 				end
 				if (appStatus == "applied") then
 					table.insert(newResults, self.results[i]);
 				elseif (PGF_DontShowDeclinedGroups) then
-					if (declinedGroups[resultID] == nil and (PGF_DontShowMyClass == false or getClassCount(playerClass, searchResults, self.results[i]) == 0) and (next(selectedInfo.dungeons) == nil or selectedInfo.dungeons[activityID]) and (requiredDungeonScore == nil or C_ChallengeMode.GetOverallDungeonScore() >= requiredDungeonScore) and (selectedInfo["leaderScore"] == 0 or selectedInfo["leaderScore"] < leaderOverallDungeonScore) and ((not PGF_FilterRemaningRoles and not isAnyValueTrue(PGF_OnlyShowMyRole2)) or HasRemainingSlotsForLocalPlayerRole(self.results[i], true))) then
+					if ((declinedGroups[leaderName] == nil or declinedGroups[leaderName].activityID ~= activityID) and (PGF_DontShowMyClass == false or getClassCount(playerClass, searchResults, self.results[i]) == 0) and (next(selectedInfo.dungeons) == nil or selectedInfo.dungeons[activityID]) and (requiredDungeonScore == nil or C_ChallengeMode.GetOverallDungeonScore() >= requiredDungeonScore) and (selectedInfo["leaderScore"] == 0 or selectedInfo["leaderScore"] < leaderOverallDungeonScore) and ((not PGF_FilterRemainingRoles and not isAnyValueTrue(PGF_OnlyShowMyRole2)) or HasRemainingSlotsForLocalPlayerRole(self.results[i], true))) then
 						table.insert(newResults, self.results[i]);
 					end
 				elseif (PGF_DontShowMyClass) then
-					if (getClassCount(playerClass, searchResults, self.results[i]) == 0 and (next(selectedInfo.dungeons) == nil or selectedInfo.dungeons[activityID]) and (requiredDungeonScore == nil or C_ChallengeMode.GetOverallDungeonScore() >= requiredDungeonScore) and (selectedInfo["leaderScore"] == 0 or selectedInfo["leaderScore"] < leaderOverallDungeonScore) and ((not PGF_FilterRemaningRoles and not isAnyValueTrue(PGF_OnlyShowMyRole2)) or HasRemainingSlotsForLocalPlayerRole(self.results[i], true))) then
+					if (getClassCount(playerClass, searchResults, self.results[i]) == 0 and (next(selectedInfo.dungeons) == nil or selectedInfo.dungeons[activityID]) and (requiredDungeonScore == nil or C_ChallengeMode.GetOverallDungeonScore() >= requiredDungeonScore) and (selectedInfo["leaderScore"] == 0 or selectedInfo["leaderScore"] < leaderOverallDungeonScore) and ((not PGF_FilterRemainingRoles and not isAnyValueTrue(PGF_OnlyShowMyRole2)) or HasRemainingSlotsForLocalPlayerRole(self.results[i], true))) then
 						table.insert(newResults, self.results[i]);
 					end
 				elseif (next(selectedInfo.dungeons) ~= nil) then
-					if (selectedInfo.dungeons[activityID] and (requiredDungeonScore == nil or C_ChallengeMode.GetOverallDungeonScore() >= requiredDungeonScore) and (selectedInfo["leaderScore"] == 0 or selectedInfo["leaderScore"] < leaderOverallDungeonScore) and ((not PGF_FilterRemaningRoles and not isAnyValueTrue(PGF_OnlyShowMyRole2)) or HasRemainingSlotsForLocalPlayerRole(self.results[i], true))) then
+					if (selectedInfo.dungeons[activityID] and (requiredDungeonScore == nil or C_ChallengeMode.GetOverallDungeonScore() >= requiredDungeonScore) and (selectedInfo["leaderScore"] == 0 or selectedInfo["leaderScore"] < leaderOverallDungeonScore) and ((not PGF_FilterRemainingRoles and not isAnyValueTrue(PGF_OnlyShowMyRole2)) or HasRemainingSlotsForLocalPlayerRole(self.results[i], true))) then
 						table.insert(newResults, self.results[i]);
 					end
 				elseif (selectedInfo["leaderScore"] > 0) then
-					if ((requiredDungeonScore == nil or C_ChallengeMode.GetOverallDungeonScore() >= requiredDungeonScore) and selectedInfo["leaderScore"] < leaderOverallDungeonScore and ((not PGF_FilterRemaningRoles and not isAnyValueTrue(PGF_OnlyShowMyRole2)) or HasRemainingSlotsForLocalPlayerRole(self.results[i], true))) then
+					if ((requiredDungeonScore == nil or C_ChallengeMode.GetOverallDungeonScore() >= requiredDungeonScore) and selectedInfo["leaderScore"] < leaderOverallDungeonScore and ((not PGF_FilterRemainingRoles and not isAnyValueTrue(PGF_OnlyShowMyRole2)) or HasRemainingSlotsForLocalPlayerRole(self.results[i], true))) then
 						table.insert(newResults, self.results[i]);
 					end
-				elseif (PGF_FilterRemaningRoles or isAnyValueTrue(PGF_OnlyShowMyRole2)) then
+				elseif (PGF_FilterRemainingRoles or isAnyValueTrue(PGF_OnlyShowMyRole2)) then
 					if ((requiredDungeonScore == nil or C_ChallengeMode.GetOverallDungeonScore() >= requiredDungeonScore) and HasRemainingSlotsForLocalPlayerRole(self.results[i], true)) then
 						table.insert(newResults, self.results[i]);
 					end
-				end
-				if (isDelisted and declinedGroups[resultID]) then
-					declinedGroups[resultID] = nil;
 				end
 			end
 			LFGListUtil_SortSearchResults(newResults);
@@ -2876,19 +3323,51 @@ function LFGListUtil_SortSearchResultsCB(id1, id2)
 	if (hasRemainingRole1 ~= hasRemainingRole2) then
 		return hasRemainingRole1;
 	end
-	if (PGF_SortingVariable == 1) then
-		if (result1.age ~= result2.age) then
-			return result1.age < result2.age;
+	if (LFGListFrame.SearchPanel.categoryID == GROUP_FINDER_CATEGORY_ID_DUNGEONS) then
+		if (PGF_SortingVariable == 1) then
+			if (result1.age ~= result2.age) then
+				return result1.age < result2.age;
+			end
+		elseif (PGF_SortingVariable == 2) then
+			if (result1.leaderOverallDungeonScore == nil) then
+				result1.leaderOverallDungeonScore = 0;
+			end
+			if (result2.leaderOverallDungeonScore == nil) then
+				result2.leaderOverallDungeonScore = 0;
+			end
+			if (result1.leaderOverallDungeonScore ~= result2.leaderOverallDungeonScore) then
+				return result1.leaderOverallDungeonScore > result2.leaderOverallDungeonScore;
+			end
 		end
-	elseif (PGF_SortingVariable == 2) then
-		if (result1.leaderOverallDungeonScore == nil) then
-			result1.leaderOverallDungeonScore = 0;
-		end
-		if (result2.leaderOverallDungeonScore == nil) then
-			result2.leaderOverallDungeonScore = 0;
-		end
-		if (result1.leaderOverallDungeonScore ~= result2.leaderOverallDungeonScore) then
-			return result1.leaderOverallDungeonScore > result2.leaderOverallDungeonScore;
+	elseif (LFGListFrame.SearchPanel.categoryID == 3) then
+		if (PGF_RaidSortingVariable == 1) then
+			if (result1.age ~= result2.age) then
+				return result1.age < result2.age;
+			end
+		elseif (PGF_RaidSortingVariable == 2) then
+			local classes1 = getClassCount(playerClass, result1, id1);
+			local classes2 = getClassCount(playerClass, result2, id2);
+			if (classes1 ~= classes2) then
+				return classes1 < classes2;
+			end
+		elseif (PGF_RaidSortingVariable == 3) then
+			local classes1 = getClassCount(playerClass, result1, id1);
+			local classes2 = getClassCount(playerClass, result2, id2);
+			if (classes1 ~= classes2) then
+				return classes1 > classes2;
+			end
+		elseif (PGF_RaidSortingVariable == 4) then
+			local tierClasses1 = getTierCountBySearchResult(playerClass, result1, id1);
+			local tierClasses2 = getTierCountBySearchResult(playerClass, result2, id2);
+			if (tierClasses1 ~= tierClasses2) then
+				return tierClasses1 < tierClasses2;
+			end
+		elseif (PGF_RaidSortingVariable == 5) then
+			local tierClasses1 = getTierCountBySearchResult(playerClass, result1, id1);
+			local tierClasses2 = getTierCountBySearchResult(playerClass, result2, id2);
+			if (tierClasses1 ~= tierClasses2) then
+				return tierClasses1 > tierClasses2;
+			end
 		end
 	end
 	if (result1.age ~= result2.age) then
