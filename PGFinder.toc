@@ -18,6 +18,8 @@
 ## SavedVariablesPerCharacter: PGF_ShowYourClassAmount
 ## SavedVariablesPerCharacter: PGF_RaidSortingVariable
 ## SavedVariablesPerCharacter: PGF_ShowYourTierAmount
+## SavedVariablesPerCharacter: PGF_ShowDungeonOptionsFrame
+## SavedVariablesPerCharacter: PGF_ShowRaidOptionsFrame
 Localization\Localization.enUS.lua
 ActivityDatabase.lua
 PGF.lua

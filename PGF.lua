@@ -782,6 +782,7 @@ raidFrame:Hide();
 
 local raidOptionsFrame = CreateFrame("Frame", nil, raidFrame, BackdropTemplateMixin and "BackdropTemplate");
 raidOptionsFrame:SetSize(242,140);
+
 --C_LFGList.GetSearchResultMemberInfo(resultID, playerIndex); returns: [1] = role, [2] = classUNIVERSAL, [3] = classLocal, [4] = spec
 
 f:RegisterEvent("PLAYER_LOGIN");
@@ -1630,18 +1631,20 @@ local function initDungeon()
 	local showMoreText = dungeonFrame:CreateFontString(nil, "ARTWORK", "GameFontNormalTiny2");
 	showMoreText:SetFont(showMoreText:GetFont(), 10);
 	showMoreText:SetPoint("BOTTOMRIGHT", PVEFrame, "BOTTOMRIGHT", -20, 2);
-	showMoreText:SetText("Show Less");
+	showMoreText:SetText(PGF_ShowDungeonOptionsFrame and "Show Less" or "Show More");
 	local showMoreButton = CreateFrame("Button", nil, dungeonFrame);
 	showMoreButton:SetNormalTexture("Interface\\Buttons\\Arrow-Up-Up.PNG");
 	showMoreButton:SetPoint("BOTTOMRIGHT", PVEFrame, "BOTTOMRIGHT", 0, 0);
 	showMoreButton:SetSize(18,18);
 	showMoreButton:SetScript("OnClick", function(self)
 		if (dungeonOptionsFrame:IsShown()) then
+			PGF_ShowDungeonOptionsFrame = false;
 			dungeonOptionsFrame:Hide();
 			showMoreButton:SetNormalTexture("Interface\\Buttons\\Arrow-Down-Down.PNG");
 			showMoreButton:SetPoint("BOTTOMRIGHT", PVEFrame, "BOTTOMRIGHT", 0, -7);
 			showMoreText:SetText("Show More");
 		else
+			PGF_ShowDungeonOptionsFrame = true;
 			dungeonOptionsFrame:Show();
 			showMoreButton:SetNormalTexture("Interface\\Buttons\\Arrow-Up-Up.PNG");
 			showMoreButton:SetPoint("BOTTOMRIGHT", PVEFrame, "BOTTOMRIGHT", 0, 0);
@@ -1992,7 +1995,7 @@ local function initRaid()
 	local showMoreText = raidFrame:CreateFontString(nil, "ARTWORK", "GameFontNormalTiny2");
 	showMoreText:SetFont(showMoreText:GetFont(), 10);
 	showMoreText:SetPoint("BOTTOMRIGHT", PVEFrame, "BOTTOMRIGHT", -20, 2);
-	showMoreText:SetText("Show Less");
+	showMoreText:SetText(PGF_ShowRaidOptionsFrame and "Show Less" or "Show More");
 	local showMoreButton = CreateFrame("Button", nil, raidFrame);
 	showMoreButton:SetNormalTexture("Interface\\Buttons\\Arrow-Up-Up.PNG");
 	showMoreButton:SetPoint("BOTTOMRIGHT", PVEFrame, "BOTTOMRIGHT", 0, 0);
@@ -2000,10 +2003,12 @@ local function initRaid()
 	showMoreButton:SetScript("OnClick", function(self)
 		if (raidOptionsFrame:IsShown()) then
 			raidOptionsFrame:Hide();
+			PGF_ShowRaidOptionsFrame = false;
 			showMoreButton:SetNormalTexture("Interface\\Buttons\\Arrow-Down-Down.PNG");
 			showMoreButton:SetPoint("BOTTOMRIGHT", PVEFrame, "BOTTOMRIGHT", 0, -7);
 			showMoreText:SetText("Show More");
 		else
+			PGF_ShowRaidOptionsFrame = true;
 			raidOptionsFrame:Show();
 			showMoreButton:SetNormalTexture("Interface\\Buttons\\Arrow-Up-Up.PNG");
 			showMoreButton:SetPoint("BOTTOMRIGHT", PVEFrame, "BOTTOMRIGHT", 0, 0);
@@ -2143,6 +2148,8 @@ f:SetScript("OnEvent", function(self, event, ...)
 			PGF_roles = {["TANK"] = false, ["HEALER"] = false, ["DAMAGER"] = false};
 			PGF_roles[playerRole] = true;
 		end
+		if (PGF_ShowDungeonOptionsFrame == nil) then PGF_ShowDungeonOptionsFrame = true; end
+		if (PGF_ShowRaidOptionsFrame == nil) then PGF_ShowRaidOptionsFrame = true; end
 		if (PGF_RaidSortingVariable == nil) then PGF_RaidSortingVariable = 1; end
 		if (PGF_DontShowDeclinedGroups == nil) then PGF_DontShowDeclinedGroups = false; end
 		if (PGF_DontShowMyClass == nil) then PGF_DontShowMyClass = false; end
@@ -2159,6 +2166,12 @@ f:SetScript("OnEvent", function(self, event, ...)
 		if (PGF_OnlyShowMyRole2 == nil) then PGF_OnlyShowMyRole2 = {["TANK"] = false, ["HEALER"] = false, ["DAMAGER"] = false}; end
 		if IsInGuild() then
 			C_ChatInfo.SendAddonMessage("PGF_VERSIONCHECK", version, "GUILD");
+		end
+		if (not PGF_ShowDungeonOptionsFrame) then
+			dungeonOptionsFrame:Hide();
+		end
+		if (not PGF_ShowRaidOptionsFrame) then
+			raidOptionsFrame:Hide();
 		end
 		playerClass = select(2, UnitClass("player"));
 	elseif (event == "GROUP_ROSTER_UPDATE") then
