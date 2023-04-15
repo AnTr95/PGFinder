@@ -2511,11 +2511,9 @@ local function PGF_LFGListSearchEntry_Update(self)
 		texture:SetSize(16, 16);
 		texture:SetTexture("Interface\\AddOns\\PGFinder\\Res\\NewGroup.tga");
 		self:HookScript("OnEnter", function(self) 
-			print("hooking onUpdate to the onEnter script")
 			self:HookScript("OnUpdate", function() searchEntry_OnUpdate(self, texture); end);
 		end);
 		self:HookScript("OnLeave", function(self)
-			print("removing the hook")
 			self:SetScript("OnUpdate", nil);
 			if (realTimeApplication(self)) then
 				self:SetScript("OnUpdate", LFGListSearchEntry_UpdateExpiration);
