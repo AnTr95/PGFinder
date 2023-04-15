@@ -893,16 +893,16 @@ local function ResolveCategoryFilters(categoryID, filters)
 	return filters;
 end
 
-local function isNewGroup(leaderName, activityID)
+local function isNewGroup(leaderName, activityID, prevSearchTime)
 	if (leaderName == nil or activityID == nil or leaderName == nil) then
 		return true;
 	end
-	if (newGroups[leaderName] and newGroups[leaderName] == activityID) then
+	if (newGroups[leaderName] and newGroups[leaderName].ActivityID == activityID and prevSearchTime ~= newGroups[leaderName].PrevSearchTime) then
 		return false;
-	else
-		newGroups[leaderName] = activityID;
-		return true;
+	elseif (newGroups[leaderName] == nil or newGroups[leaderName].ActivityID ~= activityID) then
+		newGroups[leaderName] = {["ActivityID"] = activityID, ["PrevSearchTime"] = prevSearchTime};
 	end
+	return true;
 end
 
 --[[
@@ -2462,7 +2462,7 @@ local function realTimeApplication(self)
 end
 local function searchEntry_OnUpdate(self, texture)
 	if (texture:IsMouseOver() and texture:IsShown()) then
-		GameTooltip:SetOwner(texture);
+		GameTooltip:SetOwner(texture, "ANCHOR_TOPLEFT");
 		GameTooltip:SetText("New Group");
 		GameTooltip:Show();
 	elseif (texture:IsShown() and not texture:IsMouseOver()) then
@@ -2508,8 +2508,8 @@ local function PGF_LFGListSearchEntry_Update(self)
 	else
 		local texture = self:CreateTexture(nil, "OVERLAY");
 		texture:SetPoint("TOPLEFT", 0, 0);
-		texture:SetSize(16, 16);
-		texture:SetTexture("Interface\\AddOns\\PGFinder\\Res\\NewGroup.tga");
+		texture:SetSize(10, 10);
+		--texture:SetTexture("Interface\\AddOns\\PGFinder\\Res\\NewGroup.tga");
 		self:HookScript("OnEnter", function(self) 
 			self:HookScript("OnUpdate", function() searchEntry_OnUpdate(self, texture); end);
 		end);
@@ -2520,11 +2520,11 @@ local function PGF_LFGListSearchEntry_Update(self)
 				LFGListSearchEntry_UpdateExpiration(self);
 			end
 		end);
-		--texture:SetAtlas("groupfinder-eye-highlight");
+		texture:SetAtlas("groupfinder-eye-highlight");
 		texture:Hide();
 		self.NewIcon = texture;
 	end
-	if (GetTime()-searchResultInfo.age > prevSearchTime) then
+	if ((isNewGroup(searchResultInfo.leaderName, searchResultInfo.activityID, prevSearchTime) or GetTime()-searchResultInfo.age > prevSearchTime or searchResultInfo.leaderName == nil or searchResultInfo.leaderName == "") and (prevSearchTime ~= 0 and currentSearchTime ~= 0)) then
 		self.NewIcon:Show();
 	end
 	--[[
