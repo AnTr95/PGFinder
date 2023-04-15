@@ -90,7 +90,8 @@ local ticks = 0;
 local addonIndex = 0;
 local debugTicks = 0;
 local debugPerformanceReset = 5;
-local lastSearchTime = 0;
+local currentSearchTime = 0;
+local prevSearchTime = 0;
 local refreshTimeReset = 3; --defines the time that must pass between searches
 local searchAvailable = true;
 local dungeonStates = {"Normal", "Heroic", "Mythic", "Mythic+ (Keystone)"}; --visible states for the dropdown
@@ -103,6 +104,7 @@ local performanceTimeStamp = 0;
 local declineResetTimer = 1200;
 local declinedGroups = {}; -- IN TESTING ADD LOCAL
 local newGroups = {};
+local playerRole = nil;
 local version = GetAddOnMetadata(addon, "Version");
 local recievedOutOfDateMessage = false;
 local FRIEND_ONLINE = ERR_FRIEND_ONLINE_SS:match("%s(.+)") -- Converts "[%s] has come online". to "has come online".
@@ -891,6 +893,18 @@ local function ResolveCategoryFilters(categoryID, filters)
 	return filters;
 end
 
+local function isNewGroup(leaderName, activityID)
+	if (leaderName == nil or activityID == nil or leaderName == nil) then
+		return true;
+	end
+	if (newGroups[leaderName] and newGroups[leaderName] == activityID) then
+		return false;
+	else
+		newGroups[leaderName] = activityID;
+		return true;
+	end
+end
+
 --[[
 	Documentation: This function returns the amount of players in a raid that is using the same tier set as the defined unit, defaults to player if nil. Since displayData contains all sorts of information we have to make sure it is a class first.
 	The we can add the value as the key holds the amount of that class which should reduce the time complexity for larger groups.
@@ -978,7 +992,6 @@ end
 ]]
 local function HasRemainingSlotsForLocalPlayerRole(lfgSearchResultID, isFiltering)
 	local roles = C_LFGList.GetSearchResultMemberCounts(lfgSearchResultID);
-	local playerRole = GetSpecializationRole(GetSpecialization());
 	local groupRoles = {["TANK"] = 0, ["HEALER"] = 0, ["DAMAGER"] = 0};
 	groupRoles[playerRole] = groupRoles[playerRole] + 1;
 	if (IsInGroup()) then
@@ -1254,6 +1267,7 @@ local function PGF_ShowDungeonFrame(isSameCat)
 	LFGListFrame.SearchPanel.FilterButton:ClearAllPoints();
 	LFGListFrame.SearchPanel.CategoryName:ClearAllPoints();
 	LFGListFrame.SearchPanel.SearchBox:SetPoint("TOPLEFT", dungeonFrame, "TOPLEFT", 28, -10);
+	LFGListFrame.SearchPanel.SearchBox:SetPoint("RIGHT", PVEFrame.NineSlice, "RIGHT", -15, 0);
 	LFGListFrame.SearchPanel.RefreshButton:SetPoint("TOPLEFT", LFGListFrame.SearchPanel.SearchBox, "TOPLEFT", -50, 7);
 	LFGListFrame.SearchPanel.FilterButton:SetPoint("BOTTOMRIGHT", PVEFrame, "BOTTOMRIGHT", -20, 45);
 	LFGListFrame.SearchPanel.FilterButton:SetSize(80, LFGListFrame.SearchPanel.FilterButton:GetHeight());
@@ -1290,6 +1304,7 @@ local function PGF_ShowRaidFrame(isSameCat)
 	LFGListFrame.SearchPanel.FilterButton:ClearAllPoints();
 	LFGListFrame.SearchPanel.CategoryName:ClearAllPoints();
 	LFGListFrame.SearchPanel.SearchBox:SetPoint("TOPLEFT", raidFrame, "TOPLEFT", 28, -10);
+	LFGListFrame.SearchPanel.SearchBox:SetPoint("RIGHT", PVEFrame.NineSlice, "RIGHT", -15, 0);
 	LFGListFrame.SearchPanel.RefreshButton:SetPoint("TOPLEFT", LFGListFrame.SearchPanel.SearchBox, "TOPLEFT", -50, 7);
 	LFGListFrame.SearchPanel.FilterButton:SetPoint("BOTTOMRIGHT", PVEFrame, "BOTTOMRIGHT", -20, 45);
 	LFGListFrame.SearchPanel.FilterButton:SetSize(80, LFGListFrame.SearchPanel.FilterButton:GetHeight());
@@ -1633,8 +1648,13 @@ local function initDungeon()
 	showMoreText:SetPoint("BOTTOMRIGHT", PVEFrame, "BOTTOMRIGHT", -20, 2);
 	showMoreText:SetText(PGF_ShowDungeonOptionsFrame and "Show Less" or "Show More");
 	local showMoreButton = CreateFrame("Button", nil, dungeonFrame);
-	showMoreButton:SetNormalTexture("Interface\\Buttons\\Arrow-Up-Up.PNG");
-	showMoreButton:SetPoint("BOTTOMRIGHT", PVEFrame, "BOTTOMRIGHT", 0, 0);
+	if (PGF_ShowDungeonOptionsFrame) then
+		showMoreButton:SetNormalTexture("Interface\\Buttons\\Arrow-Up-Up.PNG");
+		showMoreButton:SetPoint("BOTTOMRIGHT", PVEFrame, "BOTTOMRIGHT", 0, 0);
+	else
+		showMoreButton:SetNormalTexture("Interface\\Buttons\\Arrow-Down-Down.PNG");
+		showMoreButton:SetPoint("BOTTOMRIGHT", PVEFrame, "BOTTOMRIGHT", 0, -7);
+	end
 	showMoreButton:SetSize(18,18);
 	showMoreButton:SetScript("OnClick", function(self)
 		if (dungeonOptionsFrame:IsShown()) then
@@ -1997,8 +2017,13 @@ local function initRaid()
 	showMoreText:SetPoint("BOTTOMRIGHT", PVEFrame, "BOTTOMRIGHT", -20, 2);
 	showMoreText:SetText(PGF_ShowRaidOptionsFrame and "Show Less" or "Show More");
 	local showMoreButton = CreateFrame("Button", nil, raidFrame);
-	showMoreButton:SetNormalTexture("Interface\\Buttons\\Arrow-Up-Up.PNG");
-	showMoreButton:SetPoint("BOTTOMRIGHT", PVEFrame, "BOTTOMRIGHT", 0, 0);
+	if (PGF_ShowRaidOptionsFrame) then
+		showMoreButton:SetNormalTexture("Interface\\Buttons\\Arrow-Up-Up.PNG");
+		showMoreButton:SetPoint("BOTTOMRIGHT", PVEFrame, "BOTTOMRIGHT", 0, 0);
+	else
+		showMoreButton:SetNormalTexture("Interface\\Buttons\\Arrow-Down-Down.PNG");
+		showMoreButton:SetPoint("BOTTOMRIGHT", PVEFrame, "BOTTOMRIGHT", 0, -7);
+	end
 	showMoreButton:SetSize(18,18);
 	showMoreButton:SetScript("OnClick", function(self)
 		if (raidOptionsFrame:IsShown()) then
@@ -2143,8 +2168,8 @@ end);
 f:SetScript("OnEvent", function(self, event, ...) 
 	if (event == "PLAYER_LOGIN") then
 		C_MythicPlus.RequestMapInfo();
+		playerRole = GetSpecializationRole(GetSpecialization());
 		if (PGF_roles == nil) then 
-			local playerRole = GetSpecializationRole(GetSpecialization());
 			PGF_roles = {["TANK"] = false, ["HEALER"] = false, ["DAMAGER"] = false};
 			PGF_roles[playerRole] = true;
 		end
@@ -2370,6 +2395,12 @@ local function PGF_LFGListSearchPanel_UpdateButtonStatus(self)
 end
 hooksecurefunc("LFGListSearchPanel_UpdateButtonStatus", PGF_LFGListSearchPanel_UpdateButtonStatus);
 
+local function PGF_LFGListSearchPanel_DoSearch(self)
+	prevSearchTime = currentSearchTime;
+	currentSearchTime = GetTime();
+end
+
+hooksecurefunc("LFGListSearchPanel_DoSearch", PGF_LFGListSearchPanel_DoSearch);
 --[[
 	Documentation: The function is a blizzard function that is called every time you are inside a premade group already and new applicants show up.
 	This hooked version allows everyone in the group to browse groups rather than just the leader.
@@ -2424,6 +2455,21 @@ function LFGListUtil_GetSearchEntryMenu(resultID)
 	end
 	return LFG_LIST_SEARCH_ENTRY_MENU;
 end
+local function realTimeApplication(self)
+	local _, appStatus, pendingStatus, appDuration = C_LFGList.GetApplicationInfo(self.resultID);
+	local isApplication = (appStatus ~= "none" or pendingStatus);
+	return isApplication;
+end
+local function searchEntry_OnUpdate(self, texture)
+	if (texture:IsMouseOver() and texture:IsShown()) then
+		GameTooltip:SetOwner(texture);
+		GameTooltip:SetText("New Group");
+		GameTooltip:Show();
+	elseif (texture:IsShown() and not texture:IsMouseOver()) then
+		GameTooltip:Hide();
+		LFGListSearchEntry_OnEnter(self);
+	end
+end
 
 --C_LFGList.GetSearchResultEncounterInfo(self.resultID) returns a table [1 to n] = Boss Name or Encounter Name?
 
@@ -2456,6 +2502,38 @@ local function PGF_LFGListSearchEntry_Update(self)
 		texture:Hide();
 		self.IncompatibleBG = texture;
 	end
+	--group no longer compatible
+	if(self.NewIcon) then
+		self.NewIcon:Hide();
+	else
+		local texture = self:CreateTexture(nil, "OVERLAY");
+		texture:SetPoint("TOPLEFT", 0, 0);
+		texture:SetSize(16, 16);
+		texture:SetTexture("Interface\\AddOns\\PGFinder\\Res\\NewGroup.tga");
+		self:HookScript("OnEnter", function(self) 
+			print("hooking onUpdate to the onEnter script")
+			self:HookScript("OnUpdate", function() searchEntry_OnUpdate(self, texture); end);
+		end);
+		self:HookScript("OnLeave", function(self)
+			print("removing the hook")
+			self:SetScript("OnUpdate", nil);
+			if (realTimeApplication(self)) then
+				self:SetScript("OnUpdate", LFGListSearchEntry_UpdateExpiration);
+				LFGListSearchEntry_UpdateExpiration(self);
+			end
+		end);
+		--texture:SetAtlas("groupfinder-eye-highlight");
+		texture:Hide();
+		self.NewIcon = texture;
+	end
+	if (GetTime()-searchResultInfo.age > prevSearchTime) then
+		self.NewIcon:Show();
+	end
+	--[[
+	if (searchResultInfo.leaderName == nil or searchResultInfo.leaderName == "" or isNewGroup(searchResultInfo.leaderName, searchResultInfo.activityID)) then -- could add prevSearchTime to each entry in the array of isNewGroup and compare prevSearchTime with that field to see if its a new search or not  because currently this will return true every time you scroll in the list
+		self.NewIcon:Show();
+	end
+	]]
 	if (appStatus == "applied" and not HasRemainingSlotsForLocalPlayerRole(resultID) and LFGListFrame.SearchPanel.categoryID == GROUP_FINDER_CATEGORY_ID_DUNGEONS) then
 		self.IncompatibleBG:Show();
 	end
@@ -2641,74 +2719,76 @@ end
 	param(arr) - keeps track of the order it should display the icons, [1] = TANK, [2] = HEALER, [3] = DAMAGER
 ]]
 local function PGF_LFGListGroupDataDisplayEnumerate_Update(self, numPlayers, displayData, disabled, iconOrder)
-	local players = {};
-	self:SetSize(125, 24);
-	local p1, p2, p3, p4, p5 = self:GetPoint(1);
-	self:ClearAllPoints();
-	self:SetPoint(p1, p2, p3, -25, p5);
-	if (self.LeaderIcon) then
-		self.LeaderIcon:Hide();
-		self.LeaderIcon:ClearAllPoints();
-	else
-		local texture = self:CreateTexture(nil, "OVERLAY");
-		texture:SetAtlas("groupfinder-icon-leader", false);
-		texture:SetSize(self.Icons[1]:GetWidth()-4, 6);
-		texture:Hide();
-		self.LeaderIcon = texture;
-	end
-	for i = 1, #self.Icons do
-		if (i > numPlayers) then
-			self.Icons[i]:Show();
-			self.Icons[i]:SetDesaturated(disabled);
-			self.Icons[i]:SetAlpha(disabled and 0.5 or 1.0);
-			self.LeaderIcon:SetDesaturated(disabled);
-			self.LeaderIcon:SetAlpha(disabled and 0.5 or 1.0);
-		end
-	end
-	local resultID = self:GetParent():GetParent().resultID;
-	if (not resultID) then 
-		return;
-	end
-	local searchResults = C_LFGList.GetSearchResultInfo(resultID);
-	--Note that icons are numbered from right to left
-	for i = 1, searchResults.numMembers do
-		local role, classUniversal, classLocal, spec = C_LFGList.GetSearchResultMemberInfo(resultID, i);
-		local isLeader = false;
-		if (i == 1) then	
-			isLeader = true;
-		end
-		--spec = spec:gsub("%s","");
-		table.insert(players, {["role"] = role, ["class"] = classUniversal, ["spec"] = spec, ["isLeader"] = isLeader});
-	end
-	table.sort(players, sortRoles);
-	--Another implementation for evokers
-	for i = 1, searchResults.numMembers do
-		if (self.LeaderIcon and players[i].isLeader and PGF_ShowLeaderIcon) then
-			self.LeaderIcon:SetPoint("TOP", self.Icons[6-i], "TOP", -1, 7);
-			self.LeaderIcon:Show();
-		end
-		if (true or players[i].class == "EVOKER") then
-			if (PGF_DetailedDataDisplay) then
-				self.Icons[6-i]:SetTexture(select(4, GetSpecializationInfoByID(classSpecilizationMap[players[i].class][players[i].spec])));
-				self.Icons[6-i]:SetTexCoord(0,1,0,1);
-				--spec-thumbnail-evoker-preservation?
-			else
-				self.Icons[6-i]:SetTexture("Interface\\AddOns\\PGFinder\\Res\\" .. players[i].class .. "_" .. players[i].role .. ".tga");
-			end
+	if (LFGListFrame.SearchPanel.categoryID == GROUP_FINDER_CATEGORY_ID_DUNGEONS) then
+		local players = {};
+		self:SetSize(125, 24);
+		local p1, p2, p3, p4, p5 = self:GetPoint(1);
+		self:ClearAllPoints();
+		self:SetPoint(p1, p2, p3, -25, p5);
+		if (self.LeaderIcon) then
+			self.LeaderIcon:Hide();
+			self.LeaderIcon:ClearAllPoints();
 		else
-			self.Icons[6-i]:SetAtlas("GarrMission_ClassIcon-"..strlower(players[i].class).."-"..players[i].spec, false);
+			local texture = self:CreateTexture(nil, "OVERLAY");
+			texture:SetAtlas("groupfinder-icon-leader", false);
+			texture:SetSize(self.Icons[1]:GetWidth()-4, 6);
+			texture:Hide();
+			self.LeaderIcon = texture;
 		end
-	end
-	local count = 1;
-	for i = 3, 1, -1 do
-		for j = 1, displayData[roleRemainingKeyLookup[iconOrder[i]]] do
-			if (PGF_DetailedDataDisplay) then
-				self.Icons[count]:SetTexture("Interface\\addons\\PGFinder\\Res\\" .. roleRemainingKeyLookup[iconOrder[i]]);
-				self.Icons[count]:SetTexCoord(0,1,0,1);
-			else
-				self.Icons[count]:SetAtlas("groupfinder-icon-emptyslot", false);
+		for i = 1, #self.Icons do
+			if (i > numPlayers) then
+				self.Icons[i]:Show();
+				self.Icons[i]:SetDesaturated(disabled);
+				self.Icons[i]:SetAlpha(disabled and 0.5 or 1.0);
+				self.LeaderIcon:SetDesaturated(disabled);
+				self.LeaderIcon:SetAlpha(disabled and 0.5 or 1.0);
 			end
-			count = count + 1;
+		end
+		local resultID = self:GetParent():GetParent().resultID;
+		if (not resultID) then 
+			return;
+		end
+		local searchResults = C_LFGList.GetSearchResultInfo(resultID);
+		--Note that icons are numbered from right to left
+		for i = 1, searchResults.numMembers do
+			local role, classUniversal, classLocal, spec = C_LFGList.GetSearchResultMemberInfo(resultID, i);
+			local isLeader = false;
+			if (i == 1) then	
+				isLeader = true;
+			end
+			--spec = spec:gsub("%s","");
+			table.insert(players, {["role"] = role, ["class"] = classUniversal, ["spec"] = spec, ["isLeader"] = isLeader});
+		end
+		table.sort(players, sortRoles);
+		--Another implementation for evokers
+		for i = 1, searchResults.numMembers do
+			if (self.LeaderIcon and players[i].isLeader and PGF_ShowLeaderIcon) then
+				self.LeaderIcon:SetPoint("TOP", self.Icons[6-i], "TOP", -1, 7);
+				self.LeaderIcon:Show();
+			end
+			if (true or players[i].class == "EVOKER") then
+				if (PGF_DetailedDataDisplay) then
+					self.Icons[6-i]:SetTexture(select(4, GetSpecializationInfoByID(classSpecilizationMap[players[i].class][players[i].spec])));
+					self.Icons[6-i]:SetTexCoord(0,1,0,1);
+					--spec-thumbnail-evoker-preservation?
+				else
+					self.Icons[6-i]:SetTexture("Interface\\AddOns\\PGFinder\\Res\\" .. players[i].class .. "_" .. players[i].role .. ".tga");
+				end
+			else
+				self.Icons[6-i]:SetAtlas("GarrMission_ClassIcon-"..strlower(players[i].class).."-"..players[i].spec, false);
+			end
+		end
+		local count = 1;
+		for i = 3, 1, -1 do
+			for j = 1, displayData[roleRemainingKeyLookup[iconOrder[i]]] do
+				if (PGF_DetailedDataDisplay) then
+					self.Icons[count]:SetTexture("Interface\\addons\\PGFinder\\Res\\" .. roleRemainingKeyLookup[iconOrder[i]]);
+					self.Icons[count]:SetTexCoord(0,1,0,1);
+				else
+					self.Icons[count]:SetAtlas("groupfinder-icon-emptyslot", false);
+				end
+				count = count + 1;
+			end
 		end
 	end
 end
