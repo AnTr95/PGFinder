@@ -2258,7 +2258,9 @@ LFGListFrame:HookScript("OnSizeChanged", function(self)
 		LFGListFrame:ClearAllPoints(); 
 		LFGListFrame:SetPoint(originalUI["LFGListFrame"].position[1], originalUI["LFGListFrame"].position[2], originalUI["LFGListFrame"].position[3], originalUI["LFGListFrame"].position[4], originalUI["LFGListFrame"].position[5]);
 		LFGListFrame:SetSize(368, LFGListFrame:GetHeight());
-		LFGListSearchPanel_UpdateResults(LFGListFrame.SearchPanel);
+		C_Timer.After(0.05, function() 
+			LFGListSearchPanel_UpdateResults(LFGListFrame.SearchPanel);
+		end);
 	elseif (LFGListFrame.SearchPanel.categoryID == 3 and LFGListFrame.SearchPanel:IsVisible()) then
 		updateRaidFrameWidth();
 		--[[
@@ -2266,7 +2268,9 @@ LFGListFrame:HookScript("OnSizeChanged", function(self)
 		LFGListFrame:SetPoint(originalUI["LFGListFrame"].position[1], originalUI["LFGListFrame"].position[2], originalUI["LFGListFrame"].position[3], originalUI["LFGListFrame"].position[4], originalUI["LFGListFrame"].position[5]);
 		LFGListFrame:SetSize(438, LFGListFrame:GetHeight());
 		]]
-		LFGListSearchPanel_UpdateResults(LFGListFrame.SearchPanel);
+		C_Timer.After(0.05, function() 
+			LFGListSearchPanel_UpdateResults(LFGListFrame.SearchPanel);
+		end);
 	end
 end);
 --[[
