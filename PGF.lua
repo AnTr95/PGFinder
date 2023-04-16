@@ -858,7 +858,6 @@ end
 	Documentation: Restore all of the Blizzard UI elements that was moved by PGF to its original position when no PGF frame is shown
 ]]
 function restoreOriginalUI()
-	print("original UI was restored")
 	PVE_FRAME_BASE_WIDTH = 600;
 	PVEFrame:SetSize(600, originalUI["PVEFrame"].height);
 	LFGListFrame.SearchPanel.SearchBox:ClearAllPoints();
@@ -2279,10 +2278,8 @@ end);
 	Also need to check for if LFGListFrame.SearchPanel is visible because the categoryID is cached even when going back to the category selector which causes funky UI
 ]]
 LFGListFrame:HookScript("OnSizeChanged", function(self)
-	print("not2")
 	self:Show();
 	if (LFGListFrame.SearchPanel.categoryID == GROUP_FINDER_CATEGORY_ID_DUNGEONS and LFGListFrame.SearchPanel:IsVisible()) then
-		print("test")
 		LFGListFrame:ClearAllPoints(); 
 		LFGListFrame:SetPoint(originalUI["LFGListFrame"].position[1], originalUI["LFGListFrame"].position[2], originalUI["LFGListFrame"].position[3], originalUI["LFGListFrame"].position[4], originalUI["LFGListFrame"].position[5]);
 		LFGListFrame:SetSize(368, LFGListFrame:GetHeight());
@@ -2290,14 +2287,12 @@ LFGListFrame:HookScript("OnSizeChanged", function(self)
 			LFGListSearchPanel_UpdateResults(LFGListFrame.SearchPanel);
 		end);
 	elseif (LFGListFrame.SearchPanel.categoryID == 3 and LFGListFrame.SearchPanel:IsVisible()) then
-		print("test")
 		updateRaidFrameWidth();
 		C_Timer.After(0.05, function() 
 			LFGListSearchPanel_UpdateResults(LFGListFrame.SearchPanel);
 		end);
 	elseif (LFGListFrame.SearchPanel:IsVisible()) then
 		restoreOriginalUI();
-		print("update")
 		LFGListSearchPanel_UpdateButtonStatus(LFGListFrame.SearchPanel);
 	end
 end);
@@ -2332,7 +2327,6 @@ LFGListFrame.SearchPanel:HookScript("OnShow", function(self)
 			updateSearch();
 		end
 	else
-		print("not")
 		LFGListSearchPanel_Clear(LFGListFrame.SearchPanel);
 		if (cat ~= lastCat) then
 			lastCat = cat;
