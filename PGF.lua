@@ -792,6 +792,7 @@ f:RegisterEvent("PLAYER_ENTERING_WORLD");
 f:RegisterEvent("CHAT_MSG_ADDON");
 f:RegisterEvent("GROUP_ROSTER_UPDATE");
 f:RegisterEvent("CHAT_MSG_SYSTEM");
+f:RegisterEvent("LFG_LIST_APPLICATION_STATUS_UPDATED");
 C_ChatInfo.RegisterAddonMessagePrefix("PGF_VERSIONCHECK")
 --[[
 	Documentation: Save all of the Blizzard UI elements that we move for when no PGF frame is shown
@@ -2259,6 +2260,12 @@ f:SetScript("OnEvent", function(self, event, ...)
 					recievedOutOfDateMessage = true;
 				end
 			end
+		end
+	elseif (event == "LFG_LIST_APPLICATION_STATUS_UPDATED") then
+		local searchResultID, newStatus, oldStatus, groupName = ...;
+		if (newStatus == "applied") then
+			LFGListUtil_SortSearchResults(LFGListFrame.SearchPanel.results);
+			LFGListSearchPanel_UpdateResultList(LFGListFrame.SearchPanel);
 		end
 	elseif (event == "PLAYER_ENTERING_WORLD") then
 		if (next(GUI) == nil) then
