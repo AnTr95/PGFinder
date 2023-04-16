@@ -802,11 +802,15 @@ local function saveOriginalUI()
 		["LFGListFrame"] = {["position"] = {}, ["position2"] = {}},
 		["LFGListFrame.SearchPanel.SearchBox"] = {["position"] = {}}, 
 		["LFGListFrame.SearchPanel.FilterButton"] = {["position"] = {}}, 
-		["LFGListFrame.SearchPanel.ResultsInset"] = {["position"] = {}}, 
+		["LFGListFrame.SearchPanel.ResultsInset"] = {["position"] = {}, ["size"] = {}, ["position2"] = {}}, 
 		["LFGListFrame.SearchPanel.RefreshButton"] = {["position"] = {}},
-		["LFGListFrame.SearchPanel.CategoryName"] = {["position"] = {}};
-		["LFGListApplicationDialog.Description"] = {["position"] = {}, ["size"] = {}};
-		["LFGListApplicationDialog.Description.EditBox"] = {["size"] = {}};
+		["LFGListFrame.SearchPanel.CategoryName"] = {["position"] = {}},
+		["LFGListFrame.SearchPanel.SignUpButton"] = {["position"] = {}},
+		["LFGListFrame.SearchPanel.BackButton"] = {["position"] = {}},
+		["LFGListFrame.SearchPanel.BackToGroupButton"] = {["position"] = {}},
+		["LFGListFrame.SearchPanel.ScrollBox"] = {["size"] = {}},
+		["LFGListApplicationDialog.Description"] = {["position"] = {}, ["size"] = {}},
+		["LFGListApplicationDialog.Description.EditBox"] = {["size"] = {}},
 	};
 	originalUI["PVEFrame"].width = PVEFrame:GetWidth();
 	originalUI["PVEFrame"].height = PVEFrame:GetHeight();
@@ -816,8 +820,13 @@ local function saveOriginalUI()
 	originalUI["LFGListFrame.SearchPanel.SearchBox"].position[1], originalUI["LFGListFrame.SearchPanel.SearchBox"].position[2], originalUI["LFGListFrame.SearchPanel.SearchBox"].position[3], originalUI["LFGListFrame.SearchPanel.SearchBox"].position[4], originalUI["LFGListFrame.SearchPanel.SearchBox"].position[5] = LFGListFrame.SearchPanel.SearchBox:GetPoint();
 	originalUI["LFGListFrame.SearchPanel.FilterButton"].size = LFGListFrame.SearchPanel.FilterButton:GetSize();
 	originalUI["LFGListFrame.SearchPanel.FilterButton"].position[1], originalUI["LFGListFrame.SearchPanel.FilterButton"].position[2], originalUI["LFGListFrame.SearchPanel.FilterButton"].position[3], originalUI["LFGListFrame.SearchPanel.FilterButton"].position[4], originalUI["LFGListFrame.SearchPanel.FilterButton"].position[5] = LFGListFrame.SearchPanel.FilterButton:GetPoint();
-	originalUI["LFGListFrame.SearchPanel.ResultsInset"].size = LFGListFrame.SearchPanel.ResultsInset:GetSize();
+	originalUI["LFGListFrame.SearchPanel.ResultsInset"].size[1], originalUI["LFGListFrame.SearchPanel.ResultsInset"].size[2] = LFGListFrame.SearchPanel.ResultsInset:GetSize();
 	originalUI["LFGListFrame.SearchPanel.ResultsInset"].position[1], originalUI["LFGListFrame.SearchPanel.ResultsInset"].position[2], originalUI["LFGListFrame.SearchPanel.ResultsInset"].position[3], originalUI["LFGListFrame.SearchPanel.ResultsInset"].position[4], originalUI["LFGListFrame.SearchPanel.ResultsInset"].position[5] = LFGListFrame.SearchPanel.ResultsInset:GetPoint();
+	originalUI["LFGListFrame.SearchPanel.ResultsInset"].position2[1], originalUI["LFGListFrame.SearchPanel.ResultsInset"].position2[2], originalUI["LFGListFrame.SearchPanel.ResultsInset"].position2[3], originalUI["LFGListFrame.SearchPanel.ResultsInset"].position2[4], originalUI["LFGListFrame.SearchPanel.ResultsInset"].position2[5] = LFGListFrame.SearchPanel.ResultsInset:GetPoint(2);	
+	originalUI["LFGListFrame.SearchPanel.SignUpButton"].position[1], originalUI["LFGListFrame.SearchPanel.SignUpButton"].position[2], originalUI["LFGListFrame.SearchPanel.SignUpButton"].position[3], originalUI["LFGListFrame.SearchPanel.SignUpButton"].position[4], originalUI["LFGListFrame.SearchPanel.SignUpButton"].position[5] = LFGListFrame.SearchPanel.SignUpButton:GetPoint();
+	originalUI["LFGListFrame.SearchPanel.BackButton"].position[1], originalUI["LFGListFrame.SearchPanel.BackButton"].position[2], originalUI["LFGListFrame.SearchPanel.BackButton"].position[3], originalUI["LFGListFrame.SearchPanel.BackButton"].position[4], originalUI["LFGListFrame.SearchPanel.BackButton"].position[5] = LFGListFrame.SearchPanel.BackButton:GetPoint();
+	originalUI["LFGListFrame.SearchPanel.BackToGroupButton"].position[1], originalUI["LFGListFrame.SearchPanel.BackToGroupButton"].position[2], originalUI["LFGListFrame.SearchPanel.BackToGroupButton"].position[3], originalUI["LFGListFrame.SearchPanel.BackToGroupButton"].position[4], originalUI["LFGListFrame.SearchPanel.BackToGroupButton"].position[5] = LFGListFrame.SearchPanel.BackToGroupButton:GetPoint();
+	originalUI["LFGListFrame.SearchPanel.ScrollBox"].size[1], originalUI["LFGListFrame.SearchPanel.ScrollBox"].size[2] = LFGListFrame.SearchPanel.ScrollBox:GetSize();
 	originalUI["LFGListFrame.SearchPanel.RefreshButton"].size = LFGListFrame.SearchPanel.RefreshButton:GetSize();
 	originalUI["LFGListFrame.SearchPanel.RefreshButton"].position[1], originalUI["LFGListFrame.SearchPanel.RefreshButton"].position[2], originalUI["LFGListFrame.SearchPanel.RefreshButton"].position[3], originalUI["LFGListFrame.SearchPanel.RefreshButton"].position[4], originalUI["LFGListFrame.SearchPanel.RefreshButton"].position[5] = LFGListFrame.SearchPanel.RefreshButton:GetPoint();
 	originalUI["LFGListFrame.SearchPanel.CategoryName"].position[1], originalUI["LFGListFrame.SearchPanel.CategoryName"].position[2], originalUI["LFGListFrame.SearchPanel.CategoryName"].position[3], originalUI["LFGListFrame.SearchPanel.CategoryName"].position[4], originalUI["LFGListFrame.SearchPanel.CategoryName"].position[5] = LFGListFrame.SearchPanel.CategoryName:GetPoint();
@@ -848,7 +857,8 @@ end
 --[[
 	Documentation: Restore all of the Blizzard UI elements that was moved by PGF to its original position when no PGF frame is shown
 ]]
-local function restoreOriginalUI()
+function restoreOriginalUI()
+	print("original UI was restored")
 	PVE_FRAME_BASE_WIDTH = 600;
 	PVEFrame:SetSize(600, originalUI["PVEFrame"].height);
 	LFGListFrame.SearchPanel.SearchBox:ClearAllPoints();
@@ -863,13 +873,28 @@ local function restoreOriginalUI()
 	LFGListFrame.SearchPanel.FilterButton:SetPoint(originalUI["LFGListFrame.SearchPanel.FilterButton"].position[1], originalUI["LFGListFrame.SearchPanel.FilterButton"].position[2], originalUI["LFGListFrame.SearchPanel.FilterButton"].position[3], originalUI["LFGListFrame.SearchPanel.FilterButton"].position[4], originalUI["LFGListFrame.SearchPanel.FilterButton"].position[5]);
 	LFGListFrame.SearchPanel.RefreshButton:SetPoint(originalUI["LFGListFrame.SearchPanel.RefreshButton"].position[1], originalUI["LFGListFrame.SearchPanel.RefreshButton"].position[2], originalUI["LFGListFrame.SearchPanel.RefreshButton"].position[3], originalUI["LFGListFrame.SearchPanel.RefreshButton"].position[4], originalUI["LFGListFrame.SearchPanel.RefreshButton"].position[5]);
 	LFGListFrame.SearchPanel.CategoryName:SetPoint(originalUI["LFGListFrame.SearchPanel.CategoryName"].position[1], originalUI["LFGListFrame.SearchPanel.CategoryName"].position[2], originalUI["LFGListFrame.SearchPanel.CategoryName"].position[3], originalUI["LFGListFrame.SearchPanel.CategoryName"].position[4], originalUI["LFGListFrame.SearchPanel.CategoryName"].position[5]);
+	LFGListFrame.SearchPanel.ResultsInset:ClearAllPoints();
 	LFGListFrame.SearchPanel.ResultsInset:SetPoint(originalUI["LFGListFrame.SearchPanel.ResultsInset"].position[1], originalUI["LFGListFrame.SearchPanel.ResultsInset"].position[2], originalUI["LFGListFrame.SearchPanel.ResultsInset"].position[3], originalUI["LFGListFrame.SearchPanel.ResultsInset"].position[4], originalUI["LFGListFrame.SearchPanel.ResultsInset"].position[5]);
+	LFGListFrame.SearchPanel.ResultsInset:SetPoint(originalUI["LFGListFrame.SearchPanel.ResultsInset"].position2[1], originalUI["LFGListFrame.SearchPanel.ResultsInset"].position2[2], originalUI["LFGListFrame.SearchPanel.ResultsInset"].position2[3], originalUI["LFGListFrame.SearchPanel.ResultsInset"].position2[4], originalUI["LFGListFrame.SearchPanel.ResultsInset"].position2[5]);
+	LFGListFrame.SearchPanel.ResultsInset:SetSize(originalUI["LFGListFrame.SearchPanel.ResultsInset"].size[1], originalUI["LFGListFrame.SearchPanel.ResultsInset"].size[2]);
+	LFGListFrame.SearchPanel.SignUpButton:ClearAllPoints();
+	LFGListFrame.SearchPanel.SignUpButton:SetPoint(originalUI["LFGListFrame.SearchPanel.SignUpButton"].position[1], originalUI["LFGListFrame.SearchPanel.SignUpButton"].position[2], originalUI["LFGListFrame.SearchPanel.SignUpButton"].position[3], originalUI["LFGListFrame.SearchPanel.SignUpButton"].position[4], originalUI["LFGListFrame.SearchPanel.SignUpButton"].position[5]);
+	LFGListFrame.SearchPanel.BackButton:ClearAllPoints();
+	LFGListFrame.SearchPanel.BackButton:SetPoint(originalUI["LFGListFrame.SearchPanel.BackButton"].position[1], originalUI["LFGListFrame.SearchPanel.BackButton"].position[2], originalUI["LFGListFrame.SearchPanel.BackButton"].position[3], originalUI["LFGListFrame.SearchPanel.BackButton"].position[4], originalUI["LFGListFrame.SearchPanel.BackButton"].position[5]);
+	LFGListFrame.SearchPanel.BackToGroupButton:ClearAllPoints();
+	LFGListFrame.SearchPanel.BackToGroupButton:SetPoint(originalUI["LFGListFrame.SearchPanel.BackToGroupButton"].position[1], originalUI["LFGListFrame.SearchPanel.BackToGroupButton"].position[2], originalUI["LFGListFrame.SearchPanel.BackToGroupButton"].position[3], originalUI["LFGListFrame.SearchPanel.BackToGroupButton"].position[4], originalUI["LFGListFrame.SearchPanel.BackToGroupButton"].position[5]);
+	LFGListFrame.SearchPanel.ScrollBox:SetSize(originalUI["LFGListFrame.SearchPanel.ScrollBox"].size[1], originalUI["LFGListFrame.SearchPanel.ScrollBox"].size[2]);
 	LFGListApplicationDialog.Description:SetPoint(originalUI["LFGListApplicationDialog.Description"].position[1], originalUI["LFGListApplicationDialog.Description"].position[2], originalUI["LFGListApplicationDialog.Description"].position[3], originalUI["LFGListApplicationDialog.Description"].position[4], originalUI["LFGListApplicationDialog.Description"].position[5]);
 	LFGListApplicationDialog.Description:SetSize(originalUI["LFGListApplicationDialog.Description"].size[1], originalUI["LFGListApplicationDialog.Description"].size[2]);
 	LFGListApplicationDialog.Description.EditBox:SetSize(originalUI["LFGListApplicationDialog.Description.EditBox"].size[1], originalUI["LFGListApplicationDialog.Description.EditBox"].size[2]);
 	LFGListFrame:ClearAllPoints(); 
 	LFGListFrame:SetPoint(originalUI["LFGListFrame"].position[1], originalUI["LFGListFrame"].position[2], originalUI["LFGListFrame"].position[3], originalUI["LFGListFrame"].position[4], originalUI["LFGListFrame"].position[5]);
 	LFGListFrame:SetSize(338, LFGListFrame:GetHeight());
+	if (LFGListFrame.SearchPanel:IsShown()) then
+		LFGListFrame.SearchPanel.BackButton:SetShown(not C_LFGList.HasActiveEntryInfo()); 
+		LFGListFrame.SearchPanel.BackToGroupButton:SetShown(C_LFGList.HasActiveEntryInfo());
+		LFGListFrame.SearchPanel.SignUpButton:SetShown(true);
+	end
 end
 
 
@@ -2254,7 +2279,10 @@ end);
 	Also need to check for if LFGListFrame.SearchPanel is visible because the categoryID is cached even when going back to the category selector which causes funky UI
 ]]
 LFGListFrame:HookScript("OnSizeChanged", function(self)
+	print("not2")
+	self:Show();
 	if (LFGListFrame.SearchPanel.categoryID == GROUP_FINDER_CATEGORY_ID_DUNGEONS and LFGListFrame.SearchPanel:IsVisible()) then
+		print("test")
 		LFGListFrame:ClearAllPoints(); 
 		LFGListFrame:SetPoint(originalUI["LFGListFrame"].position[1], originalUI["LFGListFrame"].position[2], originalUI["LFGListFrame"].position[3], originalUI["LFGListFrame"].position[4], originalUI["LFGListFrame"].position[5]);
 		LFGListFrame:SetSize(368, LFGListFrame:GetHeight());
@@ -2262,17 +2290,18 @@ LFGListFrame:HookScript("OnSizeChanged", function(self)
 			LFGListSearchPanel_UpdateResults(LFGListFrame.SearchPanel);
 		end);
 	elseif (LFGListFrame.SearchPanel.categoryID == 3 and LFGListFrame.SearchPanel:IsVisible()) then
+		print("test")
 		updateRaidFrameWidth();
-		--[[
-		LFGListFrame:ClearAllPoints(); 
-		LFGListFrame:SetPoint(originalUI["LFGListFrame"].position[1], originalUI["LFGListFrame"].position[2], originalUI["LFGListFrame"].position[3], originalUI["LFGListFrame"].position[4], originalUI["LFGListFrame"].position[5]);
-		LFGListFrame:SetSize(438, LFGListFrame:GetHeight());
-		]]
 		C_Timer.After(0.05, function() 
 			LFGListSearchPanel_UpdateResults(LFGListFrame.SearchPanel);
 		end);
+	elseif (LFGListFrame.SearchPanel:IsVisible()) then
+		restoreOriginalUI();
+		print("update")
+		LFGListSearchPanel_UpdateButtonStatus(LFGListFrame.SearchPanel);
 	end
 end);
+
 --[[
 	Documentation: Based on which category is selected different frames are shown. If the category is different from last time all widgets are first hidden and the selectedInfo is reset for that category otherwise we restore all the options from before.
 ]]
@@ -2303,10 +2332,10 @@ LFGListFrame.SearchPanel:HookScript("OnShow", function(self)
 			updateSearch();
 		end
 	else
+		print("not")
 		LFGListSearchPanel_Clear(LFGListFrame.SearchPanel);
 		if (cat ~= lastCat) then
 			lastCat = cat;
-		else
 		end
 		if (next(originalUI) == nil) then
 			saveOriginalUI();
