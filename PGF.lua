@@ -1070,6 +1070,8 @@ end);
 ]]
 local function updateDungeonDifficulty(isSameCat)
 	if (not isSameCat) then
+		currentSearchTime = 0;
+		prevSearchTime = 0;
 		raidFrame:Hide();
 		--Hide all
 		LFGListSearchPanel_Clear(LFGListFrame.SearchPanel);
@@ -1163,6 +1165,8 @@ end
 local function updateRaidDifficulty(isSameCat)
 	--Hide all
 	if (not isSameCat) then
+		prevSearchTime = 0;
+		currentSearchTime = 0;
 		dungeonFrame:Hide();
 		LFGListSearchPanel_Clear(LFGListFrame.SearchPanel);
 		for aID, names in pairs(rGUI) do
@@ -2157,8 +2161,8 @@ end
 ]]
 PVEFrame:HookScript("OnShow", function(self)
 	if(next(dGUI) == nil) then
-		initChallengeMap();		
-		initBestScores();
+		--initChallengeMap();		
+		--initBestScores();
 		initDungeon();
 		initRaid();
 	end
