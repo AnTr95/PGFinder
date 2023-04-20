@@ -793,6 +793,7 @@ f:RegisterEvent("CHAT_MSG_ADDON");
 f:RegisterEvent("GROUP_ROSTER_UPDATE");
 f:RegisterEvent("CHAT_MSG_SYSTEM");
 f:RegisterEvent("LFG_LIST_APPLICATION_STATUS_UPDATED");
+f:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED");
 C_ChatInfo.RegisterAddonMessagePrefix("PGF_VERSIONCHECK")
 --[[
 	Documentation: Save all of the Blizzard UI elements that we move for when no PGF frame is shown
@@ -2228,6 +2229,11 @@ f:SetScript("OnEvent", function(self, event, ...)
 			raidOptionsFrame:Hide();
 		end
 		playerClass = select(2, UnitClass("player"));
+	elseif (event == "PLAYER_SPECIALIZATION_CHANGED") then
+		local unit = ...;
+		if (UnitIsUnit(unit, "player")) then
+			playerRole = GetSpecializationRole(GetSpecialization());
+		end
 	elseif (event == "GROUP_ROSTER_UPDATE") then
 		if (IsInRaid(LE_PARTY_CATEGORY_INSTANCE) or IsInGroup(LE_PARTY_CATEGORY_INSTANCE)) then
 			C_ChatInfo.SendAddonMessage("PGF_VERSIONCHECK", version, "INSTANCE_CHAT");
@@ -2264,8 +2270,8 @@ f:SetScript("OnEvent", function(self, event, ...)
 	elseif (event == "LFG_LIST_APPLICATION_STATUS_UPDATED") then
 		local searchResultID, newStatus, oldStatus, groupName = ...;
 		if (newStatus == "applied") then
-			LFGListUtil_SortSearchResults(LFGListFrame.SearchPanel.results);
-			LFGListSearchPanel_UpdateResultList(LFGListFrame.SearchPanel);
+			--LFGListUtil_SortSearchResults(LFGListFrame.SearchPanel.results);
+			--LFGListSearchPanel_UpdateResults(LFGListFrame.SearchPanel);
 		end
 	elseif (event == "PLAYER_ENTERING_WORLD") then
 		if (next(GUI) == nil) then
