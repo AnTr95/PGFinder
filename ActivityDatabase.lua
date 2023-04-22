@@ -337,6 +337,7 @@ PGF_allDungeonsActivityIDs = {
 	[679] = "Mechagon Junkyard (Mythic Keystone)",
 	[484] = "Seat of the Triumvirate (Heroic)",
 	[535] = "Siege of Boralus (Heroic)",
+	[1195] = "The Vortex Pinnacle (Mythic Keystone)",
 };
 
 PGF_allRaidActivityIDs = {

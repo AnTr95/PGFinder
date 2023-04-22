@@ -204,7 +204,7 @@ local dungeonAbbreviations = {
 	["Neltharus"] = "NEL",
 	["Neltharion's Lair"] = "NL",
 	["Freehold"] = "FH",
-	["Temple of Sethraliss"] = "TOS",
+	["Underrot"] = "UR",
 	["The Vortex Pinnacle"] = "VP",
 };
 
@@ -937,6 +937,7 @@ local function PGF_ShowDungeonFrame()
 	LFGListFrame.SearchPanel.RefreshButton:SetPoint("TOPLEFT", LFGListFrame.SearchPanel.SearchBox, "TOPLEFT", -50, 7);
 	LFGListFrame.SearchPanel.FilterButton:SetPoint("BOTTOMRIGHT", PVEFrame, "BOTTOMRIGHT", -20, 45);
 	LFGListFrame.SearchPanel.FilterButton:SetSize(80, LFGListFrame.SearchPanel.FilterButton:GetHeight());
+	LFGListFrame.SearchPanel.SearchBox:SetSize(235, LFGListFrame.SearchPanel.SearchBox:GetHeight());
 	LFGListFrame.SearchPanel.CategoryName:SetPoint("TOP", 125, -17);
 	LFGListFrame.SearchPanel.CategoryName:SetFont(PVEFrameTitleText:GetFont(), 11);
 	LFGListFrame.SearchPanel.ResultsInset:SetPoint("TOPLEFT", LFGListFrame, "TOPLEFT", -5, -50);
@@ -968,6 +969,7 @@ local function PGF_ShowRaidFrame()
 	LFGListFrame.SearchPanel.RefreshButton:SetPoint("TOPLEFT", LFGListFrame.SearchPanel.SearchBox, "TOPLEFT", -50, 7);
 	LFGListFrame.SearchPanel.FilterButton:SetPoint("BOTTOMRIGHT", PVEFrame, "BOTTOMRIGHT", -20, 45);
 	LFGListFrame.SearchPanel.FilterButton:SetSize(80, LFGListFrame.SearchPanel.FilterButton:GetHeight());
+	LFGListFrame.SearchPanel.SearchBox:SetSize(235, LFGListFrame.SearchPanel.SearchBox:GetHeight());
 	LFGListFrame.SearchPanel.CategoryName:SetPoint("TOP", 125, -17);
 	LFGListFrame.SearchPanel.CategoryName:SetFont(PVEFrameTitleText:GetFont(), 11);
 	LFGListFrame.SearchPanel.ResultsInset:SetPoint("TOPLEFT", LFGListFrame, "TOPLEFT", -5, -50);
@@ -1939,7 +1941,7 @@ function LFGListSearchPanel_UpdateResultList(self)
 		return true;
 	end
 end
-
+--only goes up to 1400 dungeons currently at 1200 as of 10.1
 function PGF_DevGenerateAllActivityIDs()
 	PGF_DevAllActivityIDs = {
 		["dungeons"] = {},
