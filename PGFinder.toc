@@ -1,14 +1,25 @@
 ## Interface: 100100
 ## Title: Premade Group Finder
-## Version: 10.05
+## Version: 10.17
 ## Notes: Made finding groups quick and easy
 ## Author: Ant-Kazzak / Antmage-Ragnaros
 ## SavedVariables: PGF_DevAllActivityIDs
 ## SavedVariables: PGF_DevDungeonsActivityIDs
 ## SavedVariables: PGF_DevRaidActivityIDs
+## SavedVariables: PGF_DetailedDataDisplay
+## SavedVariables: PGF_SortingVariable
+## SavedVariables: PGF_ShowLeaderDungeonKey
+## SavedVariables: PGF_DontShowDeclinedGroups
+## SavedVariables: PGF_ShowLeaderIcon
 ## SavedVariablesPerCharacter: PGF_roles
-## SavedVariablesPerCharacter: PGF_FilterRemaningRoles
-
+## SavedVariablesPerCharacter: PGF_FilterRemainingRoles
+## SavedVariablesPerCharacter: PGF_OnlyShowMyRole2
+## SavedVariablesPerCharacter: PGF_DontShowMyClass
+## SavedVariablesPerCharacter: PGF_ShowYourClassAmount
+## SavedVariablesPerCharacter: PGF_RaidSortingVariable
+## SavedVariablesPerCharacter: PGF_ShowYourTierAmount
+## SavedVariablesPerCharacter: PGF_ShowDungeonOptionsFrame
+## SavedVariablesPerCharacter: PGF_ShowRaidOptionsFrame
 Localization\Localization.enUS.lua
 ActivityDatabase.lua
 PGF.lua
