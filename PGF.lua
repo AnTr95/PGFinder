@@ -2270,8 +2270,8 @@ f:SetScript("OnEvent", function(self, event, ...)
 	elseif (event == "LFG_LIST_APPLICATION_STATUS_UPDATED") then
 		local searchResultID, newStatus, oldStatus, groupName = ...;
 		if (newStatus == "applied") then
-			--LFGListUtil_SortSearchResults(LFGListFrame.SearchPanel.results);
-			--LFGListSearchPanel_UpdateResults(LFGListFrame.SearchPanel);
+			LFGListUtil_SortSearchResults(LFGListFrame.SearchPanel.results);
+			LFGListSearchPanel_UpdateResults(LFGListFrame.SearchPanel);
 		end
 	elseif (event == "PLAYER_ENTERING_WORLD") then
 		if (next(GUI) == nil) then
