@@ -600,7 +600,7 @@ local achievementIDs = {
 	Documentation: All of the red, green, blue values for the leader score. The score must be equal or above the key to use the r, g, b value
 ]]
 local scoreColors = {
-	[3450] = {1.00, 0.50, 0.00},
+	[3650] = {1.00, 0.50, 0.00},
 	[3385] = {1.00, 0.49, 0.08},
 	[3365] = {0.99, 0.49, 0.13},
 	[3340] = {0.99, 0.48, 0.17},
@@ -734,8 +734,6 @@ local scoreColors = {
 	[0] = {0.62, 0.62, 0.62},
 };
 
-
-
 --[[
 	Documentation: Lets precompute the scoreColor table to a lookup table to reduce the time complexity to O(1) as this is called extremly frequently.
 	Creates a table from 0-3450 as keys with the r,g,b value of the scoreTable for each score that is between 2 scoreTable keys
@@ -743,7 +741,7 @@ local scoreColors = {
 local colorLookup = {};
 local lastScore = 0;
 do 
-	for i = 0, 3450 do
+	for i = 0, 3650 do
 		if (scoreColors[i]) then
 			colorLookup[i] = scoreColors[i];
 			lastScore = i;
@@ -985,7 +983,6 @@ f:RegisterEvent("PLAYER_ENTERING_WORLD");
 f:RegisterEvent("CHAT_MSG_ADDON");
 f:RegisterEvent("GROUP_ROSTER_UPDATE");
 f:RegisterEvent("CHAT_MSG_SYSTEM");
-f:RegisterEvent("LFG_LIST_APPLICATION_STATUS_UPDATED");
 f:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED");
 C_ChatInfo.RegisterAddonMessagePrefix("PGF_VERSIONCHECK")
 --[[
