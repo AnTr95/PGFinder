@@ -218,7 +218,7 @@ local dungeonAbbreviations = {
 	["Neltharus"] = "NEL",
 	["Neltharion's Lair"] = "NL",
 	["Freehold"] = "FH",
-	["Underrot"] = "UR",
+	["The Underrot"] = "UR",
 	["The Vortex Pinnacle"] = "VP",
 };
 
