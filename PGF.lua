@@ -214,11 +214,11 @@ local dungeonAbbreviations = {
 	["Temple of the Jade Serpent"] = "TJS",
 	["Brackenhide Hollow"] = "BH",
 	["Halls of Infusion"] = "HOI",
-	["Uldaman: Legacy of Tyr"] = "ULT",
-	["Neltharus"] = "NEL",
+	["Uldaman: Legacy of Tyr"] = "ULD",
+	["Neltharus"] = "NELT",
 	["Neltharion's Lair"] = "NL",
 	["Freehold"] = "FH",
-	["The Underrot"] = "UR",
+	["The Underrot"] = "UNDR",
 	["The Vortex Pinnacle"] = "VP",
 };
 
@@ -3606,20 +3606,20 @@ LFGListApplicationDialog:HookScript("OnShow", function(self)
 	local apps = C_LFGList.GetApplications();
 	if(IsInGroup() and not UnitIsGroupLeader("player")) then
 		if (PGF_roles["TANK"]) then
-	    	LFDRoleCheckPopupRoleButtonTank.checkButton:SetChecked(true);
-	    else
-	   		LFDRoleCheckPopupRoleButtonTank.checkButton:SetChecked(false);
-	    end
-	    if (PGF_roles["HEALER"]) then
-	    	LFDRoleCheckPopupRoleButtonHealer.checkButton:SetChecked(true);
-	    else
-	    	LFDRoleCheckPopupRoleButtonHealer.checkButton:SetChecked(false);
-	    end
-	    if (PGF_roles["DAMAGER"]) then
-	        LFDRoleCheckPopupRoleButtonDPS.checkButton:SetChecked(true);
-	    else
-	    	LFDRoleCheckPopupRoleButtonHealer.checkButton:SetChecked(false);
-	    end
+			LFDRoleCheckPopupRoleButtonTank.checkButton:SetChecked(true);
+		else
+			LFDRoleCheckPopupRoleButtonTank.checkButton:SetChecked(false);
+		end
+		if (PGF_roles["HEALER"]) then
+			LFDRoleCheckPopupRoleButtonHealer.checkButton:SetChecked(true);
+		else
+			LFDRoleCheckPopupRoleButtonHealer.checkButton:SetChecked(false);
+		end
+		if (PGF_roles["DAMAGER"]) then
+			LFDRoleCheckPopupRoleButtonDPS.checkButton:SetChecked(true);
+		else
+			LFDRoleCheckPopupRoleButtonHealer.checkButton:SetChecked(false);
+		end
 		LFDRoleCheckPopupAcceptButton:Enable();
 		LFDRoleCheckPopupAcceptButton:Click();
 	elseif (true or PGF_autoSign) then
