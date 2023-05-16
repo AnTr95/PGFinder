@@ -214,7 +214,7 @@ local dungeonAbbreviations = {
 	["Temple of the Jade Serpent"] = "TJS",
 	["Brackenhide Hollow"] = "BH",
 	["Halls of Infusion"] = "HOI",
-	["Uldaman: Legacy of Tyr"] = "ULD",
+	["Uldaman: Legacy of Tyr"] = "UL",
 	["Neltharus"] = "NELT",
 	["Neltharion's Lair"] = "NL",
 	["Freehold"] = "FH",
@@ -2178,8 +2178,12 @@ local function initRaid()
 			texture:SetTexCoord(0.15, 0.85, 0, 0.7)
 			local shortName = name:gsub("%s%(.*", "");
 			local raidNameShort = PGF_allRaidActivityIDs[aID]:gsub("%s%(.*", "");
-			local trimedName = bossOrderMap[raidAbbreviations[raidNameShort]][index]:gsub("(%s)","");
+			local trimedName = bossOrderMap[raidAbbreviations[raidNameShort]][index];
+			if (raidNameShort ~= "Aberrus, the Shadowed Crucible") then
+				trimedName = bossOrderMap[raidAbbreviations[raidNameShort]][index]:gsub("(%s)","");
+			end
 			trimedName = trimedName:gsub(",","");
+			print(trimedName)
 			texture:SetTexture("Interface\\ENCOUNTERJOURNAL\\UI-EJ-BOSS-" .. trimedName ..".PNG");
 			texture:SetPoint("TOPLEFT", 30,-65-((count-1)*24));
 			texture:SetSize(18, 18);
