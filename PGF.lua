@@ -63,15 +63,16 @@ local refreshButtonClick = LFGListFrame.SearchPanel.RefreshButton:GetScript("OnC
 --[[
 	Documentation: Creating all local variables.
 	To add a new raid:
-	Update the dropdownMenuStates
-	Add the activityID to the raidStateMap
-	Add the abbreviated version of the raid name to the bossNameMap and all of the bosses long and short names
-	Add the abbreviated version of the raid name to the bossOrderMap and all long names of the bosses in the prefered order
+	Update the dropdownMenuStates 
+	Add the activityID to the raidStateMap 
+	Add the abbreviated version of the raid name to the bossNameMap and all of the bosses long and short names 
+	Add the abbreviated version of the raid name to the bossOrderMap and all long names of the bosses in the prefered order 
 	Add the boss paths to the PATHs graph
-	Add the abbreviated name of the raid to the raidAbbrerviations
-	Add all achievement IDs to the achievementID array using the generic raid name (without difficulty)
+	Add the abbreviated name of the raid to the raidAbbrerviations 
+	Add all achievement IDs to the achievementID array using the generic raid name (without difficulty) 
 	Update isNextBoss function to cover first boss and post multiple wing bosses i.e Broodkeeper
 	Add the activityIDs of all difficulties to PGF_allRaidsActivityIDs
+	Change lastSelectedRaidState to match the new raids "All" AFTER it has been released
 
 	To add a new dungeon:
 	Add the abbreviated name of the dungeon to the dungeonAbbrerviations
@@ -95,7 +96,7 @@ local prevSearchTime = 0;
 local refreshTimeReset = 3; --defines the time that must pass between searches
 local searchAvailable = true;
 local dungeonStates = {"Normal", "Heroic", "Mythic", "Mythic+ (Keystone)"}; --visible states for the dropdown
-local raidStates = {"VOTI Normal", "VOTI Heroic", "VOTI Mythic", "VOTI All"}; --visible states for the dropdown
+local raidStates = {"All", "VOTI Normal", "VOTI Heroic", "VOTI Mythic", "VOTI All", "ASC Normal", "ASC Heroic", "ASC Mythic", "ASC All",}; --visible states for the dropdown
 local sortingStates = {[1] = "Time", [2] = "Score"};
 local sortingRaidStates = {[1] = "Time", [2] = "Few of your class", [3] = "Many of your class", [4] = "Few of your tier", [5] = "Many of your tier"};
 local lastSelectedDungeonState = "";
@@ -118,12 +119,18 @@ local dungeonStateMap = {
 	["Heroic"] = "(Heroic)",
 	["Mythic"] = "(Mythic)",
 	["Mythic+ (Keystone)"] = "(Mythic Keystone)",
+
 };
 local raidStateMap = {
+	["All"] = 0,
 	["VOTI Normal"] = 1189,
 	["VOTI Heroic"] = 1190,
 	["VOTI Mythic"] = 1191,
-	["VOTI All"] = 1191, --no activity ID for this so lets take the boss data from mythic
+	["VOTI All"] = 1191, 
+	["ASC Normal"] = 1235,
+	["ASC Heroic"] = 1236,
+	["ASC Mythic"] = 1237,
+	["ASC All"] = 1235, --no activity ID for this so lets take the boss data from normal
 };
 local tierSetsMap = {
 	["DEATHKNIGHT"] = "Dreadful",
@@ -157,6 +164,17 @@ local bossOrderMap = {
 		"Raszageth the Storm-Eater",
 		"Fresh"
 	};
+	["ASC"] = {
+		"Kazzara, the Hellforged",
+		"The Amalgamation Chamber",
+		"The Forgotten Experiments",
+		"Assault of the Zaqali",
+		"Rashok, the Elder",
+		"The Vigilant Steward, Zskarn",
+		"Magmorax",
+		"Echo of Neltharion",
+		"Scalecommander Sarkareth",
+	},
 };
 --[[
 	Documentation: This converts the names used in the GUIs for the user to see with the actual names in the code.
@@ -173,6 +191,17 @@ local bossNameMap = {
 		["Raszageth the Storm-Eater"] = "Raszageth",
 		["Fresh"] = "Fresh Run",
 	},
+	["ASC"] = {
+		["Kazzara, the Hellforged"] = "Kazzara",
+		["The Amalgamation Chamber"] = "Amalgamation Chamber",
+		["The Forgotten Experiments"] = "Forgotten Experiments",
+		["Assault of the Zaqali"] = "Assault of the Zaqali",
+		["Rashok, the Elder"] = "Rashok",
+		["The Vigilant Steward, Zskarn"] = "Zskarn",
+		["Magmorax"] = "Magmorax",
+		["Echo of Neltharion"] = "Neltharion",
+		["Scalecommander Sarkareth"] = "Sarkareth",
+	},
 };
 local dungeonAbbreviations = {
 	["The Nokhud Offensive"] = "NO",
@@ -185,20 +214,183 @@ local dungeonAbbreviations = {
 	["Temple of the Jade Serpent"] = "TJS",
 	["Brackenhide Hollow"] = "BH",
 	["Halls of Infusion"] = "HOI",
-	["Uldaman: Legacy of Tyr"] = "ULT",
-	["Neltharus"] = "NEL",
+	["Uldaman: Legacy of Tyr"] = "UL",
+	["Neltharus"] = "NELT",
 	["Neltharion's Lair"] = "NL",
 	["Freehold"] = "FH",
-	["Temple of Sethraliss"] = "TOS",
+	["The Underrot"] = "UNDR",
 	["The Vortex Pinnacle"] = "VP",
 };
 
 local raidAbbreviations = {
 	["Vault of the Incarnates"] = "VOTI",
+	["Aberrus"] = "ASC",
 };
 --[[
 	Documentation: This is DAG that defines which bosses are after and which are before the selected boss and is used for figuring out what boss is next based on the raid lockout
 ]]
+local boss_Paths = {
+	["ASC"] = {
+		["Kazzara, the Hellforged"] = {
+			["children_paths"] = {
+				{"The Amalgamation Chamber", "The Forgotten Experiments", "Assault of the Zaqali", "Rashok, the Elder", "The Vigilant Steward, Zskarn", "Magmorax", "Echo of Neltharion", "Scalecommander Sarkareth"},
+				{"Assault of the Zaqali", "Rashok, the Elder", "The Amalgamation Chamber", "The Forgotten Experiments", "The Vigilant Steward, Zskarn", "Magmorax", "Echo of Neltharion", "Scalecommander Sarkareth"},
+				{"Echo of Neltharion", "Scalecommander Sarkareth"},
+			},
+			["parent_paths"] = {},
+		},
+		["The Amalgamation Chamber"] = {
+			["children_paths"] = {
+				{"The Forgotten Experiments", "Assault of the Zaqali", "Rashok, the Elder", "The Vigilant Steward, Zskarn", "Magmorax", "Echo of Neltharion", "Scalecommander Sarkareth"},
+			},
+			["parent_paths"] = {
+				{"Kazzara, the Hellforged"},
+				{"Rashok, the Elder", "Assault of the Zaqali","Kazzara, the Hellforged"},
+			},
+		},
+		["The Forgotten Experiments"] = {
+			["children_paths"] = {
+				{"Assault of the Zaqali", "Rashok, the Elder", "The Vigilant Steward, Zskarn", "Magmorax", "Echo of Neltharion", "Scalecommander Sarkareth"},
+			},
+			["parent_paths"] = {
+				{"The Amalgamation Chamber", "Kazzara, the Hellforged"},
+				{"Rashok, the Elder", "Assault of the Zaqali", "The Amalgamation Chamber", "Kazzara, the Hellforged"},
+			},
+		},
+		["Assault of the Zaqali"] = {
+			["children_paths"] = {
+				{"Rashok, the Elder", "The Vigilant Steward, Zskarn", "Magmorax", "Echo of Neltharion", "Scalecommander Sarkareth"},
+			},
+			["parent_paths"] = {
+				{"Kazzara, the Hellforged"},
+				{"The Forgotten Experiments", "The Amalgamation Chamber", "Kazzara, the Hellforged"},
+			},
+		},
+		["Rashok, the Elder"] = {
+			["children_paths"] = {
+				{"The Vigilant Steward, Zskarn", "Magmorax", "Echo of Neltharion", "Scalecommander Sarkareth"}
+			},
+			["parent_paths"] = {
+				{"Assault of the Zaqali", "Kazzara, the Hellforged"},
+	  			{"Assault of the Zaqali", "The Forgotten Experiments", "The Amalgamation Chamber", "Kazzara, the Hellforged"},
+			},
+		},
+		["The Vigilant Steward, Zskarn"] = {
+			["children_paths"] = {
+				{"Magmorax", "Echo of Neltharion", "Scalecommander Sarkareth"}
+			},
+			["parent_paths"] = {
+				{"Rashok, the Elder", "Assault of the Zaqali", "The Forgotten Experiments", "The Amalgamation Chamber", "Kazzara, the Hellforged"},
+				{"The Forgotten Experiments", "The Amalgamation Chamber", "Rashok, the Elder", "Assault of the Zaqali", "Kazzara, the Hellforged"},
+			},
+		},
+		["Magmorax"] = {
+			["children_paths"] = {
+				{"Echo of Neltharion", "Scalecommander Sarkareth"}
+			},
+			["parent_paths"] = {
+				{"The Vigilant Steward, Zskarn", "Rashok, the Elder", "Assault of the Zaqali", "The Forgotten Experiments", "The Amalgamation Chamber", "Kazzara, the Hellforged"},
+				{"The Vigilant Steward, Zskarn", "The Forgotten Experiments", "The Amalgamation Chamber", "Rashok, the Elder", "Assault of the Zaqali", "Kazzara, the Hellforged"},
+			},
+		},
+		["Echo of Neltharion"] = {
+			["children_paths"] = {
+				{"Scalecommander Sarkareth"}
+			},
+			["parent_paths"] = {
+				{"Kazzara, the Hellforged"},
+				{"Magmorax", "The Vigilant Steward, Zskarn", "Rashok, the Elder", "Assault of the Zaqali", "The Forgotten Experiments", "The Amalgamation Chamber", "Kazzara, the Hellforged"},
+				{"Magmorax", "The Vigilant Steward, Zskarn", "The Forgotten Experiments", "The Amalgamation Chamber", "Rashok, the Elder", "Assault of the Zaqali", "Kazzara, the Hellforged"},
+			}
+		},
+		["Scalecommander Sarkareth"] = {
+			["children_paths"] = {},
+			["parent_paths"] = {			
+				{"Echo of Neltharion", "Kazzara, the Hellforged"},
+				{"Echo of Neltharion", "Magmorax", "The Vigilant Steward, Zskarn", "Rashok, the Elder", "Assault of the Zaqali", "The Forgotten Experiments", "The Amalgamation Chamber", "Kazzara, the Hellforged"},
+				{"Echo of Neltharion", "Magmorax", "The Vigilant Steward, Zskarn", "The Forgotten Experiments", "The Amalgamation Chamber", "Rashok, the Elder", "Assault of the Zaqali", "Kazzara, the Hellforged"},
+			}
+		},
+	},
+	["VOTI"] = {
+		["Eranog"] = {
+			["children_paths"] = {
+				{"Terros", "Sennarth", "Kurog", "Council", "Dathea", "Broodkeeper", "Raszageth"},
+				{"Council", "Dathea", "Terros", "Sennarth", "Kurog", "Broodkeeper", "Raszageth"},
+				{"Broodkeeper", "Raszageth"}
+			},
+			["parent_paths"] = {},
+		},
+		["Terros"] = {
+			["children_paths"] = {
+				{"Sennarth", "Kurog", "Council", "Dathea", "Broodkeeper", "Raszageth"},
+				{"Dathea", "Broodkeeper", "Raszageth"}
+			},
+			["parent_paths"] = {
+				{"Eranog"},
+				{"Dathea", "Council", "Eranog"},
+			},
+		},
+		["Sennarth"] = {
+			["children_paths"] = {
+				{"Kurog", "Council", "Dathea", "Broodkeeper", "Raszageth"},
+				{"Kurog", "Broodkeeper", "Raszageth"}
+			},
+			["parent_paths"] = {
+				{"Terros", "Eranog"},
+				{"Terros", "Dathea", "Council", "Eranog"},
+			},
+		},
+		["Kurog"] = {
+			["children_paths"] = {
+				{"Council", "Dathea", "Broodkeeper", "Raszageth"},
+				{"Broodkeeper", "Raszageth"}
+			},
+			["parent_paths"] = {
+				{"Sennarth", "Terros", "Eranog"},
+				{"Sennarth", "Terros", "Dathea", "Council", "Eranog"},
+			},
+		},
+		["Council"] = {
+			["children_paths"] = {
+				{"Dathea", "Broodkeeper", "Raszageth"},
+				{"Terros", "Sennarth", "Kurog", "Broodkeeper", "Raszageth"},
+			},
+			["parent_paths"] = {
+				{"Eranog"},
+				{"Kurog", "Sennarth", "Terros", "Eranog"},
+			},
+		},
+		["Dathea"] = {
+			["children_paths"] = {
+				{"Terros", "Broodkeeper", "Raszageth"},
+				{"Broodkeeper", "Raszageth"}
+			},
+			["parent_paths"] = {
+				{"Council", "Eranog"},
+				{"Council", "Kurog", "Sennarth", "Terros", "Eranog"},
+			},
+		},
+		["Broodkeeper"] = {
+			["children_paths"] = {
+				{"Raszageth"}
+			},
+			["parent_paths"] = {
+				{"Eranog"},
+				{"Dathea", "Council", "Kurog", "Sennarth", "Terros", "Eranog"},
+				{"Kurog", "Sennarth", "Terros", "Dathea", "Council", "Eranog"},
+			},
+		},
+		["Raszageth"] = {
+			["children_paths"] = {},
+			["parent_paths"] = {
+				{"Broodkeeper", "Eranog"},
+				{"Broodkeeper", "Dathea", "Council", "Kurog", "Sennarth", "Terros", "Eranog"},
+				{"Broodkeeper", "Kurog", "Sennarth", "Terros", "Dathea", "Council", "Eranog"},
+			},
+		}
+	},
+};
 local VOTI_Path = {
 	["Eranog"] = {
 		["children_paths"] = {
@@ -276,29 +468,6 @@ local VOTI_Path = {
 			{"Broodkeeper", "Kurog", "Sennarth", "Terros", "Dathea", "Council", "Eranog"},
 		},
 	}
-};
-
-local dungeonAbbreviations = {
-	["The Nokhud Offensive"] = "NO",
-	["Court of Stars"] = "COS",
-	["Halls of Valor"] = "HOV",
-	["Algeth'ar Academy"] = "AA",
-	["Shadowmoon Burial Grounds"] = "SBG",
-	["The Azure Vault"] = "AV",
-	["Ruby Life Pools"] = "RLP",
-	["Temple of the Jade Serpent"] = "TJS",
-	["Brackenhide Hollow"] = "BH",
-	["Halls of Infusion"] = "HOI",
-	["Uldaman: Legacy of Tyr"] = "ULT",
-	["Neltharus"] = "NEL",
-	["Neltharion's Lair"] = "NL",
-	["Freehold"] = "FH",
-	["Underrot"] = "UR",
-	["The Vortex Pinnacle"] = "VP",
-};
-
-local raidAbbreviations = {
-	["Vault of the Incarnates"] = "VOTI",
 };
 
 --[[
@@ -424,13 +593,14 @@ local selectedInfo = {
 ]]
 local achievementIDs = {
 	["Vault of the Incarnates"] = {17108, 16352, 16350, 16351, 16349, 16347, 16346, 16348, 16346, 17107, 16343},
+	["Aberrus"] = {18254, 18158, 18157, 18156, 18155, 18153, 18154, 18152, 18151, 18253, 18177, 18167, 18165, 18164, 18163},
 };
 
 --[[
 	Documentation: All of the red, green, blue values for the leader score. The score must be equal or above the key to use the r, g, b value
 ]]
 local scoreColors = {
-	[3450] = {1.00, 0.50, 0.00},
+	[3650] = {1.00, 0.50, 0.00},
 	[3385] = {1.00, 0.49, 0.08},
 	[3365] = {0.99, 0.49, 0.13},
 	[3340] = {0.99, 0.48, 0.17},
@@ -564,8 +734,6 @@ local scoreColors = {
 	[0] = {0.62, 0.62, 0.62},
 };
 
-
-
 --[[
 	Documentation: Lets precompute the scoreColor table to a lookup table to reduce the time complexity to O(1) as this is called extremly frequently.
 	Creates a table from 0-3450 as keys with the r,g,b value of the scoreTable for each score that is between 2 scoreTable keys
@@ -573,7 +741,7 @@ local scoreColors = {
 local colorLookup = {};
 local lastScore = 0;
 do 
-	for i = 0, 3450 do
+	for i = 0, 3650 do
 		if (scoreColors[i]) then
 			colorLookup[i] = scoreColors[i];
 			lastScore = i;
@@ -772,7 +940,7 @@ end
 ]]
 local function isNextBoss(graph, boss, bosses)
 	if (boss and graph) then
-		if (boss == "Broodkeeper") then
+		if (boss == "Broodkeeper" or boss == "Echo of Neltharion") then
 			if (bosses[graph[boss]["parent_paths"][1][1]] and PGF_GetSize(bosses) == 1) then
 				return true;
 			elseif (bosses[graph[boss]["parent_paths"][1][1]] and bosses[graph[boss]["parent_paths"][2][1]] and bosses[graph[boss]["parent_paths"][3][1]]) then
@@ -815,7 +983,6 @@ f:RegisterEvent("PLAYER_ENTERING_WORLD");
 f:RegisterEvent("CHAT_MSG_ADDON");
 f:RegisterEvent("GROUP_ROSTER_UPDATE");
 f:RegisterEvent("CHAT_MSG_SYSTEM");
-f:RegisterEvent("LFG_LIST_APPLICATION_STATUS_UPDATED");
 f:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED");
 C_ChatInfo.RegisterAddonMessagePrefix("PGF_VERSIONCHECK")
 --[[
@@ -1015,14 +1182,11 @@ local function updateSearch()
 			slowTotal = dungeonsSelected;
 			for k, v in ipairs(selectedInfo.dungeons) do
 				C_Timer.After(3*count, function()
-					print(v);
-					print("starting search");
 					C_LFGList.SetSearchToActivity(k);
 					C_LFGList.Search(LFGListFrame.SearchPanel.categoryID, ResolveCategoryFilters(LFGListFrame.SearchPanel.categoryID, LFGListFrame.SearchPanel.filters), LFGListFrame.SearchPanel.preferredFilters, C_LFGList.GetLanguageSearchFilter());
 				end);
 				count = count + 1;
 			end
-			print("slow count is: " .. slowTotal);
 		end
 	else
 		LFGListSearchPanel_UpdateResults(LFGListFrame.SearchPanel);
@@ -1211,13 +1375,15 @@ end
 	Payload:
 	isSameCat param(bool) if false we should pass a long to hide all of the old UI
 ]]
-local function updateRaidDifficulty(isSameCat)
+local function updateRaidDifficulty(isSameCat, isSameActivity)
 	--Hide all
-	if (not isSameCat) then
+	if (not isSameCat or not isSameActivity) then
 		prevSearchTime = 0;
 		currentSearchTime = 0;
 		dungeonFrame:Hide();
-		LFGListSearchPanel_Clear(LFGListFrame.SearchPanel);
+		if (not isSameCat) then
+			LFGListSearchPanel_Clear(LFGListFrame.SearchPanel);
+		end
 		for aID, names in pairs(rGUI) do
 			for name, widgets in pairs(rGUI[aID]) do
 				local text = widgets.text;
@@ -1268,7 +1434,7 @@ local function updateRaidDifficulty(isSameCat)
 				if (dropDown) then
 					dropDown:Show();
 					if (lastSelectedRaidState == "") then --addon just loaded
-						lastSelectedRaidState = raidStates[4];
+						lastSelectedRaidState = raidStates[1];
 					end
 				end
 			end
@@ -1281,22 +1447,24 @@ local function updateRaidDifficulty(isSameCat)
 				end
 			end
 		end
-		for index, name in pairs(currentRaidsActivityIDs[raidStateMap[lastSelectedRaidState]]) do
-			local aID = raidStateMap[lastSelectedRaidState];
-			local text = rGUI[aID][name].text;
-			local checkbox = rGUI[aID][name].checkbox;
-			local texture = rGUI[aID][name].texture;
-			if (text) then
-				text:Show();
-			end
-			if (checkbox) then
-				checkbox:Show();
-			end
-			if (texture) then
-				texture:Show();
-			end
-			if (selectedInfo.bosses[name]) then
-				checkbox:SetChecked(true);
+		if (raidStateMap[lastSelectedRaidState] ~= 0 and currentRaidsActivityIDs[raidStateMap[lastSelectedRaidState]]) then
+			for index, name in pairs(currentRaidsActivityIDs[raidStateMap[lastSelectedRaidState]]) do
+				local aID = raidStateMap[lastSelectedRaidState];
+				local text = rGUI[aID][name].text;
+				local checkbox = rGUI[aID][name].checkbox;
+				local texture = rGUI[aID][name].texture;
+				if (text) then
+					text:Show();
+				end
+				if (checkbox) then
+					checkbox:Show();
+				end
+				if (texture) then
+					texture:Show();
+				end
+				if (selectedInfo.bosses[name]) then
+					checkbox:SetChecked(true);
+				end
 			end
 		end
 	end
@@ -1379,7 +1547,7 @@ local function PGF_ShowRaidFrame(isSameCat)
 	LFGListFrame:SetPoint(originalUI["LFGListFrame"].position[1], originalUI["LFGListFrame"].position[2], originalUI["LFGListFrame"].position[3], originalUI["LFGListFrame"].position[4], originalUI["LFGListFrame"].position[5]);
 	LFGListFrame:SetSize(438, LFGListFrame:GetHeight());
 	]]
-	updateRaidDifficulty(isSameCat);
+	updateRaidDifficulty(isSameCat, true);
 end
 
 --[[
@@ -1972,23 +2140,23 @@ local function initRaid()
 	function PGF_RaidState_OnClick(self)
 		UIDropDownMenu_SetSelectedID(raidDifficultyDropDown, self:GetID());
 		lastSelectedRaidState = self:GetText();
-		if (self:GetText():match(" All")) then --there is no activity for All so if there is a previous activity set in the searchbox it needs to be cleared
+		if (self:GetText():match("All")) then --there is no activity for All so if there is a previous activity set in the searchbox it needs to be cleared
 			C_LFGList.ClearSearchTextFields();
 		elseif (PGF_allRaidActivityIDs[raidStateMap[lastSelectedRaidState]]) then
 			C_LFGList.SetSearchToActivity(raidStateMap[lastSelectedRaidState]);
 		end
-		updateRaidDifficulty(true);
+		updateRaidDifficulty(true, false);
 	end
 
 	UIDropDownMenu_SetWidth(raidDifficultyDropDown, 100);
 	UIDropDownMenu_SetButtonWidth(raidDifficultyDropDown, 100);
 	UIDropDownMenu_JustifyText(raidDifficultyDropDown, "CENTER");
 	UIDropDownMenu_Initialize(raidDifficultyDropDown, Initialize_RaidStates);
-	UIDropDownMenu_SetSelectedID(raidDifficultyDropDown, 4);
+	UIDropDownMenu_SetSelectedID(raidDifficultyDropDown, 1);
 	local matchingActivities = C_LFGList.GetAvailableActivities(3, nil, ResolveCategoryFilters(3, 1), ""); --3 == raid category 0 is to set there arent any language filters
 	for i = 1, #matchingActivities do
 		local name = PGF_allRaidActivityIDs[matchingActivities[i]];
-		local shortName = name:gsub("%s%(.*", "")
+		local shortName = name:gsub("%s%(.*", "");
 		local difficulty = name:match("%(.*%)");
 		if (raidAbbreviations[shortName]) then
 			shortName = raidAbbreviations[shortName];
@@ -2010,7 +2178,10 @@ local function initRaid()
 			texture:SetTexCoord(0.15, 0.85, 0, 0.7)
 			local shortName = name:gsub("%s%(.*", "");
 			local raidNameShort = PGF_allRaidActivityIDs[aID]:gsub("%s%(.*", "");
-			local trimedName = bossOrderMap[raidAbbreviations[raidNameShort]][index]:gsub("(%s)","");
+			local trimedName = bossOrderMap[raidAbbreviations[raidNameShort]][index];
+			if (raidNameShort ~= "Aberrus") then
+				trimedName = bossOrderMap[raidAbbreviations[raidNameShort]][index]:gsub("(%s)","");
+			end
 			trimedName = trimedName:gsub(",","");
 			texture:SetTexture("Interface\\ENCOUNTERJOURNAL\\UI-EJ-BOSS-" .. trimedName ..".PNG");
 			texture:SetPoint("TOPLEFT", 30,-65-((count-1)*24));
@@ -3041,8 +3212,6 @@ local function PGF_LFGListGroupDataDisplayRoleCount_Update(self, displayData, di
 
 	local resultID = self:GetParent():GetParent().resultID;
 	if (not disabled) then
-		--print(self.Name)
-		--print(getTierCount(nil, displayData));
 	end
 end
 
@@ -3203,9 +3372,7 @@ function LFGListSearchPanel_UpdateResultList(self)
 			return true;
 		else
 			slowCount = slowCount + 1;
-			print("count is " .. slowCount)
 			self.totalResults, self.results = C_LFGList.GetFilteredSearchResults();
-			print("found results: " .. self.totalResults)
 			for i = 1, #self.results do
 				local searchResults = C_LFGList.GetSearchResultInfo(self.results[i]);
 				local activityID = searchResults.activityID;
@@ -3227,7 +3394,6 @@ function LFGListSearchPanel_UpdateResultList(self)
 				end
 			end
 			if (slowCount == slowTotal) then
-				print("slow total before filter: " .. self.totalResults);
 				LFGListUtil_SortSearchResults(slowResults);
 				self.totalResults = #slowResults;
 				self.results = slowResults;
@@ -3238,7 +3404,7 @@ function LFGListSearchPanel_UpdateResultList(self)
 			end
 		end
 	elseif (LFGListFrame.SearchPanel.categoryID == 3) then
-		if(next(selectedInfo.bosses) == nil) then
+		if((next(selectedInfo.bosses) == nil and raidStateMap[lastSelectedRaidState] ~= 0 and not lastSelectedRaidState:match(" All")) or raidStateMap[lastSelectedRaidState] == 0) then
 			LFGListFrame.SearchPanel.RefreshButton:SetScript("OnClick", function() end);
 			LFGListFrame.SearchPanel.RefreshButton.Icon:SetTexture("Interface\\AddOns\\PGFinder\\Res\\RedRefresh.tga");
 			searchAvailable = false;
@@ -3277,22 +3443,52 @@ function LFGListSearchPanel_UpdateResultList(self)
 				local _, appStatus, pendingStatus, appDuration = C_LFGList.GetApplicationInfo(self.results[i]);
 				local encounterInfo = C_LFGList.GetSearchResultEncounterInfo(self.results[i]);
 				local bossesDefeated = {};
-				if (raidAbbreviations[activityShortName]) then
-					if (selectedInfo.bosses[bossNameMap[raidAbbreviations[activityShortName]][bossOrderMap[raidAbbreviations[activityShortName]][1]]]) then
-						if (encounterInfo == nil or encounterInfo[1] ~= bossNameMap[raidAbbreviations[activityShortName]][bossOrderMap[raidAbbreviations[activityShortName]][1]]) then
+				if (lastSelectedRaidState:match(" All")) then
+					if (raidStateMap[lastSelectedRaidState] == activityID or raidStateMap[lastSelectedRaidState]-1 == activityID or raidStateMap[lastSelectedRaidState]-2 == activityID) then --raidStateMap[lastSelectedRaidState] is always mythicID, and heroic and normal are also accepted when the user is looking for ANY raid and their aIDs are -1 and -2 from mythic always
+						if (next(selectedInfo.bosses) == nil) then
 							table.insert(newResults, self.results[i]);
-						end
-					elseif (selectedInfo.bosses["Fresh Run"] and encounterInfo == nil) then
-						table.insert(newResults, self.results[i]);
-					elseif (encounterInfo) then
-						for index, boss in pairs(encounterInfo) do
-							bossesDefeated[bossNameMap[raidAbbreviations[activityShortName]][boss]] = true;
-						end
-						for bossName, isWanted in pairs(selectedInfo.bosses) do
-							if (bossName ~= "Fresh Run" and bossName ~= bossNameMap[raidAbbreviations[activityShortName]][bossOrderMap[raidAbbreviations[activityShortName]][1]]) then -- if its fresh or first boss wont have a parent, just skip
-								if (isNextBoss(VOTI_Path, bossName, bossesDefeated) and not bossesDefeated[bossName]) then
+						else
+							if (raidAbbreviations[activityShortName]) then
+								if (selectedInfo.bosses[bossNameMap[raidAbbreviations[activityShortName]][bossOrderMap[raidAbbreviations[activityShortName]][1]]]) then
+									if (encounterInfo == nil or encounterInfo[1] ~= bossNameMap[raidAbbreviations[activityShortName]][bossOrderMap[raidAbbreviations[activityShortName]][1]]) then
+										table.insert(newResults, self.results[i]);
+									end
+								elseif (selectedInfo.bosses["Fresh Run"] and encounterInfo == nil) then
 									table.insert(newResults, self.results[i]);
-									break;
+								elseif (encounterInfo) then
+									for index, boss in pairs(encounterInfo) do
+										bossesDefeated[bossNameMap[raidAbbreviations[activityShortName]][boss]] = true;
+									end
+									for bossName, isWanted in pairs(selectedInfo.bosses) do
+										if (bossName ~= "Fresh Run" and bossName ~= bossNameMap[raidAbbreviations[activityShortName]][bossOrderMap[raidAbbreviations[activityShortName]][1]]) then -- if its fresh or first boss wont have a parent, just skip
+											if (isNextBoss(boss_Paths[raidAbbreviations[activityShortName]], bossName, bossesDefeated) and not bossesDefeated[bossName]) then
+												table.insert(newResults, self.results[i]);
+												break;
+											end
+										end
+									end
+								end
+							end
+						end
+					end
+				else
+					if (raidAbbreviations[activityShortName]) then
+						if (selectedInfo.bosses[bossNameMap[raidAbbreviations[activityShortName]][bossOrderMap[raidAbbreviations[activityShortName]][1]]]) then
+							if (encounterInfo == nil or encounterInfo[1] ~= bossNameMap[raidAbbreviations[activityShortName]][bossOrderMap[raidAbbreviations[activityShortName]][1]]) then
+								table.insert(newResults, self.results[i]);
+							end
+						elseif (selectedInfo.bosses["Fresh Run"] and encounterInfo == nil) then
+							table.insert(newResults, self.results[i]);
+						elseif (encounterInfo) then
+							for index, boss in pairs(encounterInfo) do
+								bossesDefeated[bossNameMap[raidAbbreviations[activityShortName]][boss]] = true;
+							end
+							for bossName, isWanted in pairs(selectedInfo.bosses) do
+								if (bossName ~= "Fresh Run" and bossName ~= bossNameMap[raidAbbreviations[activityShortName]][bossOrderMap[raidAbbreviations[activityShortName]][1]]) then -- if its fresh or first boss wont have a parent, just skip
+									if (isNextBoss(boss_Paths[raidAbbreviations[activityShortName]], bossName, bossesDefeated) and not bossesDefeated[bossName]) then
+										table.insert(newResults, self.results[i]);
+										break;
+									end
 								end
 							end
 						end
@@ -3308,9 +3504,7 @@ function LFGListSearchPanel_UpdateResultList(self)
 			return true;
 		else
 			slowCount = slowCount + 1;
-			print("count is " .. slowCount)
 			self.totalResults, self.results = C_LFGList.GetFilteredSearchResults();
-			print("found results: " .. self.totalResults)
 			for i = 1, #self.results do
 				local searchResults = C_LFGList.GetSearchResultInfo(self.results[i]);
 				local activityID = searchResults.activityID;
@@ -3332,7 +3526,6 @@ function LFGListSearchPanel_UpdateResultList(self)
 				end
 			end
 			if (slowCount == slowTotal) then
-				print("slow total before filter: " .. self.totalResults);
 				LFGListUtil_SortSearchResults(slowResults);
 				self.totalResults = #slowResults;
 				self.results = slowResults;
@@ -3416,20 +3609,20 @@ LFGListApplicationDialog:HookScript("OnShow", function(self)
 	local apps = C_LFGList.GetApplications();
 	if(IsInGroup() and not UnitIsGroupLeader("player")) then
 		if (PGF_roles["TANK"]) then
-	    	LFDRoleCheckPopupRoleButtonTank.checkButton:SetChecked(true);
-	    else
-	   		LFDRoleCheckPopupRoleButtonTank.checkButton:SetChecked(false);
-	    end
-	    if (PGF_roles["HEALER"]) then
-	    	LFDRoleCheckPopupRoleButtonHealer.checkButton:SetChecked(true);
-	    else
-	    	LFDRoleCheckPopupRoleButtonHealer.checkButton:SetChecked(false);
-	    end
-	    if (PGF_roles["DAMAGER"]) then
-	        LFDRoleCheckPopupRoleButtonDPS.checkButton:SetChecked(true);
-	    else
-	    	LFDRoleCheckPopupRoleButtonHealer.checkButton:SetChecked(false);
-	    end
+			LFDRoleCheckPopupRoleButtonTank.checkButton:SetChecked(true);
+		else
+			LFDRoleCheckPopupRoleButtonTank.checkButton:SetChecked(false);
+		end
+		if (PGF_roles["HEALER"]) then
+			LFDRoleCheckPopupRoleButtonHealer.checkButton:SetChecked(true);
+		else
+			LFDRoleCheckPopupRoleButtonHealer.checkButton:SetChecked(false);
+		end
+		if (PGF_roles["DAMAGER"]) then
+			LFDRoleCheckPopupRoleButtonDPS.checkButton:SetChecked(true);
+		else
+			LFDRoleCheckPopupRoleButtonHealer.checkButton:SetChecked(false);
+		end
 		LFDRoleCheckPopupAcceptButton:Enable();
 		LFDRoleCheckPopupAcceptButton:Click();
 	elseif (true or PGF_autoSign) then

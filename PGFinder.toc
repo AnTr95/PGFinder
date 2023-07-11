@@ -1,8 +1,9 @@
-## Interface: 100100
+## Interface: 100105
 ## Title: Premade Group Finder
-## Version: 10.17
+## Version: 10.25
 ## Notes: Made finding groups quick and easy
-## Author: Ant-Kazzak / Antmage-Ragnaros
+## Author: Ant-Kazzak / Ant-Ragnaros
+## IconTexture: Interface\AddOns\PGFinder\Res\minimap
 ## SavedVariables: PGF_DevAllActivityIDs
 ## SavedVariables: PGF_DevDungeonsActivityIDs
 ## SavedVariables: PGF_DevRaidActivityIDs
