@@ -130,11 +130,7 @@ local raidStateMap = {
 	["ASC Normal"] = 1235,
 	["ASC Heroic"] = 1236,
 	["ASC Mythic"] = 1237,
-<<<<<<< HEAD
 	["ASC All"] = 1235, --no activity ID for this so lets take the boss data from normal
-=======
-	["ASC All"] = 1237, --no activity ID for this so lets take the boss data from mythic
->>>>>>> 8153239e5335aadf93afa6e847e0013bc967fa9d
 };
 local tierSetsMap = {
 	["DEATHKNIGHT"] = "Dreadful",
@@ -228,11 +224,7 @@ local dungeonAbbreviations = {
 
 local raidAbbreviations = {
 	["Vault of the Incarnates"] = "VOTI",
-<<<<<<< HEAD
 	["Aberrus"] = "ASC",
-=======
-	["Aberrus, the Shadowed Crucible"] = "ASC",
->>>>>>> 8153239e5335aadf93afa6e847e0013bc967fa9d
 };
 --[[
 	Documentation: This is DAG that defines which bosses are after and which are before the selected boss and is used for figuring out what boss is next based on the raid lockout
@@ -601,11 +593,7 @@ local selectedInfo = {
 ]]
 local achievementIDs = {
 	["Vault of the Incarnates"] = {17108, 16352, 16350, 16351, 16349, 16347, 16346, 16348, 16346, 17107, 16343},
-<<<<<<< HEAD
 	["Aberrus"] = {18254, 18158, 18157, 18156, 18155, 18153, 18154, 18152, 18151, 18253, 18177, 18167, 18165, 18164, 18163},
-=======
-	["Aberrus, the Shadowed Crucible"] = {18254, 18158, 18157, 18156, 18155, 18153, 18154, 18152, 18151, 18253, 18177, 18167, 18165, 18164, 18163},
->>>>>>> 8153239e5335aadf93afa6e847e0013bc967fa9d
 };
 
 --[[
@@ -2191,11 +2179,7 @@ local function initRaid()
 			local shortName = name:gsub("%s%(.*", "");
 			local raidNameShort = PGF_allRaidActivityIDs[aID]:gsub("%s%(.*", "");
 			local trimedName = bossOrderMap[raidAbbreviations[raidNameShort]][index];
-<<<<<<< HEAD
 			if (raidNameShort ~= "Aberrus") then
-=======
-			if (raidNameShort ~= "Aberrus, the Shadowed Crucible") then
->>>>>>> 8153239e5335aadf93afa6e847e0013bc967fa9d
 				trimedName = bossOrderMap[raidAbbreviations[raidNameShort]][index]:gsub("(%s)","");
 			end
 			trimedName = trimedName:gsub(",","");

@@ -347,11 +347,7 @@ PGF_allRaidActivityIDs = {
 	[1191] = "Vault of the Incarnates (Mythic)",
 	[1020] = "Sepulcher of the First Ones (Normal)",
 	[346] = "Terrace of Endless Spring (25 Heroic)",
-<<<<<<< HEAD
 	[1237] = "Aberrus (Mythic)",
-=======
-	[1237] = "Aberrus, the Shadowed Crucible (Mythic)",
->>>>>>> 8153239e5335aadf93afa6e847e0013bc967fa9d
 	[397] = "World Bosses (Pandaria)",
 	[671] = "The Eternal Palace (Heroic)",
 	[9] = "Molten Core",
@@ -398,11 +394,7 @@ PGF_allRaidActivityIDs = {
 	[721] = "Castle Nathria (Mythic)",
 	[319] = "The Bastion of Twilight (10 Normal)",
 	[323] = "Throne of the Four Winds (10 Normal)",
-<<<<<<< HEAD
 	[1236] = "Aberrus (Heroic)",
-=======
-	[1236] = "Aberrus, the Shadowed Crucible (Heroic)",
->>>>>>> 8153239e5335aadf93afa6e847e0013bc967fa9d
 	[331] = "Dragon Soul (10 Normal)",
 	[335] = "Mogu'shan Vaults (10 Normal)",
 	[339] = "Heart of Fear (10 Normal)",
@@ -421,11 +413,7 @@ PGF_allRaidActivityIDs = {
 	[672] = "The Eternal Palace (Normal)",
 	[1022] = "Sepulcher of the First Ones (Mythic)",
 	[399] = "Highmaul (Mythic)",
-<<<<<<< HEAD
 	[1235] = "Aberrus (Normal)",
-=======
-	[1235] = "Aberrus, the Shadowed Crucible (Normal)",
->>>>>>> 8153239e5335aadf93afa6e847e0013bc967fa9d
 	[667] = "Crucible of Storms (Heroic)",
 	[306] = "Trial of the Crusader (25 Normal)",
 	[415] = "The Nighthold (Normal)",
