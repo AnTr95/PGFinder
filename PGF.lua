@@ -174,6 +174,7 @@ local bossOrderMap = {
 		"Magmorax",
 		"Echo of Neltharion",
 		"Scalecommander Sarkareth",
+		"Fresh"
 	},
 };
 --[[
@@ -201,6 +202,7 @@ local bossNameMap = {
 		["Magmorax"] = "Magmorax",
 		["Echo of Neltharion"] = "Neltharion",
 		["Scalecommander Sarkareth"] = "Sarkareth",
+		["Fresh"] = "Fresh Run",
 	},
 };
 local dungeonAbbreviations = {
@@ -2183,7 +2185,6 @@ local function initRaid()
 				trimedName = bossOrderMap[raidAbbreviations[raidNameShort]][index]:gsub("(%s)","");
 			end
 			trimedName = trimedName:gsub(",","");
-			print(trimedName)
 			texture:SetTexture("Interface\\ENCOUNTERJOURNAL\\UI-EJ-BOSS-" .. trimedName ..".PNG");
 			texture:SetPoint("TOPLEFT", 30,-65-((count-1)*24));
 			texture:SetSize(18, 18);
