@@ -511,6 +511,7 @@ local classSpecilizationMap = {
     ["EVOKER"] = {
         ["Devastation"] = 1467,
         ["Preservation"] = 1468,
+        ["Augmentation"] = 1473,
         ["Initial"] = 1465
     },
     ["HUNTER"] = {
