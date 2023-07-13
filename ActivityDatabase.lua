@@ -338,6 +338,11 @@ PGF_allDungeonsActivityIDs = {
 	[484] = "Seat of the Triumvirate (Heroic)",
 	[535] = "Siege of Boralus (Heroic)",
 	[1195] = "The Vortex Pinnacle (Mythic Keystone)",
+	[1244] = "Dawn of the Infinite (Mythic)",
+	[1245] = "Dawn of the Infinite: Galakrond's Fall (Heroic)",
+	[1246] = "Dawn of the Infinite: Murozond's Rise (Heroic)",
+	[1247] = "Dawn of the Infinite: Galakrond's Fall (Mythic Keystone)",
+	[1248] = "Dawn of the Infinite: Murozond's Rise (Mythic Keystone)",
 };
 
 PGF_allRaidActivityIDs = {

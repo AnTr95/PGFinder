@@ -75,7 +75,7 @@ local refreshButtonClick = LFGListFrame.SearchPanel.RefreshButton:GetScript("OnC
 	Change lastSelectedRaidState to match the new raids "All" AFTER it has been released
 
 	To add a new dungeon:
-	Add the abbreviated name of the dungeon to the dungeonAbbrerviations
+	Add the abbreviated name of the dungeon to the dungeonAbbreviations
 	Add the activityIDs of all difficulties to PGF_allDungeonsActivityIDs
 ]]
 
@@ -222,6 +222,10 @@ local dungeonAbbreviations = {
 	["Freehold"] = "FH",
 	["The Underrot"] = "UNDR",
 	["The Vortex Pinnacle"] = "VP",
+	["Dawn of the Infinite"] = "DI",
+	["Dawn of the Infinite: Galakrond's Fall"] = "DI:GF",
+	["Dawn of the Infinite: Murozond's Rise"] ="DI:MR",
+
 };
 
 local raidAbbreviations = {
@@ -1623,7 +1627,10 @@ local function initDungeon()
 			shortName = dungeonAbbreviations[shortName];
 		end
 		if (name:match("(Mythic Keystone)")) then
-			currentDungeonsActivityIDs["(Mythic Keystone)"][matchingActivities[i]] = shortName .. " " .. difficulty;
+			--remove for 10.2
+			if (not name:match("Dawn of the Infinite")) then
+				currentDungeonsActivityIDs["(Mythic Keystone)"][matchingActivities[i]] = shortName .. " " .. difficulty;
+			end
 		elseif (name:match("(Mythic)")) then
 			currentDungeonsActivityIDs["(Mythic)"][matchingActivities[i]] = shortName .. " " .. difficulty;
 		elseif (name:match("(Heroic)")) then
@@ -1705,7 +1712,7 @@ local function initDungeon()
 	end
 	local slowSearchCheckBox = CreateFrame("CheckButton", nil, dungeonFrame, "UICheckButtonTemplate");
 	slowSearchCheckBox:SetSize(20, 20);
-	slowSearchCheckBox:SetPoint("TOPLEFT", 49,-253);
+	slowSearchCheckBox:SetPoint("TOPLEFT", 49,-268);
 	slowSearchCheckBox:SetScript("OnClick", function(self)
 		if (self:GetChecked()) then
 			slowSearch = true;
@@ -1767,7 +1774,7 @@ local function initDungeon()
 	end);
 	local minLeaderScoreText = dungeonFrame:CreateFontString(nil, "ARTWORK", "GameFontNormalTiny2");
 	minLeaderScoreText:SetFont(minLeaderScoreText:GetFont(), 10);
-	minLeaderScoreText:SetPoint("TOPLEFT", filterRolesText, "TOPLEFT", 0, -25);
+	minLeaderScoreText:SetPoint("TOPLEFT", filterRolesText, "TOPLEFT", 0, -20);
 	minLeaderScoreText:SetText(L.OPTIONS_MIN_LEADER_SCORE);
 	local minLeaderScoreEditBox = CreateFrame("EditBox", nil, dungeonFrame, "InputBoxTemplate");
 	minLeaderScoreEditBox:SetPoint("RIGHT", minLeaderScoreText, "RIGHT", 100, 0);
@@ -1804,7 +1811,7 @@ local function initDungeon()
 	end);
 	local roleText = f:CreateFontString(nil, "ARTWORK", "GameFontNormalTiny2");
 	roleText:SetFont(roleText:GetFont(), 10);
-	roleText:SetPoint("TOPLEFT", minLeaderScoreText, "TOPLEFT", 0, -25);
+	roleText:SetPoint("TOPLEFT", minLeaderScoreText, "TOPLEFT", 0, -20);
 	roleText:SetText(L.OPTIONS_ROLE);
 	local canBeTank, canBeHealer, canBeDPS = UnitGetAvailableRoles("player");
 	local dpsTexture = f:CreateTexture(nil, "OVERLAY");
