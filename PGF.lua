@@ -2408,6 +2408,17 @@ f:SetScript("OnEvent", function(self, event, ...)
 		if (PGF_roles == nil) then 
 			PGF_roles = {["TANK"] = false, ["HEALER"] = false, ["DAMAGER"] = false};
 			PGF_roles[playerRole] = true;
+		else
+			local canBeTank, canBeHealer, canBeDPS = UnitGetAvailableRoles("player");
+			if (not canBeDPS) then
+				PGF_roles["DAMAGER"] = false;
+			end
+			if (not canBeHealer) then
+				PGF_roles["HEALER"] = false;
+			end
+			if (not canBeTank) then
+				PGF_roles["TANK"] = false;
+			end
 		end
 		if (PGF_ShowDungeonOptionsFrame == nil) then PGF_ShowDungeonOptionsFrame = true; end
 		if (PGF_ShowRaidOptionsFrame == nil) then PGF_ShowRaidOptionsFrame = true; end
