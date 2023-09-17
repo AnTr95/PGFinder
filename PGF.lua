@@ -237,84 +237,84 @@ local raidAbbreviations = {
 ]]
 local boss_Paths = {
 	["ASC"] = {
-		["Kazzara, the Hellforged"] = {
+		["Kazzara"] = {
 			["children_paths"] = {
-				{"The Amalgamation Chamber", "The Forgotten Experiments", "Assault of the Zaqali", "Rashok, the Elder", "The Vigilant Steward, Zskarn", "Magmorax", "Echo of Neltharion", "Scalecommander Sarkareth"},
-				{"Assault of the Zaqali", "Rashok, the Elder", "The Amalgamation Chamber", "The Forgotten Experiments", "The Vigilant Steward, Zskarn", "Magmorax", "Echo of Neltharion", "Scalecommander Sarkareth"},
-				{"Echo of Neltharion", "Scalecommander Sarkareth"},
+				{"Amalgamation Chamber", "Forgotten Experiments", "Assault of the Zaqali", "Rashok", "Zskarn", "Magmorax", "Neltharion", "Sarkareth"},
+				{"Assault of the Zaqali", "Rashok", "Amalgamation Chamber", "Forgotten Experiments", "Zskarn", "Magmorax", "Neltharion", "Sarkareth"},
+				{"Neltharion", "Sarkareth"},
 			},
 			["parent_paths"] = {},
 		},
-		["The Amalgamation Chamber"] = {
+		["Amalgamation Chamber"] = {
 			["children_paths"] = {
-				{"The Forgotten Experiments", "Assault of the Zaqali", "Rashok, the Elder", "The Vigilant Steward, Zskarn", "Magmorax", "Echo of Neltharion", "Scalecommander Sarkareth"},
+				{"Forgotten Experiments", "Assault of the Zaqali", "Rashok", "Zskarn", "Magmorax", "Neltharion", "Sarkareth"},
 			},
 			["parent_paths"] = {
-				{"Kazzara, the Hellforged"},
-				{"Rashok, the Elder", "Assault of the Zaqali","Kazzara, the Hellforged"},
+				{"Kazzara"},
+				{"Rashok", "Assault of the Zaqali","Kazzara"},
 			},
 		},
-		["The Forgotten Experiments"] = {
+		["Forgotten Experiments"] = {
 			["children_paths"] = {
-				{"Assault of the Zaqali", "Rashok, the Elder", "The Vigilant Steward, Zskarn", "Magmorax", "Echo of Neltharion", "Scalecommander Sarkareth"},
+				{"Assault of the Zaqali", "Rashok", "Zskarn", "Magmorax", "Neltharion", "Sarkareth"},
 			},
 			["parent_paths"] = {
-				{"The Amalgamation Chamber", "Kazzara, the Hellforged"},
-				{"Rashok, the Elder", "Assault of the Zaqali", "The Amalgamation Chamber", "Kazzara, the Hellforged"},
+				{"Amalgamation Chamber", "Kazzara"},
+				{"Rashok", "Assault of the Zaqali", "Amalgamation Chamber", "Kazzara"},
 			},
 		},
 		["Assault of the Zaqali"] = {
 			["children_paths"] = {
-				{"Rashok, the Elder", "The Vigilant Steward, Zskarn", "Magmorax", "Echo of Neltharion", "Scalecommander Sarkareth"},
+				{"Rashok", "Zskarn", "Magmorax", "Neltharion", "Sarkareth"},
 			},
 			["parent_paths"] = {
-				{"Kazzara, the Hellforged"},
-				{"The Forgotten Experiments", "The Amalgamation Chamber", "Kazzara, the Hellforged"},
+				{"Kazzara"},
+				{"Forgotten Experiments", "Amalgamation Chamber", "Kazzara"},
 			},
 		},
-		["Rashok, the Elder"] = {
+		["Rashok"] = {
 			["children_paths"] = {
-				{"The Vigilant Steward, Zskarn", "Magmorax", "Echo of Neltharion", "Scalecommander Sarkareth"}
+				{"Zskarn", "Magmorax", "Neltharion", "Sarkareth"}
 			},
 			["parent_paths"] = {
-				{"Assault of the Zaqali", "Kazzara, the Hellforged"},
-	  			{"Assault of the Zaqali", "The Forgotten Experiments", "The Amalgamation Chamber", "Kazzara, the Hellforged"},
+				{"Assault of the Zaqali", "Kazzara"},
+	  			{"Assault of the Zaqali", "Forgotten Experiments", "Amalgamation Chamber", "Kazzara"},
 			},
 		},
-		["The Vigilant Steward, Zskarn"] = {
+		["Zskarn"] = {
 			["children_paths"] = {
-				{"Magmorax", "Echo of Neltharion", "Scalecommander Sarkareth"}
+				{"Magmorax", "Neltharion", "Sarkareth"}
 			},
 			["parent_paths"] = {
-				{"Rashok, the Elder", "Assault of the Zaqali", "The Forgotten Experiments", "The Amalgamation Chamber", "Kazzara, the Hellforged"},
-				{"The Forgotten Experiments", "The Amalgamation Chamber", "Rashok, the Elder", "Assault of the Zaqali", "Kazzara, the Hellforged"},
+				{"Rashok", "Assault of the Zaqali", "Forgotten Experiments", "Amalgamation Chamber", "Kazzara"},
+				{"Forgotten Experiments", "Amalgamation Chamber", "Rashok", "Assault of the Zaqali", "Kazzara"},
 			},
 		},
 		["Magmorax"] = {
 			["children_paths"] = {
-				{"Echo of Neltharion", "Scalecommander Sarkareth"}
+				{"Neltharion", "Sarkareth"}
 			},
 			["parent_paths"] = {
-				{"The Vigilant Steward, Zskarn", "Rashok, the Elder", "Assault of the Zaqali", "The Forgotten Experiments", "The Amalgamation Chamber", "Kazzara, the Hellforged"},
-				{"The Vigilant Steward, Zskarn", "The Forgotten Experiments", "The Amalgamation Chamber", "Rashok, the Elder", "Assault of the Zaqali", "Kazzara, the Hellforged"},
+				{"Zskarn", "Rashok", "Assault of the Zaqali", "Forgotten Experiments", "Amalgamation Chamber", "Kazzara"},
+				{"Zskarn", "Forgotten Experiments", "Amalgamation Chamber", "Rashok", "Assault of the Zaqali", "Kazzara"},
 			},
 		},
-		["Echo of Neltharion"] = {
+		["Neltharion"] = {
 			["children_paths"] = {
-				{"Scalecommander Sarkareth"}
+				{"Sarkareth"}
 			},
 			["parent_paths"] = {
-				{"Kazzara, the Hellforged"},
-				{"Magmorax", "The Vigilant Steward, Zskarn", "Rashok, the Elder", "Assault of the Zaqali", "The Forgotten Experiments", "The Amalgamation Chamber", "Kazzara, the Hellforged"},
-				{"Magmorax", "The Vigilant Steward, Zskarn", "The Forgotten Experiments", "The Amalgamation Chamber", "Rashok, the Elder", "Assault of the Zaqali", "Kazzara, the Hellforged"},
+				{"Kazzara"},
+				{"Magmorax", "Zskarn", "Rashok", "Assault of the Zaqali", "Forgotten Experiments", "Amalgamation Chamber", "Kazzara"},
+				{"Magmorax", "Zskarn", "Forgotten Experiments", "Amalgamation Chamber", "Rashok", "Assault of the Zaqali", "Kazzara"},
 			}
 		},
-		["Scalecommander Sarkareth"] = {
+		["Sarkareth"] = {
 			["children_paths"] = {},
 			["parent_paths"] = {			
-				{"Echo of Neltharion", "Kazzara, the Hellforged"},
-				{"Echo of Neltharion", "Magmorax", "The Vigilant Steward, Zskarn", "Rashok, the Elder", "Assault of the Zaqali", "The Forgotten Experiments", "The Amalgamation Chamber", "Kazzara, the Hellforged"},
-				{"Echo of Neltharion", "Magmorax", "The Vigilant Steward, Zskarn", "The Forgotten Experiments", "The Amalgamation Chamber", "Rashok, the Elder", "Assault of the Zaqali", "Kazzara, the Hellforged"},
+				{"Neltharion", "Kazzara"},
+				{"Neltharion", "Magmorax", "Zskarn", "Rashok", "Assault of the Zaqali", "Forgotten Experiments", "Amalgamation Chamber", "Kazzara"},
+				{"Neltharion", "Magmorax", "Zskarn", "Forgotten Experiments", "Amalgamation Chamber", "Rashok", "Assault of the Zaqali", "Kazzara"},
 			}
 		},
 	},
@@ -947,7 +947,7 @@ end
 ]]
 local function isNextBoss(graph, boss, bosses)
 	if (boss and graph) then
-		if (boss == "Broodkeeper" or boss == "Echo of Neltharion") then
+		if (boss == "Broodkeeper" or boss == "Neltharion") then
 			if (bosses[graph[boss]["parent_paths"][1][1]] and PGF_GetSize(bosses) == 1) then
 				return true;
 			elseif (bosses[graph[boss]["parent_paths"][1][1]] and bosses[graph[boss]["parent_paths"][2][1]] and bosses[graph[boss]["parent_paths"][3][1]]) then
