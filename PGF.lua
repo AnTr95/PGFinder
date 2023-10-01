@@ -61,22 +61,23 @@ local strlower = strlower;
 local refreshButtonClick = LFGListFrame.SearchPanel.RefreshButton:GetScript("OnClick"); --save the OnClick functionality to be able to temporarily move it and put it back when needed
 
 --[[
-	Documentation: Creating all local variables.
 	To add a new raid:
-	Update the dropdownMenuStates 
-	Add the activityID to the raidStateMap 
-	Add the abbreviated version of the raid name to the bossNameMap and all of the bosses long and short names 
-	Add the abbreviated version of the raid name to the bossOrderMap and all long names of the bosses in the prefered order 
-	Add the boss paths to the PATHs graph
-	Add the abbreviated name of the raid to the raidAbbrerviations 
-	Add all achievement IDs to the achievementID array using the generic raid name (without difficulty) 
-	Update isNextBoss function to cover first boss and post multiple wing bosses i.e Broodkeeper
-	Add the activityIDs of all difficulties to PGF_allRaidsActivityIDs
-	Change lastSelectedRaidState to match the new raids "All" AFTER it has been released
+	Update the raidStates x
+	Add the activityID to the raidStateMap x
+	Add the abbreviated version of the raid name to the bossNameMap and all of the bosses long and short names x
+	Add the abbreviated version of the raid name to the bossOrderMap and all long names of the bosses in the prefered order x
+	Add the boss paths to the PATHs graph (use short names)
+	Add the abbreviated name of the raid to the raidAbbreviations x
+	Add all achievement IDs to the achievementID array using the generic raid name (without difficulty) x
+	Update isNextBoss function to cover first boss and post multiple wing bosses i.e Broodkeeper x
+	Add the activityIDs of all difficulties to PGF_allRaidActivityIDs
+	Change lastSelectedRaidState to match the new raids "All" AFTER it has been released 
 
 	To add a new dungeon:
 	Add the abbreviated name of the dungeon to the dungeonAbbreviations
 	Add the activityIDs of all difficulties to PGF_allDungeonsActivityIDs
+
+	Documentation: Creating all local variables.
 ]]
 
 local lastCat = nil;
@@ -96,7 +97,7 @@ local prevSearchTime = 0;
 local refreshTimeReset = 3; --defines the time that must pass between searches
 local searchAvailable = true;
 local dungeonStates = {"Normal", "Heroic", "Mythic", "Mythic+ (Keystone)"}; --visible states for the dropdown
-local raidStates = {"All", "VOTI Normal", "VOTI Heroic", "VOTI Mythic", "VOTI All", "ASC Normal", "ASC Heroic", "ASC Mythic", "ASC All",}; --visible states for the dropdown
+local raidStates = {"All", "VOTI Normal", "VOTI Heroic", "VOTI Mythic", "VOTI All", "ASC Normal", "ASC Heroic", "ASC Mythic", "ASC All", "ADH Normal", "ADH Heroic", "ADH Mythic", "ADH All",}; --visible states for the dropdown
 local sortingStates = {[1] = "Time", [2] = "Score"};
 local sortingRaidStates = {[1] = "Time", [2] = "Few of your class", [3] = "Many of your class", [4] = "Few of your tier", [5] = "Many of your tier"};
 local lastSelectedDungeonState = "";
@@ -131,6 +132,10 @@ local raidStateMap = {
 	["ASC Heroic"] = 1236,
 	["ASC Mythic"] = 1237,
 	["ASC All"] = 1235, --no activity ID for this so lets take the boss data from normal
+	["ADH Normal"] = 1251,
+	["ADH Heroic"] = 1252,
+	["ADH Mythic"] = 1253,
+	["ADH All"] = 1251,
 };
 local tierSetsMap = {
 	["DEATHKNIGHT"] = "Dreadful",
@@ -176,6 +181,18 @@ local bossOrderMap = {
 		"Scalecommander Sarkareth",
 		"Fresh"
 	},
+	["ADH"] = {
+		"Gnarlroot",
+		"Igira the Cruel",
+		"Volcoross",
+		"Council of Dreams",
+		"Larodar, Keeper of the Flame",
+		"Nymue, Weaver of the Cycle",
+		"Smolderon",
+		"Tindral Sageswift, Seer of the Flame",
+		"Fyrakk the Blazing",
+		"Fresh",
+	},
 };
 --[[
 	Documentation: This converts the names used in the GUIs for the user to see with the actual names in the code.
@@ -202,6 +219,18 @@ local bossNameMap = {
 		["Magmorax"] = "Magmorax",
 		["Echo of Neltharion"] = "Neltharion",
 		["Scalecommander Sarkareth"] = "Sarkareth",
+		["Fresh"] = "Fresh Run",
+	},
+	["ADH"] = {
+		["Gnarlroot"] = "Gnarlroot",
+		["Igira the Cruel"] = "Igira",
+		["Volcoross"] = "Volcoross",
+		["Council of Dreams"] = "Council",
+		["Larodar, Keeper of the Flame"] = "Larodar",
+		["Nymue, Weaver of the Cycle"] = "Nymue",
+		["Smolderon"] = "Smolderon",
+		["Tindral Sageswift, Seer of the Flame"] = "Tindral",
+		["Fyrakk the Blazing"] = "Fyrakk",
 		["Fresh"] = "Fresh Run",
 	},
 };
@@ -231,6 +260,7 @@ local dungeonAbbreviations = {
 local raidAbbreviations = {
 	["Vault of the Incarnates"] = "VOTI",
 	["Aberrus"] = "ASC",
+	["Amirdrassil, the Dream's Hope"] = "ADH",
 };
 --[[
 	Documentation: This is DAG that defines which bosses are after and which are before the selected boss and is used for figuring out what boss is next based on the raid lockout
@@ -393,6 +423,93 @@ local boss_Paths = {
 				{"Broodkeeper", "Eranog"},
 				{"Broodkeeper", "Dathea", "Council", "Kurog", "Sennarth", "Terros", "Eranog"},
 				{"Broodkeeper", "Kurog", "Sennarth", "Terros", "Dathea", "Council", "Eranog"},
+			},
+		}
+	},
+	["ADH"] = {
+		["Gnarlroot"] = {
+			["children_paths"] = {
+				{"Igira", "Volcoross", "Larodar", "Council", "Nymue", "Smolderon", "Tindral", "Fyrakk"},
+				{"Igira", "Council", "Nymue", "Volcoross", "Larodar", "Smolderon", "Tindral", "Fyrakk"},
+				{"Smolderon", "Tindral", "Fyrakk"}
+			},
+			["parent_paths"] = {},
+		},
+		["Igira"] = {
+			["children_paths"] = {
+				{"Volcoross", "Larodar", "Council", "Nymue", "Smolderon", "Tindral", "Fyrakk"},
+				{"Council", "Nymue", "Volcoross", "Larodar", "Smolderon", "Tindral", "Fyrakk"}
+			},
+			["parent_paths"] = {
+				{"Gnarlroot"},
+			},
+		},
+		["Volcoross"] = {
+			["children_paths"] = {
+				{"Larodar", "Council", "Nymue", "Smolderon", "Tindral", "Fyrakk"},
+				{"Larodar", "Smolderon", "Tindral", "Fyrakk"}
+			},
+			["parent_paths"] = {
+				{"Igira", "Gnarlroot"},
+				{"Nymue", "Council", "Igira", "Gnarlroot"},
+			},
+		},
+		["Larodar"] = {
+			["children_paths"] = {
+				{"Council", "Nymue", "Smolderon", "Tindral", "Fyrakk"},
+				{"Smolderon", "Tindral", "Fyrakk"}
+			},
+			["parent_paths"] = {
+				{"Volcoross", "Igira", "Gnarlroot"},
+				{"Volcoross", "Nymue", "Council", "Igira", "Gnarlroot"},
+			},
+		},
+		["Council"] = {
+			["children_paths"] = {
+				{"Nymue", "Smolderon", "Tindral", "Fyrakk"},
+				{"Volcoross", "Larodar", "Smolderon", "Tindral", "Fyrakk"},
+			},
+			["parent_paths"] = {
+				{"Igira", "Gnarlroot"},
+				{"Larodar", "Volcoross", "Igira", "Gnarlroot"},
+			},
+		},
+		["Nymue"] = {
+			["children_paths"] = {
+				{"Volcoross", "Larodar", "Smolderon", "Tindral", "Fyrakk"},
+				{"Smolderon", "Tindral", "Fyrakk"}
+			},
+			["parent_paths"] = {
+				{"Council", "Igira", "Gnarlroot"},
+				{"Council", "Larodar", "Volcoross", "Igira", "Gnarlroot"},
+			},
+		},
+		["Smolderon"] = {
+			["children_paths"] = {
+				{"Tindral", "Fyrakk"}
+			},
+			["parent_paths"] = {
+				{"Gnarlroot"},
+				{"Nymue", "Council", "Larodar", "Volcoross", "Igira", "Gnarlroot"},
+				{"Larodar", "Volcoross", "Nymue", "Council", "Igira", "Gnarlroot"},
+			},
+		},
+		["Tindral"] = {
+			["children_paths"] = {
+				{"Fyrakk"}
+			},
+			["parent_paths"] = {
+				{"Smolderon", "Gnarlroot"},
+				{"Smolderon", "Nymue", "Council", "Larodar", "Volcoross", "Igira", "Gnarlroot"},
+				{"Smolderon", "Larodar", "Volcoross", "Nymue", "Council", "Igira", "Gnarlroot"},
+			},
+		},
+		["Fyrakk"] = {
+			["children_paths"] = {},
+			["parent_paths"] = {
+				{"Tindral", "Smolderon", "Gnarlroot"},
+				{"Tindral", "Smolderon", "Nymue", "Council", "Larodar", "Volcoross", "Igira", "Gnarlroot"},
+				{"Tindral", "Smolderon", "Larodar", "Volcoross", "Nymue", "Council", "Igira", "Gnarlroot"},
 			},
 		}
 	},
@@ -601,6 +718,7 @@ local selectedInfo = {
 local achievementIDs = {
 	["Vault of the Incarnates"] = {17108, 16352, 16350, 16351, 16349, 16347, 16346, 16348, 16346, 17107, 16343},
 	["Aberrus"] = {18254, 18158, 18157, 18156, 18155, 18153, 18154, 18152, 18151, 18253, 18177, 18167, 18165, 18164, 18163},
+	["Amirdrassil, the Dream's Hope"] = {19351, 19342, 19341, 19339, 19340, 19337, 19338, 19336, 19335, 19350 ,19331},
 };
 
 --[[
@@ -947,7 +1065,7 @@ end
 ]]
 local function isNextBoss(graph, boss, bosses)
 	if (boss and graph) then
-		if (boss == "Broodkeeper" or boss == "Neltharion") then
+		if (boss == "Broodkeeper" or boss == "Neltharion" or boss == "Smolderon") then
 			if (bosses[graph[boss]["parent_paths"][1][1]] and PGF_GetSize(bosses) == 1) then
 				return true;
 			elseif (bosses[graph[boss]["parent_paths"][1][1]] and bosses[graph[boss]["parent_paths"][2][1]] and bosses[graph[boss]["parent_paths"][3][1]]) then
