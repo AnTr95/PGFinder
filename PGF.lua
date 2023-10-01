@@ -62,14 +62,14 @@ local refreshButtonClick = LFGListFrame.SearchPanel.RefreshButton:GetScript("OnC
 
 --[[
 	To add a new raid:
-	Update the raidStates x
-	Add the activityID to the raidStateMap x
-	Add the abbreviated version of the raid name to the bossNameMap and all of the bosses long and short names x
-	Add the abbreviated version of the raid name to the bossOrderMap and all long names of the bosses in the prefered order x
+	Update the raidStates 
+	Add the activityID to the raidStateMap 
+	Add the abbreviated version of the raid name to the bossNameMap and all of the bosses long and short names 
+	Add the abbreviated version of the raid name to the bossOrderMap and all long names of the bosses in the prefered order 
 	Add the boss paths to the PATHs graph (use short names)
-	Add the abbreviated name of the raid to the raidAbbreviations x
-	Add all achievement IDs to the achievementID array using the generic raid name (without difficulty) x
-	Update isNextBoss function to cover first boss and post multiple wing bosses i.e Broodkeeper x
+	Add the abbreviated name of the raid to the raidAbbreviations 
+	Add all achievement IDs to the achievementID array using the generic raid name (without difficulty) 
+	Update isNextBoss function to cover first boss and post multiple wing bosses i.e Broodkeeper 
 	Add the activityIDs of all difficulties to PGF_allRaidActivityIDs
 	Change lastSelectedRaidState to match the new raids "All" AFTER it has been released 
 
@@ -254,6 +254,8 @@ local dungeonAbbreviations = {
 	["Dawn of the Infinite"] = "DI",
 	["Dawn of the Infinite: Galakrond's Fall"] = "DI:GF",
 	["Dawn of the Infinite: Murozond's Rise"] ="DI:MR",
+	["Black Rook Hold"] = "BRH",
+	["Darkheart Thicket"] = "DHT",
 
 };
 
@@ -1746,10 +1748,7 @@ local function initDungeon()
 			shortName = dungeonAbbreviations[shortName];
 		end
 		if (name:match("(Mythic Keystone)")) then
-			--remove for 10.2
-			if (not name:match("Dawn of the Infinite")) then
-				currentDungeonsActivityIDs["(Mythic Keystone)"][matchingActivities[i]] = shortName .. " " .. difficulty;
-			end
+			currentDungeonsActivityIDs["(Mythic Keystone)"][matchingActivities[i]] = shortName .. " " .. difficulty;
 		elseif (name:match("(Mythic)")) then
 			currentDungeonsActivityIDs["(Mythic)"][matchingActivities[i]] = shortName .. " " .. difficulty;
 		elseif (name:match("(Heroic)")) then
