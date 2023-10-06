@@ -256,7 +256,10 @@ local dungeonAbbreviations = {
 	["Dawn of the Infinite: Murozond's Rise"] ="DI:MR",
 	["Black Rook Hold"] = "BRH",
 	["Darkheart Thicket"] = "DHT",
-
+	["Throne of the Tides"] = "TT",
+	["Atal'Dazar"] = "AT",
+	["Waycrest Manor"] = "WM",
+	["Everbloom"] = "EB",
 };
 
 local raidAbbreviations = {
