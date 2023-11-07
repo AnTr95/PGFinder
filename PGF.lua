@@ -259,7 +259,7 @@ local dungeonAbbreviations = {
 	["Throne of the Tides"] = "TT",
 	["Atal'Dazar"] = "AT",
 	["Waycrest Manor"] = "WM",
-	["Everbloom"] = "EB",
+	["The Everbloom"] = "EB",
 };
 
 local raidAbbreviations = {
