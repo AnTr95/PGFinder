@@ -140,7 +140,7 @@ PGF_allDungeonsActivityIDs = {
 	[181] = "Auchindoun (Challenge)",
 	[182] = "Skyreach (Challenge)",
 	[183] = "Grimrail Depot (Mythic Keystone)",
-	[184] = "The Everbloom (Challenge)",
+	[184] = "The Everbloom (Mythic Keystone)",
 	[186] = "Upper Blackrock Spire (Challenge)",
 	[500] = "Atal'Dazar (Heroic)",
 	[520] = "Shrine of the Storm (Normal)",
@@ -343,6 +343,7 @@ PGF_allDungeonsActivityIDs = {
 	[1246] = "Dawn of the Infinite: Murozond's Rise (Heroic)",
 	[1247] = "Dawn of the Infinite: Galakrond's Fall (Mythic Keystone)",
 	[1248] = "Dawn of the Infinite: Murozond's Rise (Mythic Keystone)",
+	[1274] = "Throne of the Tides (Mythic Keystone)",
 };
 
 PGF_allRaidActivityIDs = {
