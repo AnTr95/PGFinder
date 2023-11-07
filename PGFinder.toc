@@ -3,6 +3,8 @@
 ## Version: 10.32
 ## Notes: Made finding groups quick and easy
 ## Author: Ant-Kazzak / Ant-Ragnaros
+## X-Curse-Project-ID: 91733
+## X-WAGO-ID: EGPXQ3G1
 ## IconTexture: Interface\AddOns\PGFinder\Res\minimap
 ## SavedVariables: PGF_DevAllActivityIDs
 ## SavedVariables: PGF_DevDungeonsActivityIDs

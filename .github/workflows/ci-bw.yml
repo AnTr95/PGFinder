@@ -1,0 +1,47 @@
+name: CI-BW
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Clone Project
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Get Version
+        id: extract_version
+        run: |
+          version=$(grep -oP 'Version:\s*([\d.]+)' PGFinder.toc | cut -d' ' -f2)
+          echo "Version: $version"
+          echo "version=v$version" >> $GITHUB_OUTPUT
+          
+      - name: Create Git Tag
+        env: 
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config user.name "AnTr95"
+          git config user.email "anton.ronsjo@gmail.com"
+          git tag ${{ steps.extract_version.outputs.version }}
+          git push origin --tags
+
+      - name: Checkout Git Tag
+        run: |
+          git fetch --tags
+          git checkout ${{ steps.extract_version.outputs.version }}
+      
+      - name: Install and run Luacheck
+        uses: nebularg/actions-luacheck@v1
+        continue-on-error: true
+        
+      - name: Package and Deploy
+        uses: BigWigsMods/packager@v2
+        env:
+          CF_API_KEY: ${{ secrets.CF_API_KEY }}
+          GITHUB_OAUTH: ${{ secrets.GITHUB_TOKEN }}
+          WAGO_API_TOKEN: ${{ secrets.WAGO_API_KEY }}
+        with:
+          args: -n "{project-version}"
