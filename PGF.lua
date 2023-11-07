@@ -254,6 +254,7 @@ local dungeonAbbreviations = {
 	["Dawn of the Infinite"] = "DI",
 	["Dawn of the Infinite: Galakrond's Fall"] = "DI:GF",
 	["Dawn of the Infinite: Murozond's Rise"] ="DI:MR",
+	["The Everbloom"] = "EB",
 
 };
 
@@ -2545,7 +2546,7 @@ f:SetScript("OnEvent", function(self, event, ...)
 		if (PGF_DontShowMyClass == nil) then PGF_DontShowMyClass = false; end
 		if (PGF_ShowYourTierAmount == nil) then PGF_ShowYourTierAmount = false; end
 		if (PGF_FilterRemainingRoles == nil) then PGF_FilterRemainingRoles = true; end
-		if (PGF_DetailedDataDisplay == nil) then PGF_DetailedDataDisplay = true; end
+		if (PGF_DetailedDataDisplay == nil) then PGF_DetailedDataDisplay = false; end
 		if (PGF_ShowLeaderIcon == nil) then PGF_ShowLeaderIcon = false; end
 		if (locale ~= "enGB" and locale ~= "enUS") then 
 			PGF_DetailedDataDisplay = false; 

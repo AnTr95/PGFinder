@@ -1,6 +1,6 @@
-## Interface: 100107
+## Interface: 100200
 ## Title: Premade Group Finder
-## Version: 10.31
+## Version: 10.32
 ## Notes: Made finding groups quick and easy
 ## Author: Ant-Kazzak / Ant-Ragnaros
 ## IconTexture: Interface\AddOns\PGFinder\Res\minimap

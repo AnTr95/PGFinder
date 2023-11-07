@@ -345,7 +345,7 @@ PGF_allDungeonsActivityIDs = {
 	[1248] = "Dawn of the Infinite: Murozond's Rise (Mythic Keystone)",
 };
 
-PGF_DevRaidActivityIDs = {
+PGF_allRaidActivityIDs = {
 	[480] = "Trial of Valor (Mythic)",
 	[1253] = "Amirdrassil, the Dream's Hope (Mythic)",
 	[492] = "Tomb of Sargeras (Mythic)",
@@ -481,7 +481,6 @@ local raidMapIDs = {
 	["Ruins of Ahn'Qiraj"] = 743,
 	["Temple of Ahn'Qiraj"] = 744,
 	["Naxxramas"] = 754,
-	["Onyxia's Lair"] = 760,
 	["Zul'Gurub"] = 76,
 	["The Ruins of Ahn'Qiraj"] = 287,
 	["The Temple of Ahn'Qiraj"] = 289,
