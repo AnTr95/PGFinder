@@ -2041,8 +2041,9 @@ local function initDungeon()
 			PlaySound(857);
 		end
 	end);
+	local showDetailedDataText = nil;
 	if (locale == "enGB" or locale == "enUS") then
-		local showDetailedDataText = dungeonOptionsFrame:CreateFontString(nil, "ARTWORK", "GameFontNormalTiny2");
+		showDetailedDataText = dungeonOptionsFrame:CreateFontString(nil, "ARTWORK", "GameFontNormalTiny2");
 		showDetailedDataText:SetFont(showDetailedDataText:GetFont(), 10);
 		showDetailedDataText:SetPoint("TOPLEFT", showLeaderScoreForDungeonText, "TOPLEFT", 0, -18);
 		showDetailedDataText:SetText("Show Detailed Roles");
@@ -2219,7 +2220,7 @@ local function initDungeon()
 	dGUI["Sorting"] = {["text"]= sortingText, ["dropDown"] = sortingDropdown};
 	dGUI["LeaderScore"] = {["text"] = showLeaderScoreForDungeonText, ["checkbox"] = showLeaderScoreForDungeonButton};
 	dGUI["DetailedData"] = {["text"] = showDetailedDataText, ["checkbox"] = showDetailedDataText};
-	dGUI["OnlyMyRole"]= {["text"] = showGroupsForYourRoleText, ["checkbox"] = showGroupsForYourRoleButton};
+	dGUI["OnlyMyRole"]= {["text"] = showGroupsForYourRoleText, ["checkbox"] = showGroupsForYourRoleText};
 end
 --[[
 	Documentation: Creates all of the UI elements related to the raidFrame including:
@@ -2254,9 +2255,8 @@ local function initRaid()
 	local raidDifficultyDropDown = CreateFrame("Button", nil, raidFrame, "UIDropDownMenuTemplate");
 	raidDifficultyDropDown:SetPoint("LEFT", raidDifficultyText, "RIGHT", -12, -2);
 	local function Initialize_RaidStates(self, level)
-		local info = UIDropDownMenu_CreateInfo();
 		for k,v in pairs(raidStates) do
-			info = UIDropDownMenu_CreateInfo();
+			local info = UIDropDownMenu_CreateInfo();
 			info.text = v;
 			info.value = v;
 			info.func = PGF_RaidState_OnClick;
@@ -2478,32 +2478,35 @@ local function initChallengeMap()
 	end
 end
 -- 9 is tyrannical, 10 is fortified as of 10.0.7, unsure if [1] is always fortified
-local function initBestScores()
-	local weeklyMainAffix = C_MythicPlus.GetCurrentAffixes()[1].id;
-	local isFortifiedWeek = false;
-	if (weeklyMainAffix == 10) then
-		isFortifiedWeek = true;
-	end
-	for index, challengeID in ipairs(C_ChallengeMode.GetMapTable()) do
-		local runs = C_MythicPlus.GetSeasonBestAffixScoreInfoForMap(challengeID);
-		local activityID = challengeIDMap[challengeID];
-		if (runs == nil) then
-			bestLevelPerDungeonMap[activityID] = 0;
-		else
-			if (runs[1] and runs[1].name == L.FORTIFIED and isFortifiedWeek) then
-				bestLevelPerDungeonMap[activityID] = runs[1].level;
-			elseif (runs[1] and runs[1].name == L.TYRANNICAL and not isFortifiedWeek) then
-				bestLevelPerDungeonMap[activityID] = runs[1].level;
-			elseif (runs[2] and runs[2].name == L.TYRANNICAL and not isFortifiedWeek) then
-				bestLevelPerDungeonMap[activityID] = runs[2].level;
-			elseif (runs[2] and runs[2].name == L.FORTIFIED and isFortifiedWeek) then
-				bestLevelPerDungeonMap[activityID] = runs[2].level;
-			else
+--[[
+
+	local function initBestScores()
+		local weeklyMainAffix = C_MythicPlus.GetCurrentAffixes()[1].id;
+		local isFortifiedWeek = false;
+		if (weeklyMainAffix == 10) then
+			isFortifiedWeek = true;
+		end
+		for index, challengeID in ipairs(C_ChallengeMode.GetMapTable()) do
+			local runs = C_MythicPlus.GetSeasonBestAffixScoreInfoForMap(challengeID);
+			local activityID = challengeIDMap[challengeID];
+			if (runs == nil) then
 				bestLevelPerDungeonMap[activityID] = 0;
+			else
+				if (runs[1] and runs[1].name == L.FORTIFIED and isFortifiedWeek) then
+					bestLevelPerDungeonMap[activityID] = runs[1].level;
+				elseif (runs[1] and runs[1].name == L.TYRANNICAL and not isFortifiedWeek) then
+					bestLevelPerDungeonMap[activityID] = runs[1].level;
+				elseif (runs[2] and runs[2].name == L.TYRANNICAL and not isFortifiedWeek) then
+					bestLevelPerDungeonMap[activityID] = runs[2].level;
+				elseif (runs[2] and runs[2].name == L.FORTIFIED and isFortifiedWeek) then
+					bestLevelPerDungeonMap[activityID] = runs[2].level;
+				else
+					bestLevelPerDungeonMap[activityID] = 0;
+				end
 			end
 		end
 	end
-end
+]]
 --[[
 	Documentation: Initiate the UI if it has not been done before.
 ]]
@@ -2591,7 +2594,7 @@ f:SetScript("OnEvent", function(self, event, ...)
 		end
 	elseif (event == "CHAT_MSG_ADDON") then
 		local prefix, msg, channel, sender = ...;
-		local sender = Ambiguate(sender, "none");
+		sender = Ambiguate(sender, "none");
 		if (prefix == "PGF_VERSIONCHECK" and not recievedOutOfDateMessage and not UnitIsUnit(UnitName("player"), sender)) then
 			if (tonumber(msg) ~= nil) then
 				if (tonumber(msg) > tonumber(version)) then
@@ -3011,14 +3014,12 @@ local function PGF_LFGListSearchEntry_Update(self)
 	if (LFGListFrame.SearchPanel.categoryID == GROUP_FINDER_CATEGORY_ID_DUNGEONS) then
 		local leaderOverallDungeonScore = searchResultInfo.leaderOverallDungeonScore;
 		local leaderDungeonScoreInfo = searchResultInfo.leaderDungeonScoreInfo;
-		local dungeonScoreText = "|cff00aa00+" .. leaderDungeonScoreInfo.bestRunLevel .. "|r"
+		local dungeonScoreText = "|cffaaaaaa+0|r";
 		--
-		if (leaderDungeonScoreInfo == nil or leaderDungeonScoreInfo.mapScore == 0) then
-			--leaderDungeonScoreInfo.bestRunLevel = 0;
-			--leaderOverallDungeonScore.finishedSuccess = false;
-			dungeonScoreText = "|cffaaaaaa+0|r"
-		elseif (not leaderDungeonScoreInfo.finishedSuccess) then
+		if (leaderDungeonScoreInfo and leaderDungeonScoreInfo.mapScore ~= 0 and not leaderDungeonScoreInfo.finishedSuccess) then
 			dungeonScoreText = "|cffaaaaaa+" .. leaderDungeonScoreInfo.bestRunLevel .. "|r";
+		elseif (leaderDungeonScoreInfo and leaderDungeonScoreInfo.mapScore ~= 0) then
+			dungeonScoreText = "|cff00aa00+" .. leaderDungeonScoreInfo.bestRunLevel .. "|r";
 		end
 		if (leaderOverallDungeonScore == nil) then
 			leaderOverallDungeonScore = 0;
@@ -3053,13 +3054,11 @@ function PGF_LFGListApplicationViewer_UpdateApplicantMember(member, appID, membe
 		local color = CreateColorFromBytes(r*255,g*255,b*255,1):GenerateHexColor();
 		local activeEntryInfo = C_LFGList.GetActiveEntryInfo();
 		local applicantDungeonScoreInfo = C_LFGList.GetApplicantDungeonScoreForListing(appID, memberIdx, activeEntryInfo.activityID);
-		local dungeonScoreText = "|cff00aa00[+" .. applicantDungeonScoreInfo.bestRunLevel .. "]|r"
-		if (applicantDungeonScoreInfo == nil or applicantDungeonScoreInfo.mapScore == 0) then
-			--leaderDungeonScoreInfo.bestRunLevel = 0;
-			--leaderOverallDungeonScore.finishedSuccess = false;
-			dungeonScoreText = "|cffaaaaaa[+0]|r"
-		elseif (not applicantDungeonScoreInfo.finishedSuccess) then
+		local dungeonScoreText = "|cffaaaaaa[+0]|r";
+		if (applicantDungeonScoreInfo and applicantDungeonScoreInfo.mapScore ~= 0 and not applicantDungeonScoreInfo.finishedSuccess) then
 			dungeonScoreText = "|cffaaaaaa[+" .. applicantDungeonScoreInfo.bestRunLevel .. "]|r";
+		elseif (applicantDungeonScoreInfo and applicantDungeonScoreInfo.mapScore ~= 0) then
+			dungeonScoreText = "|cff00aa00[+" .. applicantDungeonScoreInfo.bestRunLevel .. "]|r";
 		end
 		member.Rating:SetText(WrapTextInColorCode(dungeonScore, color) .. dungeonScoreText);
 		member.Rating:Show();
@@ -3126,7 +3125,7 @@ local function PGF_LFGListGroupDataDisplayEnumerate_Update(self, numPlayers, dis
 		for i = 1, searchResults.numMembers do
 			local role, classUniversal, classLocal, spec = C_LFGList.GetSearchResultMemberInfo(resultID, i);
 			local isLeader = false;
-			if (i == 1) then	
+			if (i == 1) then
 				isLeader = true;
 			end
 			--spec = spec:gsub("%s","");
@@ -3435,14 +3434,16 @@ function LFGListSearchPanel_UpdateResultList(self)
 			searchAvailable = false;
 			self.totalResults, self.results = C_LFGList.GetFilteredSearchResults();
 			self.applications = C_LFGList.GetApplications();
-			for i = 1, #self.results do
-				local searchResults = C_LFGList.GetSearchResultInfo(self.results[i]);
-				local leaderOverallDungeonScore = searchResults.leaderOverallDungeonScore;
-				if (leaderOverallDungeonScore == nil) then
-					leaderOverallDungeonScore = 0;
+			--[[
+				for i = 1, #self.results do
+					local searchResults = C_LFGList.GetSearchResultInfo(self.results[i]);
+					local leaderOverallDungeonScore = searchResults.leaderOverallDungeonScore;
+					if (leaderOverallDungeonScore == nil) then
+						leaderOverallDungeonScore = 0;
+					end
+					self.results[i].searchResults.name = name .. " (" .. leaderOverallDungeonScore .. ")";
 				end
-				--self.results[i].searchResults.name = name .. " (" .. leaderOverallDungeonScore .. ")";
-			end
+			]]
 			LFGListUtil_SortSearchResults(self.results);
 			LFGListSearchPanel_UpdateResults(self);
 			updatePerformanceText(self.totalResults, GetTimePreciseSec());
@@ -3549,13 +3550,6 @@ function LFGListSearchPanel_UpdateResultList(self)
 			searchAvailable = false;
 			self.totalResults, self.results = C_LFGList.GetFilteredSearchResults();
 			self.applications = C_LFGList.GetApplications();
-			for i = 1, #self.results do
-				local searchResults = C_LFGList.GetSearchResultInfo(self.results[i]);
-				local leaderOverallDungeonScore = searchResults.leaderOverallDungeonScore;
-				if (leaderOverallDungeonScore == nil) then
-					leaderOverallDungeonScore = 0;
-				end
-			end
 			LFGListUtil_SortSearchResults(self.results);
 			LFGListSearchPanel_UpdateResults(self);
 			updatePerformanceText(self.totalResults, GetTimePreciseSec());

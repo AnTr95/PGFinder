@@ -150,6 +150,7 @@ globals = {
     "PVE_FRAME_BASE_WIDTH",
     "RAID_CLASS_COLORS",
     "REPORT_GROUP_FINDER_ADVERTISEMENT",
+    "WHISPER",
     "WHISPER_LEADER",
 
     --PGF Functions
