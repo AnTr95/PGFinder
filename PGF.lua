@@ -53,7 +53,7 @@ local Show = Show;
 local Hide = Hide;
 local format = format;
 local unpack = unpack;
-local next = next; 
+local next = next;
 local math = math;
 local table = table;
 local string = string;
@@ -1056,7 +1056,7 @@ local function isAnyValueTrue(array)
 end
 --[[
 	Documentation: A function to figure out if the boss param is the next boss based on the raid lockout and graph for that raid
-	CASE post all wings boss: If it is a boss that unlocks after 2 or more wings or there is a skip to the boss we need to check for all 3 scenarios. In the case it is a skip only check if first boss is defeated and not the 2nd boss as they are probably not skipping then 
+	CASE post all wings boss: If it is a boss that unlocks after 2 or more wings or there is a skip to the boss we need to check for all 3 scenarios. In the case it is a skip only check if first boss is defeated and not the 2nd boss as they are probably not skipping then
 	CASE any other case: check if the boss just before the current boss is defeated
 
 	Payload:
@@ -1171,7 +1171,7 @@ local function updateRaidFrameWidth()
 	end
 	PVEFrame:SetSize(x2,428);
 	PVE_FRAME_BASE_WIDTH = x2; -- blizz is always trying to resize the pveframe based on this value
-	LFGListFrame:ClearAllPoints(); 
+	LFGListFrame:ClearAllPoints();
 	LFGListFrame:SetPoint(originalUI["LFGListFrame"].position[1], originalUI["LFGListFrame"].position[2], originalUI["LFGListFrame"].position[3], originalUI["LFGListFrame"].position[4], originalUI["LFGListFrame"].position[5]);
 	LFGListFrame:SetSize(x, LFGListFrame:GetHeight());
 	LFGListSearchPanel_UpdateResults(LFGListFrame.SearchPanel);
@@ -1221,7 +1221,7 @@ end
 
 --[[
 	Documentation: A blizzard function used to perform C_LFGList.Search and C_LFGList.GetAvailableActivities
-	The function takes the categoryID and if a filter should be applied or not which depends on the category. For raids 0 is for all raids including legacy while 1 is only current raids. For dungeons 
+	The function takes the categoryID and if a filter should be applied or not which depends on the category. For raids 0 is for all raids including legacy while 1 is only current raids. For dungeons
 
 	Payload:
 	categoryID param(int) - the categoryID of LFGListFrame.SearchPanel.categoryID or the categoryID of the activity
@@ -1299,7 +1299,7 @@ end
 ]]
 local function updateSearch()
 	if (searchAvailable) then
-		performanceTimeStamp = GetTimePreciseSec(); 
+		performanceTimeStamp = GetTimePreciseSec();
 		searchAvailable = false;
 		LFGListFrame.SearchPanel.RefreshButton:SetScript("OnClick", function() end);
 		LFGListFrame.SearchPanel.RefreshButton.Icon:SetTexture("Interface\\AddOns\\PGFinder\\Res\\RedRefresh.tga");
@@ -1405,9 +1405,9 @@ PVEFrame:HookScript("OnUpdate", function(self, elapsed)
 	end
 end);
 --[[
-	Documentation: Based on isSameCat all elements will either be hidden because they are no longer relevant as a new category is opened or everything is restored as it is the same category. 
+	Documentation: Based on isSameCat all elements will either be hidden because they are no longer relevant as a new category is opened or everything is restored as it is the same category.
 	First all elements are hidden to force a reset, then all of the generic elements within the dungeonframe and all generic elements for all frames are shown.
-	
+
 	Payload:
 	isSameCat param(bool) if false we should pass a long to hide all of the old UI
 ]]
@@ -1499,9 +1499,9 @@ local function updateDungeonDifficulty(isSameCat)
 	updateSearch();
 end
 --[[
-	Documentation: Based on isSameCat all elements will either be hidden because they are no longer relevant as a new category is opened or everything is restored as it is the same category. 
+	Documentation: Based on isSameCat all elements will either be hidden because they are no longer relevant as a new category is opened or everything is restored as it is the same category.
 	First all elements are hidden to force a reset, then all of the generic elements within the raid frame are shown and then all generic elements for all frames are shown and lastly all raidFrame specific elements are shown.
-	
+
 	Payload:
 	isSameCat param(bool) if false we should pass a long to hide all of the old UI
 ]]
@@ -1602,7 +1602,7 @@ local function updateRaidDifficulty(isSameCat, isSameActivity)
 end
 --[[
 	Documentation: Blizzard overwrites the frame size of the PVEFrame with PVE_FRAME_BASE_WIDTH so that is changed. Also moving all of blizzards UI elements to fit the new UI. Certain elements size are based on 2 anchor points TOPLEFT and BOTTOMRIGHT to fix that we need to clear all points and just set the TOPLEFT.
-	
+
 	Payload:
 	isSameCat param(bool) if false we should pass a long to hide all of the old UI
 ]]
@@ -1633,14 +1633,14 @@ local function PGF_ShowDungeonFrame(isSameCat)
 	LFGListApplicationDialog.Description.EditBox:SetMaxLetters(50);
 	LFGListApplicationDialog.Description.EditBox:SetSize(LFGListApplicationDialog.Description:GetWidth(), LFGListApplicationDialog.Description:GetHeight());
 	LFGListApplicationDialog.Description.EditBox:SetTextColor(1,1,1,1);
-	LFGListFrame:ClearAllPoints(); 
+	LFGListFrame:ClearAllPoints();
 	LFGListFrame:SetPoint(originalUI["LFGListFrame"].position[1], originalUI["LFGListFrame"].position[2], originalUI["LFGListFrame"].position[3], originalUI["LFGListFrame"].position[4], originalUI["LFGListFrame"].position[5]);
 	LFGListFrame:SetSize(368, LFGListFrame:GetHeight());
 	updateDungeonDifficulty(isSameCat);
 end
 --[[
 	Documentation: Blizzard overwrites the frame size of the PVEFrame with PVE_FRAME_BASE_WIDTH so that is changed. Also moving all of blizzards UI elements to fit the new UI. Certain elements size are based on 2 anchor points TOPLEFT and BOTTOMRIGHT to fix that we need to clear all points and just set the TOPLEFT.
-	
+
 	Payload:
 	isSameCat param(bool) if false we should pass a long to hide all of the old UI
 ]]
@@ -1673,7 +1673,7 @@ local function PGF_ShowRaidFrame(isSameCat)
 	LFGListApplicationDialog.Description.EditBox:SetTextColor(1,1,1,1);
 	updateRaidFrameWidth();
 	--[[
-	LFGListFrame:ClearAllPoints(); 
+	LFGListFrame:ClearAllPoints();
 	LFGListFrame:SetPoint(originalUI["LFGListFrame"].position[1], originalUI["LFGListFrame"].position[2], originalUI["LFGListFrame"].position[3], originalUI["LFGListFrame"].position[4], originalUI["LFGListFrame"].position[5]);
 	LFGListFrame:SetSize(438, LFGListFrame:GetHeight());
 	]]
@@ -1783,7 +1783,7 @@ local function initDungeon()
 		for aID, name in pairs(currentDungeonsActivityIDs[difficulty]) do
 			count = count + 1;
 			local texture = dungeonFrame:CreateTexture(nil, "OVERLAY");
-			local shortName = name:gsub("%s%(.*", ""); 
+			local shortName = name:gsub("%s%(.*", "");
 			texture:SetTexture(dungeonTextures[shortName]);
 			if (difficulty == "(Mythic Keystone)" and (GetLocale() == "enGB" or GetLocale() == "enUS")) then
 				texture:SetTexture(dungeonTextures[name]);
@@ -2513,7 +2513,7 @@ end
 ]]
 PVEFrame:HookScript("OnShow", function(self)
 	if(next(dGUI) == nil) then
-		--initChallengeMap();		
+		--initChallengeMap();
 		--initBestScores();
 		initDungeon();
 		initRaid();
@@ -2521,11 +2521,11 @@ PVEFrame:HookScript("OnShow", function(self)
 end);
 
 
-f:SetScript("OnEvent", function(self, event, ...) 
+f:SetScript("OnEvent", function(self, event, ...)
 	if (event == "PLAYER_LOGIN") then
 		C_MythicPlus.RequestMapInfo();
 		playerRole = GetSpecializationRole(GetSpecialization());
-		if (PGF_roles == nil) then 
+		if (PGF_roles == nil) then
 			PGF_roles = {["TANK"] = false, ["HEALER"] = false, ["DAMAGER"] = false};
 			PGF_roles[playerRole] = true;
 		else
@@ -2549,8 +2549,8 @@ f:SetScript("OnEvent", function(self, event, ...)
 		if (PGF_FilterRemainingRoles == nil) then PGF_FilterRemainingRoles = true; end
 		if (PGF_DetailedDataDisplay == nil) then PGF_DetailedDataDisplay = false; end
 		if (PGF_ShowLeaderIcon == nil) then PGF_ShowLeaderIcon = false; end
-		if (locale ~= "enGB" and locale ~= "enUS") then 
-			PGF_DetailedDataDisplay = false; 
+		if (locale ~= "enGB" and locale ~= "enUS") then
+			PGF_DetailedDataDisplay = false;
 		end
 		if (PGF_ShowYourClassAmount == nil) then PGF_ShowYourClassAmount = true; end
 		if (PGF_ShowLeaderDungeonKey == nil) then PGF_ShowLeaderDungeonKey = false; end
@@ -2586,7 +2586,7 @@ f:SetScript("OnEvent", function(self, event, ...)
 		if (msg == FRIEND_ONLINE) then
 			sender = sender:match("%[(.+)%]");
 			if (sender ~= UnitName("player")) then
-				C_Timer.After(5, function() 
+				C_Timer.After(5, function()
 					if (sender ~= nil and UnitIsConnected(sender)) then
 						C_ChatInfo.SendAddonMessage("PGF_VERSIONCHECK", version, "WHISPER", sender);
 					end
@@ -2610,17 +2610,19 @@ f:SetScript("OnEvent", function(self, event, ...)
 			LFGListUtil_SortSearchResults(LFGListFrame.SearchPanel.results);
 			LFGListSearchPanel_UpdateResults(LFGListFrame.SearchPanel);
 		end
+	--[[
 	elseif (event == "PLAYER_ENTERING_WORLD") then
 		if (next(GUI) == nil) then
-			
 		end
 	end
+	]]
 end);
-
-f:SetScript("OnShow", function() 
-	if (LFGListFrame.SearchPanel.categoryID) then
-	end
-end);
+--[[
+	f:SetScript("OnShow", function() 
+		if (LFGListFrame.SearchPanel.categoryID) then
+		end
+	end);
+]]
 
 --[[
 	Documentation: LFGListFrame is automatically setting all points every time it is opened through pressing "I" and not selecting a category. So select a category then hide with "I" and then open again with "I" and it will change size.
@@ -2630,15 +2632,15 @@ end);
 LFGListFrame:HookScript("OnSizeChanged", function(self)
 	self:Show();
 	if (LFGListFrame.SearchPanel.categoryID == GROUP_FINDER_CATEGORY_ID_DUNGEONS and LFGListFrame.SearchPanel:IsVisible()) then
-		LFGListFrame:ClearAllPoints(); 
+		LFGListFrame:ClearAllPoints();
 		LFGListFrame:SetPoint(originalUI["LFGListFrame"].position[1], originalUI["LFGListFrame"].position[2], originalUI["LFGListFrame"].position[3], originalUI["LFGListFrame"].position[4], originalUI["LFGListFrame"].position[5]);
 		LFGListFrame:SetSize(368, LFGListFrame:GetHeight());
-		C_Timer.After(0.05, function() 
+		C_Timer.After(0.05, function()
 			LFGListSearchPanel_UpdateResults(LFGListFrame.SearchPanel);
 		end);
 	elseif (LFGListFrame.SearchPanel.categoryID == 3 and LFGListFrame.SearchPanel:IsVisible()) then
 		updateRaidFrameWidth();
-		C_Timer.After(0.05, function() 
+		C_Timer.After(0.05, function()
 			LFGListSearchPanel_UpdateResults(LFGListFrame.SearchPanel);
 		end);
 	elseif (LFGListFrame.SearchPanel:IsVisible()) then
@@ -2768,10 +2770,9 @@ end
 local function PGF_LFGListSearchPanel_UpdateButtonStatus(self)
 	--Update the SignUpButton
 	local resultID = self.selectedResult;
-
 	local isPartyLeader = UnitIsGroupLeader("player", LE_PARTY_CATEGORY_HOME);
 	local canBrowseWhileQueued = C_LFGList.HasActiveEntryInfo();
-	self.BackButton:SetShown(not canBrowseWhileQueued); 
+	self.BackButton:SetShown(not canBrowseWhileQueued);
 	self.BackToGroupButton:SetShown(canBrowseWhileQueued)
 end
 hooksecurefunc("LFGListSearchPanel_UpdateButtonStatus", PGF_LFGListSearchPanel_UpdateButtonStatus);
@@ -2859,7 +2860,7 @@ end
 	The hooked version changes it so that displayData is always shown and moves the pending text, expiration text and the cancel button. While also adding the leaders m+ score to the name of the group if it is a dungeon group.
 
 	Payload:
-	param(arr/object) - the entryFrame that contains all of the elements with information of the group 
+	param(arr/object) - the entryFrame that contains all of the elements with information of the group
 ]]
 local function PGF_LFGListSearchEntry_Update(self)
 	local resultID = self.resultID;
@@ -2891,7 +2892,7 @@ local function PGF_LFGListSearchEntry_Update(self)
 		texture:SetPoint("TOPLEFT", 0, 0);
 		texture:SetSize(10, 10);
 		--texture:SetTexture("Interface\\AddOns\\PGFinder\\Res\\NewGroup.tga");
-		self:HookScript("OnEnter", function(self) 
+		self:HookScript("OnEnter", function(self)
 			self:HookScript("OnUpdate", function() searchEntry_OnUpdate(self, texture); end);
 		end);
 		self:HookScript("OnLeave", function(self)
@@ -3124,7 +3125,7 @@ local function PGF_LFGListGroupDataDisplayEnumerate_Update(self, numPlayers, dis
 			end
 		end
 		local resultID = self:GetParent():GetParent().resultID;
-		if (not resultID) then 
+		if (not resultID) then
 			return;
 		end
 		local searchResults = C_LFGList.GetSearchResultInfo(resultID);
@@ -3743,7 +3744,7 @@ LFGListSearchEntry:HookScript("OnClick", function(self)
 end);
 ]]
 --[[
-	Documentation: This function automatically accepts the role sign up when you are in a party and not the leader by setting your role to the users selected role(s) in the UI. 
+	Documentation: This function automatically accepts the role sign up when you are in a party and not the leader by setting your role to the users selected role(s) in the UI.
 	If the user is not in a group or are is the leader this window closes isntantly as ApplyToGroup is used instead to initiate the sign up directly skipping this step.
 ]]
 LFGListApplicationDialog:HookScript("OnShow", function(self)
@@ -3872,7 +3873,7 @@ function LFGListUtil_SortSearchResultsCB(id1, id2)
 end
 
 --[[
-	Documentation: If a player does not have 2FA they will not be able to create a group if a playStyleString is returned so check if the player has the authenticatior connected before procceding. 
+	Documentation: If a player does not have 2FA they will not be able to create a group if a playStyleString is returned so check if the player has the authenticatior connected before procceding.
 ]]
 function PGF_GetPlaystyleString(playstyle, activityInfo)
 	local activityID = 1164;
