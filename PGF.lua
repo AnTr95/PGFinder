@@ -2213,7 +2213,7 @@ local function initDungeon()
 	UIDropDownMenu_JustifyText(sortingDropdown, "CENTER");
 	UIDropDownMenu_Initialize(sortingDropdown, Initialize_SortingStates);
 	UIDropDownMenu_SetSelectedID(sortingDropdown, PGF_SortingVariable);
-	
+
 	dGUI["DAMAGER"] = {["texture"] = dpsTexture, ["checkbox"] = dpsButton};
 	dGUI["HEALER"] = {["texture"] = healerTexture, ["checkbox"] = healerButon};
 	dGUI["TANK"] = {["texture"] = tankTexture, ["checkbox"] = tankButton};
