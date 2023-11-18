@@ -152,7 +152,7 @@ local tierSetsMap = {
     ["WARRIOR"] = "Zenith"
 };
 --local bestLevelPerDungeonMap = {};
-local challengeIDMap = {};
+--local challengeIDMap = {};
 --[[
 	Documentation: This sets the order of that the bosses will show in the UI
 ]]
@@ -2465,18 +2465,20 @@ local function initRaid()
 
 	rGUI["Sorting"] = {["text"]= sortingText, ["dropDown"] = sortingDropdown};
 end
-local function initChallengeMap()
-	for index, challengeID in ipairs(C_ChallengeMode.GetMapTable()) do
-		local name, id, timeLimit, texture, backgroundTexture = C_ChallengeMode.GetMapUIInfo(challengeID);
-		local shortName = name:gsub("%s%(.*", "");
-		for aID, aName in pairs(PGF_allDungeonsActivityIDs) do
-			if (aName == shortName .. " (Mythic Keystone)") then
-				challengeIDMap[challengeID] = aID;
-				break;
+--[[
+	local function initChallengeMap()
+		for index, challengeID in ipairs(C_ChallengeMode.GetMapTable()) do
+			local name, id, timeLimit, texture, backgroundTexture = C_ChallengeMode.GetMapUIInfo(challengeID);
+			local shortName = name:gsub("%s%(.*", "");
+			for aID, aName in pairs(PGF_allDungeonsActivityIDs) do
+				if (aName == shortName .. " (Mythic Keystone)") then
+					challengeIDMap[challengeID] = aID;
+					break;
+				end
 			end
 		end
 	end
-end
+]]
 -- 9 is tyrannical, 10 is fortified as of 10.0.7, unsure if [1] is always fortified
 --[[
 
@@ -2892,10 +2894,10 @@ local function PGF_LFGListSearchEntry_Update(self)
 		texture:SetPoint("TOPLEFT", 0, 0);
 		texture:SetSize(10, 10);
 		--texture:SetTexture("Interface\\AddOns\\PGFinder\\Res\\NewGroup.tga");
-		self:HookScript("OnEnter", function(self)
+		self:HookScript("OnEnter", function()
 			self:HookScript("OnUpdate", function() searchEntry_OnUpdate(self, texture); end);
 		end);
-		self:HookScript("OnLeave", function(self)
+		self:HookScript("OnLeave", function()
 			self:SetScript("OnUpdate", nil);
 			if (realTimeApplication(self)) then
 				self:SetScript("OnUpdate", LFGListSearchEntry_UpdateExpiration);
