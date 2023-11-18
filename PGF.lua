@@ -62,16 +62,16 @@ local refreshButtonClick = LFGListFrame.SearchPanel.RefreshButton:GetScript("OnC
 
 --[[
 	To add a new raid:
-	Update the raidStates 
-	Add the activityID to the raidStateMap 
-	Add the abbreviated version of the raid name to the bossNameMap and all of the bosses long and short names 
-	Add the abbreviated version of the raid name to the bossOrderMap and all long names of the bosses in the prefered order 
+	Update the raidStates
+	Add the activityID to the raidStateMap
+	Add the abbreviated version of the raid name to the bossNameMap and all of the bosses long and short names
+	Add the abbreviated version of the raid name to the bossOrderMap and all long names of the bosses in the prefered order
 	Add the boss paths to the PATHs graph (use short names)
-	Add the abbreviated name of the raid to the raidAbbreviations 
-	Add all achievement IDs to the achievementID array using the generic raid name (without difficulty) 
-	Update isNextBoss function to cover first boss and post multiple wing bosses i.e Broodkeeper 
+	Add the abbreviated name of the raid to the raidAbbreviations
+	Add all achievement IDs to the achievementID array using the generic raid name (without difficulty)
+	Update isNextBoss function to cover first boss and post multiple wing bosses i.e Broodkeeper
 	Add the activityIDs of all difficulties to PGF_allRaidActivityIDs
-	Change lastSelectedRaidState to match the new raids "All" AFTER it has been released 
+	Change lastSelectedRaidState to match the new raids "All" AFTER it has been released
 
 	To add a new dungeon:
 	Add the abbreviated name of the dungeon to the dungeonAbbreviations
@@ -127,7 +127,7 @@ local raidStateMap = {
 	["VOTI Normal"] = 1189,
 	["VOTI Heroic"] = 1190,
 	["VOTI Mythic"] = 1191,
-	["VOTI All"] = 1191, 
+	["VOTI All"] = 1191,
 	["ASC Normal"] = 1235,
 	["ASC Heroic"] = 1236,
 	["ASC Mythic"] = 1237,
@@ -313,7 +313,7 @@ local boss_Paths = {
 			},
 			["parent_paths"] = {
 				{"Assault of the Zaqali", "Kazzara"},
-	  			{"Assault of the Zaqali", "Forgotten Experiments", "Amalgamation Chamber", "Kazzara"},
+				{"Assault of the Zaqali", "Forgotten Experiments", "Amalgamation Chamber", "Kazzara"},
 			},
 		},
 		["Zskarn"] = {
@@ -346,7 +346,7 @@ local boss_Paths = {
 		},
 		["Sarkareth"] = {
 			["children_paths"] = {},
-			["parent_paths"] = {			
+			["parent_paths"] = {
 				{"Neltharion", "Kazzara"},
 				{"Neltharion", "Magmorax", "Zskarn", "Rashok", "Assault of the Zaqali", "Forgotten Experiments", "Amalgamation Chamber", "Kazzara"},
 				{"Neltharion", "Magmorax", "Zskarn", "Forgotten Experiments", "Amalgamation Chamber", "Rashok", "Assault of the Zaqali", "Kazzara"},
@@ -699,7 +699,7 @@ local roleIndex = {["TANK"] = 1, ["HEALER"] = 2, ["DAMAGER"] = 3}; --Syncs the o
 		dungeons(arr) - saves which dungeons are selected
 		levels(arr) - saves which levels are selected
 		score(arr) - saves which score is required from the leader
-		eligible(arr) - saves if the search should check for if the current roles in the players group is eligible with the slots left in the listed groups 
+		eligible(arr) - saves if the search should check for if the current roles in the players group is eligible with the slots left in the listed groups
 		description(string) - saves the description used when applying to groups
 		leaderScore(int) - saves the lowest allowed score of the leader in dungeon groups
 		raids(arr) - saves which raids are selected
@@ -870,7 +870,7 @@ local scoreColors = {
 ]]
 local colorLookup = {};
 local lastScore = 0;
-do 
+do
 	for i = 0, 3650 do
 		if (scoreColors[i]) then
 			colorLookup[i] = scoreColors[i];
@@ -904,7 +904,7 @@ SlashCmdList["PREMADEGROUPFINDER"] = handler;
 
 --[[
 	Documentation: Looks up the r, g, b values from the coreLookup table or sends a default value if it is out of range. O(1)
-]] 
+]]
 local function getColorForScoreLookup(score)
 	return colorLookup[score] or {0.62, 0.62, 0.62};
 end
@@ -930,7 +930,7 @@ end
 
 	Payload:
 	raid param(string) - the generic name of the raid without difficulty
-	
+
 	Returr:
 	CASE no completed achievement: nil
 	CASE 1 >= completed achievements: string AchievementLink colored and clickable
@@ -971,17 +971,17 @@ local LFG_LIST_SEARCH_ENTRY_MENU = {
 	{
 		text = LFG_LIST_REPORT_GROUP_FOR,
 		notCheckable = true,
-		func = function(_, id, name) 
-			LFGList_ReportListing(id, name); 
-			LFGListSearchPanel_UpdateResultList(LFGListFrame.SearchPanel); 
+		func = function(_, id, name)
+			LFGList_ReportListing(id, name);
+			LFGListSearchPanel_UpdateResultList(LFGListFrame.SearchPanel);
 		end;
 	},
 	{
 		text = REPORT_GROUP_FINDER_ADVERTISEMENT,
 		notCheckable = true,
-		func = function(_, id, name) 
-			LFGList_ReportListing(id, name); 
-			LFGListSearchPanel_UpdateResultList(LFGListFrame.SearchPanel); 
+		func = function(_, id, name)
+			LFGList_ReportListing(id, name);
+			LFGListSearchPanel_UpdateResultList(LFGListFrame.SearchPanel);
 		end;
 	},
 	{
@@ -1120,11 +1120,11 @@ C_ChatInfo.RegisterAddonMessagePrefix("PGF_VERSIONCHECK")
 ]]
 local function saveOriginalUI()
 	originalUI = {
-		["PVEFrame"] = {["width"] = 0, ["height"] = 0}, 
+		["PVEFrame"] = {["width"] = 0, ["height"] = 0},
 		["LFGListFrame"] = {["position"] = {}, ["position2"] = {}},
-		["LFGListFrame.SearchPanel.SearchBox"] = {["position"] = {}}, 
-		["LFGListFrame.SearchPanel.FilterButton"] = {["position"] = {}}, 
-		["LFGListFrame.SearchPanel.ResultsInset"] = {["position"] = {}, ["size"] = {}, ["position2"] = {}}, 
+		["LFGListFrame.SearchPanel.SearchBox"] = {["position"] = {}},
+		["LFGListFrame.SearchPanel.FilterButton"] = {["position"] = {}},
+		["LFGListFrame.SearchPanel.ResultsInset"] = {["position"] = {}, ["size"] = {}, ["position2"] = {}},
 		["LFGListFrame.SearchPanel.RefreshButton"] = {["position"] = {}},
 		["LFGListFrame.SearchPanel.CategoryName"] = {["position"] = {}},
 		["LFGListFrame.SearchPanel.SignUpButton"] = {["position"] = {}},
@@ -1144,7 +1144,7 @@ local function saveOriginalUI()
 	originalUI["LFGListFrame.SearchPanel.FilterButton"].position[1], originalUI["LFGListFrame.SearchPanel.FilterButton"].position[2], originalUI["LFGListFrame.SearchPanel.FilterButton"].position[3], originalUI["LFGListFrame.SearchPanel.FilterButton"].position[4], originalUI["LFGListFrame.SearchPanel.FilterButton"].position[5] = LFGListFrame.SearchPanel.FilterButton:GetPoint();
 	originalUI["LFGListFrame.SearchPanel.ResultsInset"].size[1], originalUI["LFGListFrame.SearchPanel.ResultsInset"].size[2] = LFGListFrame.SearchPanel.ResultsInset:GetSize();
 	originalUI["LFGListFrame.SearchPanel.ResultsInset"].position[1], originalUI["LFGListFrame.SearchPanel.ResultsInset"].position[2], originalUI["LFGListFrame.SearchPanel.ResultsInset"].position[3], originalUI["LFGListFrame.SearchPanel.ResultsInset"].position[4], originalUI["LFGListFrame.SearchPanel.ResultsInset"].position[5] = LFGListFrame.SearchPanel.ResultsInset:GetPoint();
-	originalUI["LFGListFrame.SearchPanel.ResultsInset"].position2[1], originalUI["LFGListFrame.SearchPanel.ResultsInset"].position2[2], originalUI["LFGListFrame.SearchPanel.ResultsInset"].position2[3], originalUI["LFGListFrame.SearchPanel.ResultsInset"].position2[4], originalUI["LFGListFrame.SearchPanel.ResultsInset"].position2[5] = LFGListFrame.SearchPanel.ResultsInset:GetPoint(2);	
+	originalUI["LFGListFrame.SearchPanel.ResultsInset"].position2[1], originalUI["LFGListFrame.SearchPanel.ResultsInset"].position2[2], originalUI["LFGListFrame.SearchPanel.ResultsInset"].position2[3], originalUI["LFGListFrame.SearchPanel.ResultsInset"].position2[4], originalUI["LFGListFrame.SearchPanel.ResultsInset"].position2[5] = LFGListFrame.SearchPanel.ResultsInset:GetPoint(2);
 	originalUI["LFGListFrame.SearchPanel.SignUpButton"].position[1], originalUI["LFGListFrame.SearchPanel.SignUpButton"].position[2], originalUI["LFGListFrame.SearchPanel.SignUpButton"].position[3], originalUI["LFGListFrame.SearchPanel.SignUpButton"].position[4], originalUI["LFGListFrame.SearchPanel.SignUpButton"].position[5] = LFGListFrame.SearchPanel.SignUpButton:GetPoint();
 	originalUI["LFGListFrame.SearchPanel.BackButton"].position[1], originalUI["LFGListFrame.SearchPanel.BackButton"].position[2], originalUI["LFGListFrame.SearchPanel.BackButton"].position[3], originalUI["LFGListFrame.SearchPanel.BackButton"].position[4], originalUI["LFGListFrame.SearchPanel.BackButton"].position[5] = LFGListFrame.SearchPanel.BackButton:GetPoint();
 	originalUI["LFGListFrame.SearchPanel.BackToGroupButton"].position[1], originalUI["LFGListFrame.SearchPanel.BackToGroupButton"].position[2], originalUI["LFGListFrame.SearchPanel.BackToGroupButton"].position[3], originalUI["LFGListFrame.SearchPanel.BackToGroupButton"].position[4], originalUI["LFGListFrame.SearchPanel.BackToGroupButton"].position[5] = LFGListFrame.SearchPanel.BackToGroupButton:GetPoint();
@@ -1208,11 +1208,11 @@ function restoreOriginalUI()
 	LFGListApplicationDialog.Description:SetPoint(originalUI["LFGListApplicationDialog.Description"].position[1], originalUI["LFGListApplicationDialog.Description"].position[2], originalUI["LFGListApplicationDialog.Description"].position[3], originalUI["LFGListApplicationDialog.Description"].position[4], originalUI["LFGListApplicationDialog.Description"].position[5]);
 	LFGListApplicationDialog.Description:SetSize(originalUI["LFGListApplicationDialog.Description"].size[1], originalUI["LFGListApplicationDialog.Description"].size[2]);
 	LFGListApplicationDialog.Description.EditBox:SetSize(originalUI["LFGListApplicationDialog.Description.EditBox"].size[1], originalUI["LFGListApplicationDialog.Description.EditBox"].size[2]);
-	LFGListFrame:ClearAllPoints(); 
+	LFGListFrame:ClearAllPoints();
 	LFGListFrame:SetPoint(originalUI["LFGListFrame"].position[1], originalUI["LFGListFrame"].position[2], originalUI["LFGListFrame"].position[3], originalUI["LFGListFrame"].position[4], originalUI["LFGListFrame"].position[5]);
 	LFGListFrame:SetSize(338, LFGListFrame:GetHeight());
 	if (LFGListFrame.SearchPanel:IsShown()) then
-		LFGListFrame.SearchPanel.BackButton:SetShown(not C_LFGList.HasActiveEntryInfo()); 
+		LFGListFrame.SearchPanel.BackButton:SetShown(not C_LFGList.HasActiveEntryInfo());
 		LFGListFrame.SearchPanel.BackToGroupButton:SetShown(C_LFGList.HasActiveEntryInfo());
 		LFGListFrame.SearchPanel.SignUpButton:SetShown(true);
 	end
