@@ -2610,6 +2610,7 @@ f:SetScript("OnEvent", function(self, event, ...)
 			LFGListUtil_SortSearchResults(LFGListFrame.SearchPanel.results);
 			LFGListSearchPanel_UpdateResults(LFGListFrame.SearchPanel);
 		end
+	end
 	--[[
 	elseif (event == "PLAYER_ENTERING_WORLD") then
 		if (next(GUI) == nil) then
