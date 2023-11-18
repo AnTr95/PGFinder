@@ -43,7 +43,6 @@ local SetTextColor = SetTextColor;
 local SetAlpha = SetAlpha;
 local GetParent = GetParent
 local SetDesaturated = SetDesaturated;
-local SetTexture = SetTexture;
 local SetTexCoord = SetTexCoord;
 local SetShown = SetShown;
 local GetWidth = GetWidth;
@@ -152,7 +151,7 @@ local tierSetsMap = {
     ["WARLOCK"] = "Dreadful",
     ["WARRIOR"] = "Zenith"
 };
-local bestLevelPerDungeonMap = {};
+--local bestLevelPerDungeonMap = {};
 local challengeIDMap = {};
 --[[
 	Documentation: This sets the order of that the bosses will show in the UI
@@ -936,9 +935,9 @@ end
 	CASE 1 >= completed achievements: string AchievementLink colored and clickable
 ]]
 local function getBestAchievement(raid)
-	for i, achievementIDs in ipairs(achievementIDs[raid]) do
-		if (select(4, GetAchievementInfo(achievementIDs))) then
-			return GetAchievementLink(achievementIDs);
+	for i, achievementId in ipairs(achievementIDs[raid]) do
+		if (select(4, GetAchievementInfo(achievementId))) then
+			return GetAchievementLink(achievementId);
 		end
 	end
 	return nil;
@@ -1179,7 +1178,7 @@ end
 --[[
 	Documentation: Restore all of the Blizzard UI elements that was moved by PGF to its original position when no PGF frame is shown
 ]]
-function restoreOriginalUI()
+local function restoreOriginalUI()
 	PVE_FRAME_BASE_WIDTH = 600;
 	PVEFrame:SetSize(600, originalUI["PVEFrame"].height);
 	LFGListFrame.SearchPanel.SearchBox:ClearAllPoints();
@@ -1239,14 +1238,14 @@ local function ResolveCategoryFilters(categoryID, filters)
 	return filters;
 end
 
-local function isNewGroup(leaderName, activityID, prevSearchTime)
+local function isNewGroup(leaderName, activityID, previousSearchTime)
 	if (leaderName == nil or activityID == nil or leaderName == nil) then
 		return true;
 	end
-	if (newGroups[leaderName] and newGroups[leaderName].ActivityID == activityID and prevSearchTime ~= newGroups[leaderName].PrevSearchTime) then
+	if (newGroups[leaderName] and newGroups[leaderName].ActivityID == activityID and previousSearchTime ~= newGroups[leaderName].PrevSearchTime) then
 		return false;
 	elseif (newGroups[leaderName] == nil or newGroups[leaderName].ActivityID ~= activityID) then
-		newGroups[leaderName] = {["ActivityID"] = activityID, ["PrevSearchTime"] = prevSearchTime};
+		newGroups[leaderName] = {["ActivityID"] = activityID, ["PrevSearchTime"] = previousSearchTime};
 	end
 	return true;
 end
@@ -1374,7 +1373,7 @@ local function HasRemainingSlotsForLocalPlayerRole(lfgSearchResultID, isFilterin
 end
 
 --[[
-	Documentation: This scrript will keep track of enough time has passed between the searches to allow for searches again and reset the refresh button texture.
+	Documentation: This script will keep track of enough time has passed between the searches to allow for searches again and reset the refresh button texture.
 	While it is disabled the OnClick function is also removed but is readded here when searching is available again.
 
 	Payload:
@@ -1395,9 +1394,9 @@ PVEFrame:HookScript("OnUpdate", function(self, elapsed)
 		LFGListFrame.SearchPanel.RefreshButton:SetScript("OnClick", refreshButtonClick);
 		LFGListFrame.SearchPanel.RefreshButton.Icon:SetTexture(851904);
 		searchAvailable = true;
-		LFGListFrame.SearchPanel.RefreshButton:HookScript("OnClick", function(self)
-			self:SetScript("OnClick", function() end);
-			self.Icon:SetTexture("Interface\\AddOns\\PGFinder\\Res\\RedRefresh.tga");
+		LFGListFrame.SearchPanel.RefreshButton:HookScript("OnClick", function()
+			LFGListFrame.SearchPanel.RefreshButton:SetScript("OnClick", function() end);
+			LFGListFrame.SearchPanel.RefreshButton.Icon:SetTexture("Interface\\AddOns\\PGFinder\\Res\\RedRefresh.tga");
 			searchAvailable = false;
 		end);
 
@@ -1721,9 +1720,8 @@ local function initDungeon()
 	local dungeonDifficultyDropDown = CreateFrame("Button", nil, dungeonFrame, "UIDropDownMenuTemplate");
 	dungeonDifficultyDropDown:SetPoint("LEFT", dungeonDifficultyText, "RIGHT", -12, -2);
 	local function Initialize_DungeonStates(self, level)
-		local info = UIDropDownMenu_CreateInfo();
 		for k,v in pairs(dungeonStates) do
-			info = UIDropDownMenu_CreateInfo();
+			local info = UIDropDownMenu_CreateInfo();
 			info.text = v;
 			info.value = v;
 			info.func = PGF_DungeonState_OnClick;
@@ -2192,9 +2190,8 @@ local function initDungeon()
 	local sortingDropdown = CreateFrame("Button", nil, dungeonOptionsFrame, "UIDropDownMenuTemplate");
 	sortingDropdown:SetPoint("LEFT", sortingText, "RIGHT", -12, -2);
 	local function Initialize_SortingStates(self, level)
-		local info = UIDropDownMenu_CreateInfo();
 		for k,v in ipairs(sortingStates) do
-			info = UIDropDownMenu_CreateInfo();
+			local info = UIDropDownMenu_CreateInfo();
 			info.text = v;
 			info.value = v;
 			info.func = PGF_SortingState_OnClick;
@@ -2445,9 +2442,8 @@ local function initRaid()
 	local sortingDropdown = CreateFrame("Button", nil, raidOptionsFrame, "UIDropDownMenuTemplate");
 	sortingDropdown:SetPoint("LEFT", sortingText, "RIGHT", -12, -2);
 	local function Initialize_SortingStates(self, level)
-		local info = UIDropDownMenu_CreateInfo();
 		for k,v in ipairs(sortingRaidStates) do
-			info = UIDropDownMenu_CreateInfo();
+			local info = UIDropDownMenu_CreateInfo();
 			info.text = v;
 			info.value = v;
 			info.func = PGF_SortingRaidState_OnClick;
@@ -2581,8 +2577,8 @@ f:SetScript("OnEvent", function(self, event, ...)
 		end
 	elseif (event == "CHAT_MSG_SYSTEM") then
 		local msg = ...;
-		local sender = msg;
-		msg = msg:match("%s(.+)")
+		msg = msg:match("%s(.+)");
+		local sender = ...;
 		if (msg == FRIEND_ONLINE) then
 			sender = sender:match("%[(.+)%]");
 			if (sender ~= UnitName("player")) then
@@ -2619,7 +2615,7 @@ f:SetScript("OnEvent", function(self, event, ...)
 	]]
 end);
 --[[
-	f:SetScript("OnShow", function() 
+	f:SetScript("OnShow", function()
 		if (LFGListFrame.SearchPanel.categoryID) then
 		end
 	end);
@@ -3015,7 +3011,7 @@ local function PGF_LFGListSearchEntry_Update(self)
 	if (LFGListFrame.SearchPanel.categoryID == GROUP_FINDER_CATEGORY_ID_DUNGEONS) then
 		local leaderOverallDungeonScore = searchResultInfo.leaderOverallDungeonScore;
 		local leaderDungeonScoreInfo = searchResultInfo.leaderDungeonScoreInfo;
-		local dungeonScoreText = "";
+		local dungeonScoreText = "|cff00aa00+" .. leaderDungeonScoreInfo.bestRunLevel .. "|r"
 		--
 		if (leaderDungeonScoreInfo == nil or leaderDungeonScoreInfo.mapScore == 0) then
 			--leaderDungeonScoreInfo.bestRunLevel = 0;
@@ -3023,8 +3019,6 @@ local function PGF_LFGListSearchEntry_Update(self)
 			dungeonScoreText = "|cffaaaaaa+0|r"
 		elseif (not leaderDungeonScoreInfo.finishedSuccess) then
 			dungeonScoreText = "|cffaaaaaa+" .. leaderDungeonScoreInfo.bestRunLevel .. "|r";
-		else
-			dungeonScoreText = "|cff00aa00+" .. leaderDungeonScoreInfo.bestRunLevel .. "|r";
 		end
 		if (leaderOverallDungeonScore == nil) then
 			leaderOverallDungeonScore = 0;
@@ -3059,15 +3053,13 @@ function PGF_LFGListApplicationViewer_UpdateApplicantMember(member, appID, membe
 		local color = CreateColorFromBytes(r*255,g*255,b*255,1):GenerateHexColor();
 		local activeEntryInfo = C_LFGList.GetActiveEntryInfo();
 		local applicantDungeonScoreInfo = C_LFGList.GetApplicantDungeonScoreForListing(appID, memberIdx, activeEntryInfo.activityID);
-		local dungeonScoreText = "";
+		local dungeonScoreText = "|cff00aa00[+" .. applicantDungeonScoreInfo.bestRunLevel .. "]|r"
 		if (applicantDungeonScoreInfo == nil or applicantDungeonScoreInfo.mapScore == 0) then
 			--leaderDungeonScoreInfo.bestRunLevel = 0;
 			--leaderOverallDungeonScore.finishedSuccess = false;
 			dungeonScoreText = "|cffaaaaaa[+0]|r"
 		elseif (not applicantDungeonScoreInfo.finishedSuccess) then
 			dungeonScoreText = "|cffaaaaaa[+" .. applicantDungeonScoreInfo.bestRunLevel .. "]|r";
-		else
-			dungeonScoreText = "|cff00aa00[+" .. applicantDungeonScoreInfo.bestRunLevel .. "]|r";
 		end
 		member.Rating:SetText(WrapTextInColorCode(dungeonScore, color) .. dungeonScoreText);
 		member.Rating:Show();
@@ -3320,15 +3312,15 @@ local function PGF_LFGListGroupDataDisplayRoleCount_Update(self, displayData, di
 			classText:Hide();
 			self.ClassText = classText;
 
-			local tierText = self:CreateFontString(nil, "ARTWORK", "GameFontNormalTiny2");
-			tierText:SetFont(fontName, fontHeight, fontFlags);
-			tierText:SetTextColor(1,1,1,1);
-			tierText:Hide();
-			self.TierText = tierText;
+			local tierAmountText= self:CreateFontString(nil, "ARTWORK", "GameFontNormalTiny2");
+			tierAmountText:SetFont(fontName, fontHeight, fontFlags);
+			tierAmountText:SetTextColor(1,1,1,1);
+			tierAmountText:Hide();
+			self.TierText = tierAmountText;
 
 			local tierTextInfo = self:CreateFontString(nil, "ARTWORK", "GameFontNormalTiny2");
-			tierTextInfo:SetFont(tierText:GetFont(), 8);
-			--tierText:SetTextColor(1,1,1,1);
+			tierTextInfo:SetFont(tierAmountText:GetFont(), 8);
+			--tierAmountText:SetTextColor(1,1,1,1);
 			tierTextInfo:Hide();
 			self.TierTextInfo = tierTextInfo;
 
@@ -3354,8 +3346,10 @@ local function PGF_LFGListGroupDataDisplayRoleCount_Update(self, displayData, di
 	end
 
 	local resultID = self:GetParent():GetParent().resultID;
-	if (not disabled) then
-	end
+	--[[
+		if (not disabled) then
+		end
+	]]
 end
 
 hooksecurefunc("LFGListGroupDataDisplayRoleCount_Update", PGF_LFGListGroupDataDisplayRoleCount_Update);
@@ -3442,6 +3436,8 @@ function LFGListSearchPanel_UpdateResultList(self)
 			self.totalResults, self.results = C_LFGList.GetFilteredSearchResults();
 			self.applications = C_LFGList.GetApplications();
 			for i = 1, #self.results do
+				local searchResults = C_LFGList.GetSearchResultInfo(self.results[i]);
+				local leaderOverallDungeonScore = searchResults.leaderOverallDungeonScore;
 				if (leaderOverallDungeonScore == nil) then
 					leaderOverallDungeonScore = 0;
 				end
@@ -3464,7 +3460,7 @@ function LFGListSearchPanel_UpdateResultList(self)
 				local activityID = searchResults.activityID;
 				local activityInfo = C_LFGList.GetActivityInfoTable(activityID);
 				local activityFullName = activityInfo.fullName;
-				local isMythicPlusActivity = isMythicPlusActivity;
+				local isMythicPlusActivity = activityInfo.isMythicPlusActivity;
 				local leaderName = searchResults.leaderName;
 				local name = searchResults.name;
 				local isDelisted = searchResults.isDelisted;
@@ -3521,7 +3517,7 @@ function LFGListSearchPanel_UpdateResultList(self)
 				local activityID = searchResults.activityID;
 				local activityInfo = C_LFGList.GetActivityInfoTable(activityID);
 				local activityFullName = activityInfo.fullName;
-				local isMythicPlusActivity = isMythicPlusActivity;
+				local isMythicPlusActivity = activityInfo.isMythicPlusActivity;
 				local leaderName = searchResults.leaderName;
 				local name = searchResults.name;
 				local isDelisted = searchResults.isDelisted;
@@ -3554,6 +3550,8 @@ function LFGListSearchPanel_UpdateResultList(self)
 			self.totalResults, self.results = C_LFGList.GetFilteredSearchResults();
 			self.applications = C_LFGList.GetApplications();
 			for i = 1, #self.results do
+				local searchResults = C_LFGList.GetSearchResultInfo(self.results[i]);
+				local leaderOverallDungeonScore = searchResults.leaderOverallDungeonScore;
 				if (leaderOverallDungeonScore == nil) then
 					leaderOverallDungeonScore = 0;
 				end
@@ -3575,7 +3573,7 @@ function LFGListSearchPanel_UpdateResultList(self)
 				local activityInfo = C_LFGList.GetActivityInfoTable(activityID);
 				local activityFullName = activityInfo.fullName;
 				local activityShortName = activityFullName:gsub("%s%(.*", "");
-				local isMythicPlusActivity = isMythicPlusActivity;
+				local isMythicPlusActivity = activityInfo.isMythicPlusActivity;
 				local leaderName = searchResults.leaderName;
 				local name = searchResults.name;
 				local isDelisted = searchResults.isDelisted;
@@ -3653,7 +3651,7 @@ function LFGListSearchPanel_UpdateResultList(self)
 				local activityID = searchResults.activityID;
 				local activityInfo = C_LFGList.GetActivityInfoTable(activityID);
 				local activityFullName = activityInfo.fullName;
-				local isMythicPlusActivity = isMythicPlusActivity;
+				local isMythicPlusActivity = activityInfo.isMythicPlusActivity;
 				local leaderName = searchResults.leaderName;
 				local name = searchResults.name;
 				local isDelisted = searchResults.isDelisted;
