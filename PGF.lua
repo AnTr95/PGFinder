@@ -2042,12 +2042,13 @@ local function initDungeon()
 		end
 	end);
 	local showDetailedDataText = nil;
+	local showDetailedDataButton = nil;
 	if (locale == "enGB" or locale == "enUS") then
 		showDetailedDataText = dungeonOptionsFrame:CreateFontString(nil, "ARTWORK", "GameFontNormalTiny2");
 		showDetailedDataText:SetFont(showDetailedDataText:GetFont(), 10);
 		showDetailedDataText:SetPoint("TOPLEFT", showLeaderScoreForDungeonText, "TOPLEFT", 0, -18);
 		showDetailedDataText:SetText("Show Detailed Roles");
-		local showDetailedDataButton = CreateFrame("CheckButton", nil, dungeonOptionsFrame, "UICheckButtonTemplate");
+		showDetailedDataButton = CreateFrame("CheckButton", nil, dungeonOptionsFrame, "UICheckButtonTemplate");
 		showDetailedDataButton:SetSize(20, 20);
 		showDetailedDataButton:SetPoint("RIGHT", showDetailedDataText, "RIGHT", 20, -1);
 		showDetailedDataButton:SetChecked(PGF_DetailedDataDisplay);
@@ -2219,8 +2220,8 @@ local function initDungeon()
 	dGUI["MoreOptions"] = {["text"] = showMoreText, ["button"] = showMoreButton};
 	dGUI["Sorting"] = {["text"]= sortingText, ["dropDown"] = sortingDropdown};
 	dGUI["LeaderScore"] = {["text"] = showLeaderScoreForDungeonText, ["checkbox"] = showLeaderScoreForDungeonButton};
-	dGUI["DetailedData"] = {["text"] = showDetailedDataText, ["checkbox"] = showDetailedDataText};
-	dGUI["OnlyMyRole"]= {["text"] = showGroupsForYourRoleText, ["checkbox"] = showGroupsForYourRoleText};
+	dGUI["DetailedData"] = {["text"] = showDetailedDataText, ["checkbox"] = showDetailedDataButton};
+	dGUI["OnlyMyRole"]= {["text"] = showGroupsForYourRoleText, ["checkbox"] = showGroupsForYourRoleButtonTank};
 end
 --[[
 	Documentation: Creates all of the UI elements related to the raidFrame including:
