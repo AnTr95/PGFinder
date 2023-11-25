@@ -264,7 +264,7 @@ local dungeonAbbreviations = {
 local raidAbbreviations = {
 	["Vault of the Incarnates"] = "VOTI",
 	["Aberrus"] = "ASC",
-	["Amirdrassil, the Dream's Hope"] = "ADH",
+	["Amirdrassil"] = "ADH",
 };
 --[[
 	Documentation: This is DAG that defines which bosses are after and which are before the selected boss and is used for figuring out what boss is next based on the raid lockout
@@ -722,7 +722,7 @@ local selectedInfo = {
 local achievementIDs = {
 	["Vault of the Incarnates"] = {17108, 16352, 16350, 16351, 16349, 16347, 16346, 16348, 16346, 17107, 16343},
 	["Aberrus"] = {18254, 18158, 18157, 18156, 18155, 18153, 18154, 18152, 18151, 18253, 18177, 18167, 18165, 18164, 18163},
-	["Amirdrassil, the Dream's Hope"] = {19351, 19342, 19341, 19339, 19340, 19337, 19338, 19336, 19335, 19350 ,19331},
+	["Amirdrassil"] = {19351, 19342, 19341, 19339, 19340, 19337, 19338, 19336, 19335, 19350 ,19331},
 };
 
 --[[
@@ -2306,11 +2306,22 @@ local function initRaid()
 			local shortName = name:gsub("%s%(.*", "");
 			local raidNameShort = PGF_allRaidActivityIDs[aID]:gsub("%s%(.*", "");
 			local trimedName = bossOrderMap[raidAbbreviations[raidNameShort]][index];
-			if (raidNameShort ~= "Aberrus") then
+			if (raidNameShort ~= "Aberrus") then --try Interface\\ENCOUNTERJOURNAL\\UI-EJ-BOSS-IgiratheCruel
 				trimedName = bossOrderMap[raidAbbreviations[raidNameShort]][index]:gsub("(%s)","");
 			end
 			trimedName = trimedName:gsub(",","");
-			texture:SetTexture("Interface\\ENCOUNTERJOURNAL\\UI-EJ-BOSS-" .. trimedName ..".PNG");
+			texture:SetTexture("Interface\\ENCOUNTERJOURNAL\\UI-EJ-BOSS-" .. trimedName ..".PNG"); --try Interface\\ENCOUNTERJOURNAL\\UI-EJ-BOSS-Igira
+			if (texture:GetTextureFileID() == nil) then --try Interface\\ENCOUNTERJOURNAL\\UI-EJ-BOSS-Igira the Cruel
+				trimedName = bossOrderMap[raidAbbreviations[raidNameShort]][index]:gsub(",","");
+				texture:SetTexture("Interface\\ENCOUNTERJOURNAL\\UI-EJ-BOSS-" .. trimedName ..".PNG");
+			end
+			if (texture:GetTextureFileID() == nil) then --fallback to Boss Name instead of just BossName
+				if (bossOrderMap[raidAbbreviations[raidNameShort]][index] == "Fyrakk the Blazing") then
+					texture:SetTexture("Interface\\ENCOUNTERJOURNAL\\UI-EJ-BOSS-Fyrakk the Burning.PNG");
+				elseif (bossOrderMap[raidAbbreviations[raidNameShort]][index] == "Tindral Sageswift, Seer of the Flame") then
+					texture:SetTexture("Interface\\ENCOUNTERJOURNAL\\UI-EJ-BOSS-Tindral Sageswift Seer of Flame.PNG");
+				end
+			end
 			texture:SetPoint("TOPLEFT", 30,-65-((count-1)*24));
 			texture:SetSize(18, 18);
 			local checkbox = CreateFrame("CheckButton", nil, raidFrame, "UICheckButtonTemplate");
@@ -2917,7 +2928,7 @@ local function PGF_LFGListSearchEntry_Update(self)
 	end
 	]]
 	if (appStatus == "applied" and not HasRemainingSlotsForLocalPlayerRole(resultID) and LFGListFrame.SearchPanel.categoryID == GROUP_FINDER_CATEGORY_ID_DUNGEONS) then
-		self.IncompatibleBG:Show();
+		self.IncompatibleBG:Show(); --add debuging
 	end
 
 	--Update visibility based on whether we're an application or not

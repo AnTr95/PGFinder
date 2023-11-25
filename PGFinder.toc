@@ -1,6 +1,6 @@
 ## Interface: 100200
 ## Title: Premade Group Finder
-## Version: 10.35
+## Version: 10.36
 ## Notes: Made finding groups quick and easy
 ## Author: Ant-Kazzak / Ant-Ragnaros
 ## X-Curse-Project-ID: 91733

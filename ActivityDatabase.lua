@@ -348,11 +348,11 @@ PGF_allDungeonsActivityIDs = {
 
 PGF_allRaidActivityIDs = {
 	[480] = "Trial of Valor (Mythic)",
-	[1253] = "Amirdrassil, the Dream's Hope (Mythic)",
+	[1253] = "Amirdrassil (Mythic)",
 	[492] = "Tomb of Sargeras (Mythic)",
 	[496] = "Uldir (Mythic)",
-	[1252] = "Amirdrassil, the Dream's Hope (Heroic)",
-	[1251] = "Amirdrassil, the Dream's Hope (Normal)",
+	[1252] = "Amirdrassil (Heroic)",
+	[1251] = "Amirdrassil (Normal)",
 	[1237] = "Aberrus (Mythic)",
 	[1020] = "Sepulcher of the First Ones (Normal)",
 	[1236] = "Aberrus (Heroic)",

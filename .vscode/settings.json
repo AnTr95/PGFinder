@@ -59,6 +59,8 @@
         "GetAddOnMetadata",
         "Hide",
         "Show",
-        "ClearAllPoints"
+        "ClearAllPoints",
+        "GROUP",
+        "GROUP_FINDER"
     ]
 }
