@@ -99,7 +99,7 @@ globals = {
     "UIDropDownMenu_SetButtonWidth",
     "UIDropDownMenu_SetSelectedID",
     "UIDropDownMenu_SetWidth",
-    "UnitClass",
+    "UnitClassBase",
     "UnitIsConnected",
     "UnitIsGroupLeader",
     "UnitIsUnit",

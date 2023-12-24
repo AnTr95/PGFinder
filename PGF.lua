@@ -1262,7 +1262,7 @@ end
 	count (int) - amount of players using the tier set named
 ]]
 local function getTierCount(class, displayData)
-	class = class or select(2, UnitClass("player"));
+	class = class or select(1, UnitClassBase("player"));
 	local tier = tierSetsMap[class];
 	local tierCount = 0;
 	local classCount = 0;
@@ -1279,7 +1279,7 @@ local function getTierCount(class, displayData)
 end
 
 local function getTierCountBySearchResult(class, searchResult, resultID)
-	class = class or select(2, UnitClass("player"));
+	class = class or select(1, UnitClassBase("player"));
 	local tier = tierSetsMap[class];
 	local tierCount = 0;
 	if (searchResult == nil) then
@@ -2578,7 +2578,7 @@ f:SetScript("OnEvent", function(self, event, ...)
 		if (not PGF_ShowRaidOptionsFrame) then
 			raidOptionsFrame:Hide();
 		end
-		playerClass = select(2, UnitClass("player"));
+		playerClass = select(1, UnitClassBase("player"));
 	elseif (event == "PLAYER_SPECIALIZATION_CHANGED") then
 		local unit = ...;
 		if (UnitIsUnit(unit, "player")) then
@@ -3770,7 +3770,7 @@ LFGListApplicationDialog:HookScript("OnShow", function(self)
 		if (PGF_roles["DAMAGER"]) then
 			LFDRoleCheckPopupRoleButtonDPS.checkButton:SetChecked(true);
 		else
-			LFDRoleCheckPopupRoleButtonHealer.checkButton:SetChecked(false);
+			LFDRoleCheckPopupRoleButtonDPS.checkButton:SetChecked(false);
 		end
 		LFDRoleCheckPopupAcceptButton:Enable();
 		LFDRoleCheckPopupAcceptButton:Click();
