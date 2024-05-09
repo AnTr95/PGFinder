@@ -1306,13 +1306,13 @@ local function updateSearch()
 		local dungeonsSelected = PGF_GetSize(selectedInfo.dungeons);
 		local count = 0;
 		if (slowSearch == false) then
-			C_LFGList.Search(LFGListFrame.SearchPanel.categoryID, ResolveCategoryFilters(LFGListFrame.SearchPanel.categoryID, LFGListFrame.SearchPanel.filters), LFGListFrame.SearchPanel.preferredFilters, C_LFGList.GetLanguageSearchFilter());
+			C_LFGList.Search(LFGListFrame.SearchPanel.categoryID, ResolveCategoryFilters(LFGListFrame.SearchPanel.categoryID, LFGListFrame.SearchPanel.filters), LFGListFrame.SearchPanel.preferredFilters, C_LFGList.GetLanguageSearchFilter(), nil, C_LFGList.GetAdvancedFilter());
 		else
 			slowTotal = dungeonsSelected;
 			for k, v in ipairs(selectedInfo.dungeons) do
 				C_Timer.After(3*count, function()
 					C_LFGList.SetSearchToActivity(k);
-					C_LFGList.Search(LFGListFrame.SearchPanel.categoryID, ResolveCategoryFilters(LFGListFrame.SearchPanel.categoryID, LFGListFrame.SearchPanel.filters), LFGListFrame.SearchPanel.preferredFilters, C_LFGList.GetLanguageSearchFilter());
+					C_LFGList.Search(LFGListFrame.SearchPanel.categoryID, ResolveCategoryFilters(LFGListFrame.SearchPanel.categoryID, LFGListFrame.SearchPanel.filters), LFGListFrame.SearchPanel.preferredFilters, C_LFGList.GetLanguageSearchFilter(), nil, C_LFGList.GetAdvancedFilter());
 				end);
 				count = count + 1;
 			end
@@ -3124,8 +3124,12 @@ local function PGF_LFGListGroupDataDisplayEnumerate_Update(self, numPlayers, dis
 		for i = 1, #self.Icons do
 			if (i > numPlayers) then
 				self.Icons[i]:Show();
-				self.Icons[i]:SetDesaturated(disabled);
-				self.Icons[i]:SetAlpha(disabled and 0.5 or 1.0);
+				for _, texture in ipairs(self.Icons[i].Textures) do
+					texture:SetDesaturated(disabled);
+					texture:SetAlpha(disabled and 0.5 or 1.0);
+				end
+				self.Icons[i].RoleIcon:SetDesaturated(disabled);
+				self.Icons[i].RoleIcon:SetAlpha(disabled and 0.5 or 1.0);
 				self.LeaderIcon:SetDesaturated(disabled);
 				self.LeaderIcon:SetAlpha(disabled and 0.5 or 1.0);
 			end
@@ -3154,24 +3158,28 @@ local function PGF_LFGListGroupDataDisplayEnumerate_Update(self, numPlayers, dis
 			end
 			if (true or players[i].class == "EVOKER") then
 				if (PGF_DetailedDataDisplay) then
-					self.Icons[6-i]:SetTexture(select(4, GetSpecializationInfoByID(classSpecilizationMap[players[i].class][players[i].spec])));
-					self.Icons[6-i]:SetTexCoord(0,1,0,1);
+					self.Icons[6-i].RoleIcon:SetTexture(select(4, GetSpecializationInfoByID(classSpecilizationMap[players[i].class][players[i].spec])));
+					self.Icons[6-i].RoleIcon:SetTexCoord(0,1,0,1);
+					self.Icons[6-i].RoleIcon:Show();
 					--spec-thumbnail-evoker-preservation?
 				else
-					self.Icons[6-i]:SetTexture("Interface\\AddOns\\PGFinder\\Res\\" .. players[i].class .. "_" .. players[i].role .. ".tga");
+					self.Icons[6-i].RoleIcon:SetTexture("Interface\\AddOns\\PGFinder\\Res\\" .. players[i].class .. "_" .. players[i].role .. ".tga");
+					self.Icons[6-i].RoleIcon:Show();
 				end
 			else
-				self.Icons[6-i]:SetAtlas("GarrMission_ClassIcon-"..strlower(players[i].class).."-"..players[i].spec, false);
+				self.Icons[6-i].RoleIcon:SetAtlas("GarrMission_ClassIcon-"..strlower(players[i].class).."-"..players[i].spec, false);
+				self.Icons[6-i].RoleIcon:Show();
 			end
 		end
 		local count = 1;
 		for i = 3, 1, -1 do
 			for j = 1, displayData[roleRemainingKeyLookup[iconOrder[i]]] do
 				if (PGF_DetailedDataDisplay) then
-					self.Icons[count]:SetTexture("Interface\\addons\\PGFinder\\Res\\" .. roleRemainingKeyLookup[iconOrder[i]]);
-					self.Icons[count]:SetTexCoord(0,1,0,1);
+					self.Icons[count].Textures[3]:SetTexture("Interface\\addons\\PGFinder\\Res\\" .. roleRemainingKeyLookup[iconOrder[i]]);
+					self.Icons[count].Textures[3]:SetTexCoord(0,1,0,1);
 				else
-					self.Icons[count]:SetAtlas("groupfinder-icon-emptyslot", false);
+					self.Icons[count].Textures[3]:SetAtlas("groupfinder-icon-emptyslot", false);
+					self.Icons[count].Textures[3]:Show();
 				end
 				count = count + 1;
 			end
@@ -3440,6 +3448,9 @@ end
 	Return:
 	bool - true if there are results
 ]]
+--[[
+	
+]]
 function LFGListSearchPanel_UpdateResultList(self)
 	if (LFGListFrame.SearchPanel.categoryID == GROUP_FINDER_CATEGORY_ID_DUNGEONS) then
 		if(next(selectedInfo.dungeons) == nil and selectedInfo["leaderScore"] == 0 and not PGF_FilterRemainingRoles and not isAnyValueTrue(PGF_OnlyShowMyRole2) and not PGF_DontShowMyClass and not PGF_DontShowDeclinedGroups) then
@@ -3458,7 +3469,9 @@ function LFGListSearchPanel_UpdateResultList(self)
 					self.results[i].searchResults.name = name .. " (" .. leaderOverallDungeonScore .. ")";
 				end
 			]]
-			LFGListUtil_SortSearchResults(self.results);
+			if (self.totalResults > 0) then
+				LFGListUtil_SortSearchResults(self.results);
+			end
 			LFGListSearchPanel_UpdateResults(self);
 			updatePerformanceText(self.totalResults, GetTimePreciseSec());
 			--declinedGroups = {};
@@ -3470,7 +3483,7 @@ function LFGListSearchPanel_UpdateResultList(self)
 			searchAvailable = false;
 			self.totalResults, self.results = C_LFGList.GetFilteredSearchResults();
 			local newResults = {};
-			for i = 1, #self.results do
+			for i = 1, self.totalResults do
 				local searchResults = C_LFGList.GetSearchResultInfo(self.results[i]);
 				local activityID = searchResults.activityID;
 				local activityInfo = C_LFGList.GetActivityInfoTable(activityID);
@@ -3517,9 +3530,11 @@ function LFGListSearchPanel_UpdateResultList(self)
 					end
 				end
 			end
-			LFGListUtil_SortSearchResults(newResults);
 			self.totalResults = #newResults;
 			self.results = newResults;
+			if (self.totalResults > 0) then
+				LFGListUtil_SortSearchResults(newResults);
+			end
 			self.applications = C_LFGList.GetApplications();
 			LFGListSearchPanel_UpdateResults(self);
 			updatePerformanceText(self.totalResults, GetTimePreciseSec());
@@ -3548,9 +3563,11 @@ function LFGListSearchPanel_UpdateResultList(self)
 				end
 			end
 			if (slowCount == slowTotal) then
-				LFGListUtil_SortSearchResults(slowResults);
 				self.totalResults = #slowResults;
 				self.results = slowResults;
+				if (self.totalResults > 0) then
+					LFGListUtil_SortSearchResults(slowResults);
+				end
 				self.applications = C_LFGList.GetApplications();
 				LFGListSearchPanel_UpdateResults(self);
 				updatePerformanceText(self.totalResults, GetTimePreciseSec());
@@ -3564,7 +3581,9 @@ function LFGListSearchPanel_UpdateResultList(self)
 			searchAvailable = false;
 			self.totalResults, self.results = C_LFGList.GetFilteredSearchResults();
 			self.applications = C_LFGList.GetApplications();
-			LFGListUtil_SortSearchResults(self.results);
+			if (self.totalResults > 0) then
+				LFGListUtil_SortSearchResults(self.results);
+			end
 			LFGListSearchPanel_UpdateResults(self);
 			updatePerformanceText(self.totalResults, GetTimePreciseSec());
 			return true;
@@ -3644,9 +3663,11 @@ function LFGListSearchPanel_UpdateResultList(self)
 					end
 				end
 			end
-			LFGListUtil_SortSearchResults(newResults);
 			self.totalResults = #newResults;
 			self.results = newResults;
+			if (self.totalResults > 0) then
+				LFGListUtil_SortSearchResults(newResults);
+			end
 			self.applications = C_LFGList.GetApplications();
 			LFGListSearchPanel_UpdateResults(self);
 			updatePerformanceText(self.totalResults, GetTimePreciseSec());
@@ -3675,9 +3696,11 @@ function LFGListSearchPanel_UpdateResultList(self)
 				end
 			end
 			if (slowCount == slowTotal) then
-				LFGListUtil_SortSearchResults(slowResults);
 				self.totalResults = #slowResults;
 				self.results = slowResults;
+				if (self.totalResults > 0) then
+					LFGListUtil_SortSearchResults(slowResults);
+				end
 				self.applications = C_LFGList.GetApplications();
 				LFGListSearchPanel_UpdateResults(self);
 				updatePerformanceText(self.totalResults, GetTimePreciseSec());
@@ -3690,7 +3713,9 @@ function LFGListSearchPanel_UpdateResultList(self)
 		searchAvailable = false;
 		self.totalResults, self.results = C_LFGList.GetFilteredSearchResults();
 		self.applications = C_LFGList.GetApplications();
-		LFGListUtil_SortSearchResults(self.results);
+		if (self.totalResults > 0) then
+			LFGListUtil_SortSearchResults(self.results);
+		end
 		LFGListSearchPanel_UpdateResults(self);
 		updatePerformanceText(self.totalResults, GetTimePreciseSec());
 		return true;
@@ -3741,6 +3766,11 @@ function LFGListSearchPanel_SelectResult(self, resultID)
 	LFGListSearchPanel_UpdateResults(self);
 	if ((true or PGF_autoSign) and (IsInGroup() == false or UnitIsGroupLeader("player"))) then
 		C_LFGList.ApplyToGroup(LFGListFrame.SearchPanel.selectedResult, PGF_roles["TANK"], PGF_roles["HEALER"], PGF_roles["DAMAGER"]);
+	end
+end
+function LFGListUtil_SortSearchResults(results)
+	if (results and #results > 0) then
+		table.sort(results, LFGListUtil_SortSearchResultsCB);
 	end
 end
 --[[

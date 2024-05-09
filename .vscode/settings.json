@@ -61,6 +61,7 @@
         "Show",
         "ClearAllPoints",
         "GROUP",
-        "GROUP_FINDER"
+        "GROUP_FINDER",
+        "LFGListSearchPanel_UpdateResultList"
     ]
 }
