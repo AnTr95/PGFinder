@@ -1,1 +1,1 @@
-* Fixed bugs related to Blizzard changing the name of the raid
+* Fixed bugs related to 10.2.7
