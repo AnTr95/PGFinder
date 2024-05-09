@@ -3130,6 +3130,7 @@ local function PGF_LFGListGroupDataDisplayEnumerate_Update(self, numPlayers, dis
 				end
 				self.Icons[i].RoleIcon:SetDesaturated(disabled);
 				self.Icons[i].RoleIcon:SetAlpha(disabled and 0.5 or 1.0);
+				self.Icons[i].RoleIcon:Hide();
 				self.LeaderIcon:SetDesaturated(disabled);
 				self.LeaderIcon:SetAlpha(disabled and 0.5 or 1.0);
 			end
@@ -3158,17 +3159,17 @@ local function PGF_LFGListGroupDataDisplayEnumerate_Update(self, numPlayers, dis
 			end
 			if (true or players[i].class == "EVOKER") then
 				if (PGF_DetailedDataDisplay) then
-					self.Icons[6-i].RoleIcon:SetTexture(select(4, GetSpecializationInfoByID(classSpecilizationMap[players[i].class][players[i].spec])));
-					self.Icons[6-i].RoleIcon:SetTexCoord(0,1,0,1);
-					self.Icons[6-i].RoleIcon:Show();
+					self.Icons[6-i].Textures[3]:SetTexture(select(4, GetSpecializationInfoByID(classSpecilizationMap[players[i].class][players[i].spec])));
+					self.Icons[6-i].Textures[3]:SetTexCoord(0,1,0,1);
+					self.Icons[6-i].Textures[3]:Show();
 					--spec-thumbnail-evoker-preservation?
 				else
-					self.Icons[6-i].RoleIcon:SetTexture("Interface\\AddOns\\PGFinder\\Res\\" .. players[i].class .. "_" .. players[i].role .. ".tga");
-					self.Icons[6-i].RoleIcon:Show();
+					self.Icons[6-i].Textures[3]:SetTexture("Interface\\AddOns\\PGFinder\\Res\\" .. players[i].class .. "_" .. players[i].role .. ".tga");
+					self.Icons[6-i].Textures[3]:Show();
 				end
 			else
-				self.Icons[6-i].RoleIcon:SetAtlas("GarrMission_ClassIcon-"..strlower(players[i].class).."-"..players[i].spec, false);
-				self.Icons[6-i].RoleIcon:Show();
+				self.Icons[6-i].Textures[3]:SetAtlas("GarrMission_ClassIcon-"..strlower(players[i].class).."-"..players[i].spec, false);
+				self.Icons[6-i].Textures[3]:Show();
 			end
 		end
 		local count = 1;
@@ -3177,6 +3178,7 @@ local function PGF_LFGListGroupDataDisplayEnumerate_Update(self, numPlayers, dis
 				if (PGF_DetailedDataDisplay) then
 					self.Icons[count].Textures[3]:SetTexture("Interface\\addons\\PGFinder\\Res\\" .. roleRemainingKeyLookup[iconOrder[i]]);
 					self.Icons[count].Textures[3]:SetTexCoord(0,1,0,1);
+					self.Icons[count].Textures[3]:Show();
 				else
 					self.Icons[count].Textures[3]:SetAtlas("groupfinder-icon-emptyslot", false);
 					self.Icons[count].Textures[3]:Show();
