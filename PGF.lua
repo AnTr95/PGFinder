@@ -1679,6 +1679,88 @@ local function PGF_ShowRaidFrame(isSameCat)
 	updateRaidDifficulty(isSameCat, true);
 end
 
+local function updateDungeonFilter(difficultyID, aIDToAdd, aIDToRemove, minimumRating, showGroupsWithoutMyClass, hasTank, hasHealer, hasDPS)
+	local enabled = C_LFGList.GetAdvancedFilter();
+	if(difficultyID) then
+		if (difficultyID == 1) then
+			enabled.difficultyNormal = true;
+			enabled.difficultyHeroic = false;
+			enabled.difficultyMythic = false;
+			enabled.difficultyMythicPlus = false;
+		end
+		if (difficultyID == 2) then
+			enabled.difficultyNormal = false;
+			enabled.difficultyHeroic = true;
+			enabled.difficultyMythic = false;
+			enabled.difficultyMythicPlus = false;
+		end
+		if (difficultyID == 3) then
+			enabled.difficultyNormal = false;
+			enabled.difficultyHeroic = false;
+			enabled.difficultyMythic = true;
+			enabled.difficultyMythicPlus = false;
+		end
+		if (difficultyID == 4) then
+			enabled.difficultyNormal = false;
+			enabled.difficultyHeroic = false;
+			enabled.difficultyMythic = false;
+			enabled.difficultyMythicPlus = true;
+		end
+	end
+	if (aIDToAdd) then
+		local groupID = C_LFGList.GetActivityInfoTable(aIDToAdd).groupFinderActivityGroupID;
+		if (groupID and PGF_Contains(enabled.activities, groupID)) then
+			enabled.activities = {};
+			table.insert(enabled.activities, groupID);
+		elseif (groupID) then
+			table.insert(enabled.activities, groupID);
+		end
+	end
+	if (aIDToRemove) then
+		local groupID = C_LFGList.GetActivityInfoTable(aIDToRemove).groupFinderActivityGroupID;
+		if (groupID) then
+			local index = PGF_Contains(enabled.activities, groupID);
+			if (index) then
+				table.remove(enabled.activities, index);
+			end
+			if (next(enabled.activities) == nil) then
+				--LFGListAdvancedFiltersCheckAllDungeons
+				local seasonGroups = C_LFGList.GetAvailableActivityGroups(GROUP_FINDER_CATEGORY_ID_DUNGEONS, bit.bor(Enum.LFGListFilter.CurrentSeason, Enum.LFGListFilter.PvE));
+				local expansionGroups = C_LFGList.GetAvailableActivityGroups(GROUP_FINDER_CATEGORY_ID_DUNGEONS, bit.bor(Enum.LFGListFilter.CurrentExpansion, Enum.LFGListFilter.NotCurrentSeason, Enum.LFGListFilter.PvE));
+				local allDungeons = {};
+				tAppendAll(allDungeons, seasonGroups);
+				tAppendAll(allDungeons, expansionGroups);
+				enabled.activities = allDungeons;
+			end
+		end
+		updateSearch();
+	end
+	if (minimumRating) then
+		enabled.minimumRating = minimumRating;
+	end
+	if (showGroupsWithoutMyClass == true) then
+		enabled.needsMyClass = true;
+	elseif (showGroupsWithoutMyClass == false) then
+		enabled.needsMyClass = false;
+	end
+	if (hasTank == true) then
+		enabled.hasTank = true;
+	elseif (hasTank == false) then
+		enabled.hasTank = false;
+	end
+	if (hasHealer == true) then
+		enabled.hasHealer = true;
+	elseif (hasHealer == false) then
+		enabled.hasHealer = false;
+	end
+	if (hasDPS == true) then
+		enabled.hasDPS = true;
+	elseif (hasDPS == false) then
+		enabled.hasDPS = false;
+	end
+	C_LFGList.SaveAdvancedFilter(enabled);
+end
+
 --[[
 	Documentation: Creates all of the UI elements related to the dungeonFrame including:
 	Difficulty Dropdown
@@ -1732,6 +1814,7 @@ local function initDungeon()
 	function PGF_DungeonState_OnClick(self)
 		UIDropDownMenu_SetSelectedID(dungeonDifficultyDropDown, self:GetID());
 		lastSelectedDungeonState = self:GetText();
+		updateDungeonFilter(self:GetID());
 		updateDungeonDifficulty();
 	end
 
@@ -1794,23 +1877,11 @@ local function initDungeon()
 			checkbox:SetScript("OnClick", function(self)
 				if (self:GetChecked()) then
 					selectedInfo.dungeons[aID] = true;
-					local dungeonsSelected = PGF_GetSize(selectedInfo.dungeons);
-					if (dungeonsSelected == 1) then
-						local key, value = next(selectedInfo.dungeons);
-						C_LFGList.SetSearchToActivity(key);
-					elseif (LFGListFrame.SearchPanel.SearchBox:GetText():match("(%a.)")) then
-						C_LFGList.ClearSearchTextFields();
-					end
+					updateDungeonFilter(nil, aID);
 					updateSearch();
 				else
 					selectedInfo.dungeons[aID] = nil;
-					local dungeonsSelected = PGF_GetSize(selectedInfo.dungeons);
-					if (dungeonsSelected == 1) then
-						local key, value = next(selectedInfo.dungeons);
-						C_LFGList.SetSearchToActivity(key);
-					elseif (LFGListFrame.SearchPanel.SearchBox:GetText():match("(%a.)")) then
-						C_LFGList.ClearSearchTextFields();
-					end
+					updateDungeonFilter(nil, nil, aID);
 					updateSearch();
 				end
 			end);
@@ -1829,27 +1900,6 @@ local function initDungeon()
 			checkbox:Hide();
 		end
 	end
-	local slowSearchCheckBox = CreateFrame("CheckButton", nil, dungeonFrame, "UICheckButtonTemplate");
-	slowSearchCheckBox:SetSize(20, 20);
-	slowSearchCheckBox:SetPoint("TOPLEFT", 49,-268);
-	slowSearchCheckBox:SetScript("OnClick", function(self)
-		if (self:GetChecked()) then
-			slowSearch = true;
-			updateSearch();
-		else
-			slowSearch = false;
-			updateSearch();
-		end
-	end);
-	local slowSearchtext = dungeonFrame:CreateFontString(nil, "ARTWORK", "GameFontNormalTiny2");
-	slowSearchtext:SetPoint("TOPLEFT", slowSearchCheckBox, "TOPLEFT", 19, -3);
-	slowSearchtext:SetJustifyV("TOP");
-	slowSearchtext:SetJustifyH("LEFT");
-	slowSearchtext:SetText("Advanced Search");
-	slowSearchtext:SetFont(slowSearchtext:GetFont(), 12);
-	slowSearchtext:SetTextColor(1,1,1,1);
-	slowSearchtext:Hide();
-	slowSearchCheckBox:Hide();
 	local performanceText = f:CreateFontString(nil, "ARTWORK", "GameFontNormalTiny2");
 	performanceText:SetPoint("TOPLEFT", LFGListFrame.SearchPanel.ResultsInset, "TOPLEFT", 3, 15);
 	performanceText:SetJustifyV("TOP");
@@ -1875,7 +1925,7 @@ local function initDungeon()
 	dungeonDifficultyText:SetText(L.OPTIONS_DUNGEON_DIFFICULTY);
 	local filterRolesText = dungeonFrame:CreateFontString(nil, "ARTWORK", "GameFontNormalTiny2");
 	filterRolesText:SetFont(filterRolesText:GetFont(), 10);
-	filterRolesText:SetPoint("TOPLEFT", slowSearchtext, "TOPLEFT", -20, -30);
+	filterRolesText:SetPoint("TOPLEFT", 48, -301);
 	filterRolesText:SetText("Hide incompatible(role) groups");
 	local filterRolesCheckButton = CreateFrame("CheckButton", nil, dungeonFrame, "UICheckButtonTemplate");
 	filterRolesCheckButton:SetSize(20, 20);
@@ -1912,9 +1962,13 @@ local function initDungeon()
 	minLeaderScoreEditBox:SetScript("OnEnterPressed", function(self)
 		if (tonumber(self:GetText())) then
 			selectedInfo["leaderScore"] = tonumber(self:GetText());
+			MinRatingFrame.MinRating:SetNumber(tonumber(self:GetText()));
+			updateDungeonFilter(nil, nil, nil, tonumber(self:GetText()));
 			updateSearch();
 		elseif (self:GetText() == nil or self:GetText() == "") then
 			selectedInfo["leaderScore"] = 0;
+			updateDungeonFilter(nil, nil, nil, 0);
+			MinRatingFrame.MinRating:SetNumber(0);
 			updateSearch();
 		end
 	end);
@@ -2075,10 +2129,12 @@ local function initDungeon()
 	showGroupsForYourRoleButtonTank:HookScript("OnClick", function(self)
 		if (self:GetChecked()) then
 			PGF_OnlyShowMyRole2["TANK"] = true;
+			updateDungeonFilter(nil, nil, nil, nil, nil, true);
 			updateSearch();
 			PlaySound(856);
 		else
 			PGF_OnlyShowMyRole2["TANK"] = false;
+			updateDungeonFilter(nil, nil, nil, nil, nil, false);
 			updateSearch();
 			PlaySound(857);
 		end
@@ -2095,10 +2151,12 @@ local function initDungeon()
 	showGroupsForYourRoleButtonHealer:HookScript("OnClick", function(self)
 		if (self:GetChecked()) then
 			PGF_OnlyShowMyRole2["HEALER"] = true;
+			updateDungeonFilter(nil, nil, nil, nil, nil, nil, true);
 			updateSearch();
 			PlaySound(856);
 		else
 			PGF_OnlyShowMyRole2["HEALER"] = false;
+			updateDungeonFilter(nil, nil, nil, nil, nil, nil, false);
 			updateSearch();
 			PlaySound(857);
 		end
@@ -2115,10 +2173,12 @@ local function initDungeon()
 	showGroupsForYourRoleButtonDPS:HookScript("OnClick", function(self)
 		if (self:GetChecked()) then
 			PGF_OnlyShowMyRole2["DAMAGER"] = true;
+			updateDungeonFilter(nil, nil, nil, nil, nil, nil, nil, true);
 			updateSearch();
 			PlaySound(856);
 		else
 			PGF_OnlyShowMyRole2["DAMAGER"] = false;
+			updateDungeonFilter(nil, nil, nil, nil, nil, nil, nil, false);
 			updateSearch();
 			PlaySound(857);
 		end
@@ -2138,11 +2198,13 @@ local function initDungeon()
 	showGroupsWithoutMyClassButton:SetChecked(PGF_DontShowMyClass);
 	showGroupsWithoutMyClassButton:HookScript("OnClick", function(self)
 		if (self:GetChecked()) then
+			updateDungeonFilter(nil, nil, nil, nil, true);
 			PGF_DontShowMyClass = true;
 			updateSearch();
 			PlaySound(856);
 		else
 			PGF_DontShowMyClass = false;
+			updateDungeonFilter(nil, nil, nil, nil, false);
 			updateSearch();
 			PlaySound(857);
 		end
@@ -2531,7 +2593,36 @@ PVEFrame:HookScript("OnShow", function(self)
 		initDungeon();
 		initRaid();
 	end
+	LFGListFrame.SearchPanel.FilterButton.ResetToDefaults:Hide();
 end);
+
+LFGListFrame.SearchPanel.FilterButton.ResetToDefaults:HookScript("OnShow", function(self)
+	LFGListFrame.SearchPanel.FilterButton.ResetToDefaults:Hide();
+end);
+
+local function restoreDungeonFilter(enabled)
+	enabled.needsTank = false;
+	enabled.needsHealer = false;
+	enabled.needsDamage = false;
+	enabled.needsMyClass = PGF_DontShowMyClass;
+	enabled.hasTank = PGF_OnlyShowMyRole2["TANK"];
+	enabled.hasHealer = PGF_OnlyShowMyRole2["HEALER"];
+	enabled.hasDPS = PGF_OnlyShowMyRole2["DAMAGER"];
+	enabled.minimumRating = 0;
+	MinRatingFrame.MinRating:SetNumber(0);
+	enabled.activities = {};
+	enabled.difficultyNormal = false;
+	enabled.difficultyHeroic = false;
+	enabled.difficultyMythic = false;
+	enabled.difficultyMythicPlus = true;
+	local seasonGroups = C_LFGList.GetAvailableActivityGroups(GROUP_FINDER_CATEGORY_ID_DUNGEONS, bit.bor(Enum.LFGListFilter.CurrentSeason, Enum.LFGListFilter.PvE));
+	local expansionGroups = C_LFGList.GetAvailableActivityGroups(GROUP_FINDER_CATEGORY_ID_DUNGEONS, bit.bor(Enum.LFGListFilter.CurrentExpansion, Enum.LFGListFilter.NotCurrentSeason, Enum.LFGListFilter.PvE));
+	local allDungeons = {};
+	tAppendAll(allDungeons, seasonGroups);
+	tAppendAll(allDungeons, expansionGroups);
+	enabled.activities = allDungeons;
+	C_LFGList.SaveAdvancedFilter(enabled);
+end
 
 
 f:SetScript("OnEvent", function(self, event, ...)
@@ -2579,6 +2670,8 @@ f:SetScript("OnEvent", function(self, event, ...)
 			raidOptionsFrame:Hide();
 		end
 		playerClass = select(1, UnitClassBase("player"));
+		local enabled = C_LFGList.GetAdvancedFilter();
+		restoreDungeonFilter(enabled);
 	elseif (event == "PLAYER_SPECIALIZATION_CHANGED") then
 		local unit = ...;
 		if (UnitIsUnit(unit, "player")) then
@@ -3455,7 +3548,7 @@ end
 ]]
 function LFGListSearchPanel_UpdateResultList(self)
 	if (LFGListFrame.SearchPanel.categoryID == GROUP_FINDER_CATEGORY_ID_DUNGEONS) then
-		if(next(selectedInfo.dungeons) == nil and selectedInfo["leaderScore"] == 0 and not PGF_FilterRemainingRoles and not isAnyValueTrue(PGF_OnlyShowMyRole2) and not PGF_DontShowMyClass and not PGF_DontShowDeclinedGroups) then
+		if(not PGF_FilterRemainingRoles and not PGF_DontShowDeclinedGroups) then
 			LFGListFrame.SearchPanel.RefreshButton:SetScript("OnClick", function() end);
 			LFGListFrame.SearchPanel.RefreshButton.Icon:SetTexture("Interface\\AddOns\\PGFinder\\Res\\RedRefresh.tga");
 			searchAvailable = false;
@@ -3477,9 +3570,7 @@ function LFGListSearchPanel_UpdateResultList(self)
 			LFGListSearchPanel_UpdateResults(self);
 			updatePerformanceText(self.totalResults, GetTimePreciseSec());
 			--declinedGroups = {};
-			return true;
-		end
-		if (slowSearch == false) then
+		else
 			LFGListFrame.SearchPanel.RefreshButton:SetScript("OnClick", function() end);
 			LFGListFrame.SearchPanel.RefreshButton.Icon:SetTexture("Interface\\AddOns\\PGFinder\\Res\\RedRefresh.tga");
 			searchAvailable = false;
@@ -3511,22 +3602,10 @@ function LFGListSearchPanel_UpdateResultList(self)
 				if (appStatus == "applied") then
 					table.insert(newResults, self.results[i]);
 				elseif (PGF_DontShowDeclinedGroups) then
-					if ((declinedGroups[leaderName] == nil or declinedGroups[leaderName].activityID ~= activityID) and (PGF_DontShowMyClass == false or getClassCount(playerClass, searchResults, self.results[i]) == 0) and (next(selectedInfo.dungeons) == nil or selectedInfo.dungeons[activityID]) and (requiredDungeonScore == nil or C_ChallengeMode.GetOverallDungeonScore() >= requiredDungeonScore) and (selectedInfo["leaderScore"] == 0 or selectedInfo["leaderScore"] < leaderOverallDungeonScore) and ((not PGF_FilterRemainingRoles and not isAnyValueTrue(PGF_OnlyShowMyRole2)) or HasRemainingSlotsForLocalPlayerRole(self.results[i], true))) then
+					if ((declinedGroups[leaderName] == nil or declinedGroups[leaderName].activityID ~= activityID) and (requiredDungeonScore == nil or C_ChallengeMode.GetOverallDungeonScore() >= requiredDungeonScore) and (not PGF_FilterRemainingRoles or HasRemainingSlotsForLocalPlayerRole(self.results[i], true))) then
 						table.insert(newResults, self.results[i]);
 					end
-				elseif (PGF_DontShowMyClass) then
-					if (getClassCount(playerClass, searchResults, self.results[i]) == 0 and (next(selectedInfo.dungeons) == nil or selectedInfo.dungeons[activityID]) and (requiredDungeonScore == nil or C_ChallengeMode.GetOverallDungeonScore() >= requiredDungeonScore) and (selectedInfo["leaderScore"] == 0 or selectedInfo["leaderScore"] < leaderOverallDungeonScore) and ((not PGF_FilterRemainingRoles and not isAnyValueTrue(PGF_OnlyShowMyRole2)) or HasRemainingSlotsForLocalPlayerRole(self.results[i], true))) then
-						table.insert(newResults, self.results[i]);
-					end
-				elseif (next(selectedInfo.dungeons) ~= nil) then
-					if (selectedInfo.dungeons[activityID] and (requiredDungeonScore == nil or C_ChallengeMode.GetOverallDungeonScore() >= requiredDungeonScore) and (selectedInfo["leaderScore"] == 0 or selectedInfo["leaderScore"] < leaderOverallDungeonScore) and ((not PGF_FilterRemainingRoles and not isAnyValueTrue(PGF_OnlyShowMyRole2)) or HasRemainingSlotsForLocalPlayerRole(self.results[i], true))) then
-						table.insert(newResults, self.results[i]);
-					end
-				elseif (selectedInfo["leaderScore"] > 0) then
-					if ((requiredDungeonScore == nil or C_ChallengeMode.GetOverallDungeonScore() >= requiredDungeonScore) and selectedInfo["leaderScore"] < leaderOverallDungeonScore and ((not PGF_FilterRemainingRoles and not isAnyValueTrue(PGF_OnlyShowMyRole2)) or HasRemainingSlotsForLocalPlayerRole(self.results[i], true))) then
-						table.insert(newResults, self.results[i]);
-					end
-				elseif (PGF_FilterRemainingRoles or isAnyValueTrue(PGF_OnlyShowMyRole2)) then
+				elseif (PGF_FilterRemainingRoles) then
 					if ((requiredDungeonScore == nil or C_ChallengeMode.GetOverallDungeonScore() >= requiredDungeonScore) and HasRemainingSlotsForLocalPlayerRole(self.results[i], true)) then
 						table.insert(newResults, self.results[i]);
 					end
@@ -3541,40 +3620,6 @@ function LFGListSearchPanel_UpdateResultList(self)
 			LFGListSearchPanel_UpdateResults(self);
 			updatePerformanceText(self.totalResults, GetTimePreciseSec());
 			return true;
-		else
-			slowCount = slowCount + 1;
-			self.totalResults, self.results = C_LFGList.GetFilteredSearchResults();
-			for i = 1, #self.results do
-				local searchResults = C_LFGList.GetSearchResultInfo(self.results[i]);
-				local activityID = searchResults.activityID;
-				local activityInfo = C_LFGList.GetActivityInfoTable(activityID);
-				local activityFullName = activityInfo.fullName;
-				local isMythicPlusActivity = activityInfo.isMythicPlusActivity;
-				local leaderName = searchResults.leaderName;
-				local name = searchResults.name;
-				local isDelisted = searchResults.isDelisted;
-				local age = searchResults.age;
-				local leaderOverallDungeonScore = searchResults.leaderOverallDungeonScore;
-				local leaderDungeonScoreInfo = searchResults.leaderDungeonScoreInfo;
-				local requiredDungeonScore = searchResults.requiredDungeonScore;
-				local _, appStatus, pendingStatus, appDuration = C_LFGList.GetApplicationInfo(self.results[i]);
-				if (selectedInfo.dungeons[activityID]) then
-					if (requiredDungeonScore == nil or C_ChallengeMode.GetOverallDungeonScore() >= requiredDungeonScore) then
-						table.insert(slowResults, self.results[i]);
-					end
-				end
-			end
-			if (slowCount == slowTotal) then
-				self.totalResults = #slowResults;
-				self.results = slowResults;
-				if (self.totalResults > 0) then
-					LFGListUtil_SortSearchResults(slowResults);
-				end
-				self.applications = C_LFGList.GetApplications();
-				LFGListSearchPanel_UpdateResults(self);
-				updatePerformanceText(self.totalResults, GetTimePreciseSec());
-				return true;
-			end
 		end
 	elseif (LFGListFrame.SearchPanel.categoryID == 3) then
 		if((next(selectedInfo.bosses) == nil and raidStateMap[lastSelectedRaidState] ~= 0 and not lastSelectedRaidState:match(" All")) or raidStateMap[lastSelectedRaidState] == 0) then
@@ -3786,9 +3831,11 @@ end);
 	Documentation: This function automatically accepts the role sign up when you are in a party and not the leader by setting your role to the users selected role(s) in the UI.
 	If the user is not in a group or are is the leader this window closes isntantly as ApplyToGroup is used instead to initiate the sign up directly skipping this step.
 ]]
-LFGListApplicationDialog:HookScript("OnShow", function(self)
+LFDRoleCheckPopup:HookScript("OnShow", function(self)
+	print(1)
 	local apps = C_LFGList.GetApplications();
 	if(IsInGroup() and not UnitIsGroupLeader("player")) then
+		print(2)
 		if (PGF_roles["TANK"]) then
 			LFDRoleCheckPopupRoleButtonTank.checkButton:SetChecked(true);
 		else
@@ -3804,9 +3851,11 @@ LFGListApplicationDialog:HookScript("OnShow", function(self)
 		else
 			LFDRoleCheckPopupRoleButtonDPS.checkButton:SetChecked(false);
 		end
+		print(4)
 		LFDRoleCheckPopupAcceptButton:Enable();
 		LFDRoleCheckPopupAcceptButton:Click();
-	elseif (true or PGF_autoSign) then
+	else
+		print(3)
 		LFGListApplicationDialog:Hide();
 	end
 end);

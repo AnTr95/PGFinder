@@ -62,6 +62,8 @@
         "ClearAllPoints",
         "GROUP",
         "GROUP_FINDER",
-        "LFGListSearchPanel_UpdateResultList"
+        "LFGListSearchPanel_UpdateResultList",
+        "enabled",
+        "LFDRoleCheckPopup"
     ]
 }
