@@ -3543,9 +3543,6 @@ end
 	Return:
 	bool - true if there are results
 ]]
---[[
-	
-]]
 function LFGListSearchPanel_UpdateResultList(self)
 	if (LFGListFrame.SearchPanel.categoryID == GROUP_FINDER_CATEGORY_ID_DUNGEONS) then
 		if(not PGF_FilterRemainingRoles and not PGF_DontShowDeclinedGroups) then
@@ -3592,9 +3589,6 @@ function LFGListSearchPanel_UpdateResultList(self)
 				local _, appStatus, pendingStatus, appDuration = C_LFGList.GetApplicationInfo(self.results[i]);
 				if (leaderName == nil) then
 					leaderName = "";
-				end
-				if (leaderOverallDungeonScore == nil) then
-					leaderOverallDungeonScore = 0;
 				end
 				if (declinedGroups[leaderName] and declinedGroups[leaderName].timeout <= GetTime()) then
 					declinedGroups[leaderName] = nil;

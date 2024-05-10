@@ -21,6 +21,7 @@ globals = {
     "strlower",
 	"table.insert",
 	"table.remove",
+    "tAppendAll",
 
 	--WoW API
     "Ambiguate",
@@ -113,6 +114,7 @@ globals = {
     "BackdropTemplateMixin",
     "GameFontNormalTiny2",
     "GameTooltip",
+    "LFDRoleCheckPopup",
     "LFDRoleCheckPopupAcceptButton",
     "LFDRoleCheckPopupRoleButtonDPS",
     "LFDRoleCheckPopupRoleButtonHealer",
@@ -120,6 +122,7 @@ globals = {
     "LFGApplicationViewerRatingColumnHeader",
     "LFGListApplicationDialog",
     "LFGListFrame",
+    "MinRatingFrame",
     "PVEFrame",
     "PVEFrameBg",
     "PVEFrameTitleText",
