@@ -25,6 +25,7 @@ globals = {
 
 	--WoW API
     "Ambiguate",
+    "C_AddOns",
     "C_ChallengeMode",
     "C_ChatInfo",
     "C_LFGList",
