@@ -7,8 +7,8 @@ SLASH_PREMADEGROUPFINDER2 = "/premadefinder"
 SLASH_PREMADEGROUPFINDER3 = "/premadegroupfinder"
 
 L.OPTIONS_TITLE = "Premade Group Finder";
-L.OPTIONS_AUTHOR = "Author: " .. GetAddOnMetadata(addon, "Author");
-L.OPTIONS_VERSION = "Version: " .. GetAddOnMetadata(addon, "Version");
+L.OPTIONS_AUTHOR = "Author: " .. C_AddOns.GetAddOnMetadata(addon, "Author");
+L.OPTIONS_VERSION = "Version: " .. C_AddOns.GetAddOnMetadata(addon, "Version");
 L.OPTIONS_ROLE = "Sign up as:";
 L.OPTIONS_MIN_LEADER_SCORE = "Min. Leader Score:";
 L.OPTIONS_DUNGEON_DIFFICULTY = "Difficulty";

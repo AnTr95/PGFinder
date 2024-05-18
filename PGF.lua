@@ -1386,7 +1386,7 @@ PVEFrame:HookScript("OnUpdate", function(self, elapsed)
 		debugTicks = debugTicks + elapsed;
 		if (debugTicks >= debugPerformanceReset) then
 			UpdateAddOnMemoryUsage();
-			print("PGF: " .. math.floor(GetAddOnMemoryUsage(addonIndex)) .. "kb in use");
+			print("PGF: " .. math.floor(C_AddOns.GetAddOnMemoryUsage(addonIndex)) .. "kb in use");
 			debugTicks = 0;
 		end
 	end
@@ -3826,10 +3826,8 @@ end);
 	If the user is not in a group or are is the leader this window closes isntantly as ApplyToGroup is used instead to initiate the sign up directly skipping this step.
 ]]
 LFDRoleCheckPopup:HookScript("OnShow", function(self)
-	print(1)
 	local apps = C_LFGList.GetApplications();
 	if(IsInGroup() and not UnitIsGroupLeader("player")) then
-		print(2)
 		if (PGF_roles["TANK"]) then
 			LFDRoleCheckPopupRoleButtonTank.checkButton:SetChecked(true);
 		else
@@ -3845,11 +3843,9 @@ LFDRoleCheckPopup:HookScript("OnShow", function(self)
 		else
 			LFDRoleCheckPopupRoleButtonDPS.checkButton:SetChecked(false);
 		end
-		print(4)
 		LFDRoleCheckPopupAcceptButton:Enable();
 		LFDRoleCheckPopupAcceptButton:Click();
 	else
-		print(3)
 		LFGListApplicationDialog:Hide();
 	end
 end);
