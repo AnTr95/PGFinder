@@ -2593,11 +2593,11 @@ PVEFrame:HookScript("OnShow", function(self)
 		initDungeon();
 		initRaid();
 	end
-	LFGListFrame.SearchPanel.FilterButton.ResetToDefaults:Hide();
+	LFGListFrame.SearchPanel.FilterButton.ResetButton:Hide();
 end);
 
-LFGListFrame.SearchPanel.FilterButton.ResetToDefaults:HookScript("OnShow", function(self)
-	LFGListFrame.SearchPanel.FilterButton.ResetToDefaults:Hide();
+LFGListFrame.SearchPanel.FilterButton.ResetButton:HookScript("OnShow", function(self)
+	LFGListFrame.SearchPanel.FilterButton.ResetButton:Hide();
 end);
 
 local function restoreDungeonFilter(enabled)
@@ -2609,7 +2609,6 @@ local function restoreDungeonFilter(enabled)
 	enabled.hasHealer = PGF_OnlyShowMyRole2["HEALER"];
 	enabled.hasDPS = PGF_OnlyShowMyRole2["DAMAGER"];
 	enabled.minimumRating = 0;
-	MinRatingFrame.MinRating:SetNumber(0);
 	enabled.activities = {};
 	enabled.difficultyNormal = false;
 	enabled.difficultyHeroic = false;
