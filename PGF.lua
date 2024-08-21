@@ -96,7 +96,7 @@ local prevSearchTime = 0;
 local refreshTimeReset = 3; --defines the time that must pass between searches
 local searchAvailable = true;
 local dungeonStates = {"Normal", "Heroic", "Mythic", "Mythic+ (Keystone)"}; --visible states for the dropdown
-local raidStates = {"All", "VOTI Normal", "VOTI Heroic", "VOTI Mythic", "VOTI All", "ASC Normal", "ASC Heroic", "ASC Mythic", "ASC All", "ADH Normal", "ADH Heroic", "ADH Mythic", "ADH All",}; --visible states for the dropdown
+local raidStates = {"All", "NP Normal", "NP Heroic", "NP Mythic", "NP All"}; --visible states for the dropdown
 local sortingStates = {[1] = "Time", [2] = "Score"};
 local sortingRaidStates = {[1] = "Time", [2] = "Few of your class", [3] = "Many of your class", [4] = "Few of your tier", [5] = "Many of your tier"};
 local lastSelectedDungeonState = "";
@@ -123,18 +123,10 @@ local dungeonStateMap = {
 };
 local raidStateMap = {
 	["All"] = 0,
-	["VOTI Normal"] = 1189,
-	["VOTI Heroic"] = 1190,
-	["VOTI Mythic"] = 1191,
-	["VOTI All"] = 1191,
-	["ASC Normal"] = 1235,
-	["ASC Heroic"] = 1236,
-	["ASC Mythic"] = 1237,
-	["ASC All"] = 1235, --no activity ID for this so lets take the boss data from normal
-	["ADH Normal"] = 1251,
-	["ADH Heroic"] = 1252,
-	["ADH Mythic"] = 1253,
-	["ADH All"] = 1251,
+	["NP Normal"] = 1505,
+	["NP Heroic"] = 1506,
+	["NP Mythic"] = 1504,
+	["NP All"] = 1505, --no activity ID for this so lets take the boss data from normal
 };
 local tierSetsMap = {
 	["DEATHKNIGHT"] = "Dreadful",
@@ -157,39 +149,15 @@ local tierSetsMap = {
 	Documentation: This sets the order of that the bosses will show in the UI
 ]]
 local bossOrderMap = {
-	["VOTI"] = {
-		"Eranog",
-		"The Primal Council",
-		"Dathea, Ascended",
-		"Terros",
-		"Sennarth, The Cold Breath",
-		"Kurog Grimtotem",
-		"Broodkeeper Diurna",
-		"Raszageth the Storm-Eater",
-		"Fresh"
-	};
-	["ASC"] = {
-		"Kazzara, the Hellforged",
-		"The Amalgamation Chamber",
-		"The Forgotten Experiments",
-		"Assault of the Zaqali",
-		"Rashok, the Elder",
-		"The Vigilant Steward, Zskarn",
-		"Magmorax",
-		"Echo of Neltharion",
-		"Scalecommander Sarkareth",
-		"Fresh"
-	},
-	["ADH"] = {
-		"Gnarlroot",
-		"Igira the Cruel",
-		"Volcoross",
-		"Council of Dreams",
-		"Larodar, Keeper of the Flame",
-		"Nymue, Weaver of the Cycle",
-		"Smolderon",
-		"Tindral Sageswift, Seer of the Flame",
-		"Fyrakk the Blazing",
+	["NP"] = {
+		"Ulgrax the Devourer",
+		"The Bloodbound Horror",
+		"Sikran, Captain of Sureki",
+		"Rasha'nan",
+		"Broodtwister Ovi'nax",
+		"Nexus-Princess Ky'veza",
+		"The Silken Court",
+		"Queen Ansurek",
 		"Fresh",
 	},
 };
@@ -197,39 +165,15 @@ local bossOrderMap = {
 	Documentation: This converts the names used in the GUIs for the user to see with the actual names in the code.
 ]]
 local bossNameMap = {
-	["VOTI"] = {
-		["Eranog"] = "Eranog",
-		["Terros"] = "Terros",
-		["The Primal Council"] = "Council",
-		["Dathea, Ascended"] = "Dathea",
-		["Sennarth, The Cold Breath"] = "Sennarth",
-		["Kurog Grimtotem"] = "Kurog",
-		["Broodkeeper Diurna"] = "Broodkeeper",
-		["Raszageth the Storm-Eater"] = "Raszageth",
-		["Fresh"] = "Fresh Run",
-	},
-	["ASC"] = {
-		["Kazzara, the Hellforged"] = "Kazzara",
-		["The Amalgamation Chamber"] = "Amalgamation Chamber",
-		["The Forgotten Experiments"] = "Forgotten Experiments",
-		["Assault of the Zaqali"] = "Assault of the Zaqali",
-		["Rashok, the Elder"] = "Rashok",
-		["The Vigilant Steward, Zskarn"] = "Zskarn",
-		["Magmorax"] = "Magmorax",
-		["Echo of Neltharion"] = "Neltharion",
-		["Scalecommander Sarkareth"] = "Sarkareth",
-		["Fresh"] = "Fresh Run",
-	},
-	["ADH"] = {
-		["Gnarlroot"] = "Gnarlroot",
-		["Igira the Cruel"] = "Igira",
-		["Volcoross"] = "Volcoross",
-		["Council of Dreams"] = "Council",
-		["Larodar, Keeper of the Flame"] = "Larodar",
-		["Nymue, Weaver of the Cycle"] = "Nymue",
-		["Smolderon"] = "Smolderon",
-		["Tindral Sageswift, Seer of the Flame"] = "Tindral",
-		["Fyrakk the Blazing"] = "Fyrakk",
+	["NP"] = {
+		["Ulgrax the Devourer"] = "Ulgrax",
+		["The Bloodbound Horror"] = "Bloodbound",
+		["Sikran, Captain of Sureki"] = "Sikran",
+		["Rasha'nan"] = "Rasha'nan",
+		["Broodtwister Ovi'nax"] = "Broodtwister",
+		["Nexus-Princess Ky'veza"] = "Ky'veza",
+		["The Silken Court"] = "Silken Court",
+		["Queen Ansurek"] = "Ansurek",
 		["Fresh"] = "Fresh Run",
 	},
 };
@@ -259,342 +203,102 @@ local dungeonAbbreviations = {
 	["Atal'Dazar"] = "AD",
 	["Waycrest Manor"] = "WM",
 	["The Everbloom"] = "EB",
+	["Siege of Boralus"] = "SOB",
+	["Grim Batol"] = "GB",
+	["The Necrotic Wake"] = "NW",
+	["Mists of Tirna Scithe"] = "MTS",
+	["The Stonevault"] = "TSV",
+	["The Dawnbreaker"] = "TDB",
+	["City of Threads"] = "COT",
+	["Ara-Kara, City of Echoes"] = "ACE",
+	["The Rookery"] = "TR",
+	["Cinderbrew Meadery"] = "CBM",
+	["Darkflame Cleft"] = "DFC",
+	["Priory of the Sacred Flame"] = "PSF",
 };
 
 local raidAbbreviations = {
-	["Vault of the Incarnates"] = "VOTI",
-	["Aberrus"] = "ASC",
-	["Amirdrassil"] = "ADH",
+	["Nerub-ar Palace"] = "NP",
 };
 --[[
 	Documentation: This is DAG that defines which bosses are after and which are before the selected boss and is used for figuring out what boss is next based on the raid lockout
 ]]
 local boss_Paths = {
-	["ASC"] = {
-		["Kazzara"] = {
+	["NP"] = {
+		["Ulgrax"] = {
 			["children_paths"] = {
-				{"Amalgamation Chamber", "Forgotten Experiments", "Assault of the Zaqali", "Rashok", "Zskarn", "Magmorax", "Neltharion", "Sarkareth"},
-				{"Assault of the Zaqali", "Rashok", "Amalgamation Chamber", "Forgotten Experiments", "Zskarn", "Magmorax", "Neltharion", "Sarkareth"},
-				{"Neltharion", "Sarkareth"},
+				{"Bloodbound Horror", "Sikran", "Rasha'nan", "Broodtwister", "Ky'veza", "Silken Court", "Ansurek"},
+				{"Bloodbound Horror", "Sikran", "Rasha'nan", "Ky'veza", "Broodtwister", "Silken Court", "Ansurek"},
+				{"Silken Court", "Ansurek"},
 			},
 			["parent_paths"] = {},
 		},
-		["Amalgamation Chamber"] = {
+		["Bloodbound Horror"] = {
 			["children_paths"] = {
-				{"Forgotten Experiments", "Assault of the Zaqali", "Rashok", "Zskarn", "Magmorax", "Neltharion", "Sarkareth"},
+				{"Sikran", "Rasha'nan", "Broodtwister", "Ky'veza", "Silken Court", "Ansurek"},
+				{"Sikran", "Rasha'nan", "Ky'veza", "Broodtwister", "Silken Court", "Ansurek"},
 			},
 			["parent_paths"] = {
-				{"Kazzara"},
-				{"Rashok", "Assault of the Zaqali","Kazzara"},
+				{"Ulgrax"},
 			},
 		},
-		["Forgotten Experiments"] = {
+		["Sikran"] = {
 			["children_paths"] = {
-				{"Assault of the Zaqali", "Rashok", "Zskarn", "Magmorax", "Neltharion", "Sarkareth"},
+				{"Rasha'nan", "Broodtwister", "Ky'veza", "Silken Court", "Ansurek"},
+				{"Rasha'nan", "Ky'veza", "Broodtwister", "Silken Court", "Ansurek"},
 			},
 			["parent_paths"] = {
-				{"Amalgamation Chamber", "Kazzara"},
-				{"Rashok", "Assault of the Zaqali", "Amalgamation Chamber", "Kazzara"},
+				{"Bloodbound Horror", "Ulgrax"},
 			},
 		},
-		["Assault of the Zaqali"] = {
+		["Rasha'nan"] = {
 			["children_paths"] = {
-				{"Rashok", "Zskarn", "Magmorax", "Neltharion", "Sarkareth"},
+				{"Broodtwister", "Ky'veza", "Silken Court", "Ansurek"},
+				{"Ky'veza", "Broodtwister", "Silken Court", "Ansurek"},
 			},
 			["parent_paths"] = {
-				{"Kazzara"},
-				{"Forgotten Experiments", "Amalgamation Chamber", "Kazzara"},
+				{"Sikran", "Bloodbound Horror", "Ulgrax"},
 			},
 		},
-		["Rashok"] = {
+		["Broodtwister"] = {
 			["children_paths"] = {
-				{"Zskarn", "Magmorax", "Neltharion", "Sarkareth"}
+				{"Ky'veza", "Silken Court", "Ansurek"},
+				{"Silken Court", "Ansurek"},
 			},
 			["parent_paths"] = {
-				{"Assault of the Zaqali", "Kazzara"},
-				{"Assault of the Zaqali", "Forgotten Experiments", "Amalgamation Chamber", "Kazzara"},
+				{"Rasha'nan", "Sikran", "Bloodbound Horror", "Ulgrax"},
+				{"Ky'veza", "Rasha'nan", "Sikran", "Bloodbound Horror", "Ulgrax"},
 			},
 		},
-		["Zskarn"] = {
+		["Ky'veza"] = {
 			["children_paths"] = {
-				{"Magmorax", "Neltharion", "Sarkareth"}
+				{"Broodtwister", "Silken Court", "Ansurek"},
+				{"Silken Court", "Ansurek"},
 			},
 			["parent_paths"] = {
-				{"Rashok", "Assault of the Zaqali", "Forgotten Experiments", "Amalgamation Chamber", "Kazzara"},
-				{"Forgotten Experiments", "Amalgamation Chamber", "Rashok", "Assault of the Zaqali", "Kazzara"},
+				{"Rasha'nan", "Sikran", "Bloodbound Horror", "Ulgrax"},
+				{"Broodtwister", "Rasha'nan", "Sikran", "Bloodbound Horror", "Ulgrax"},
 			},
 		},
-		["Magmorax"] = {
+		["Silken Court"] = {
 			["children_paths"] = {
-				{"Neltharion", "Sarkareth"}
+				{"Ansurek",}
 			},
 			["parent_paths"] = {
-				{"Zskarn", "Rashok", "Assault of the Zaqali", "Forgotten Experiments", "Amalgamation Chamber", "Kazzara"},
-				{"Zskarn", "Forgotten Experiments", "Amalgamation Chamber", "Rashok", "Assault of the Zaqali", "Kazzara"},
+				{"Broodtwister", "Ky'veza", "Rasha'nan", "Sikran", "Bloodbound Horror", "Ulgrax"},
+				{"Ky'veza", "Broodtwister", "Rasha'nan", "Sikran", "Bloodbound Horror", "Ulgrax"},
+				{"Ulgrax"},
 			},
 		},
-		["Neltharion"] = {
-			["children_paths"] = {
-				{"Sarkareth"}
-			},
-			["parent_paths"] = {
-				{"Kazzara"},
-				{"Magmorax", "Zskarn", "Rashok", "Assault of the Zaqali", "Forgotten Experiments", "Amalgamation Chamber", "Kazzara"},
-				{"Magmorax", "Zskarn", "Forgotten Experiments", "Amalgamation Chamber", "Rashok", "Assault of the Zaqali", "Kazzara"},
-			}
-		},
-		["Sarkareth"] = {
+		["Ansurek"] = {
 			["children_paths"] = {},
 			["parent_paths"] = {
-				{"Neltharion", "Kazzara"},
-				{"Neltharion", "Magmorax", "Zskarn", "Rashok", "Assault of the Zaqali", "Forgotten Experiments", "Amalgamation Chamber", "Kazzara"},
-				{"Neltharion", "Magmorax", "Zskarn", "Forgotten Experiments", "Amalgamation Chamber", "Rashok", "Assault of the Zaqali", "Kazzara"},
+				{"Ulgrax", "Silken Court"},
+				{"Silken Court", "Broodtwister", "Ky'veza", "Rasha'nan", "Sikran", "Bloodbound Horror", "Ulgrax"},
+				{"Silken Court", "Ky'veza", "Broodtwister", "Rasha'nan", "Sikran", "Bloodbound Horror", "Ulgrax"},
 			}
 		},
 	},
-	["VOTI"] = {
-		["Eranog"] = {
-			["children_paths"] = {
-				{"Terros", "Sennarth", "Kurog", "Council", "Dathea", "Broodkeeper", "Raszageth"},
-				{"Council", "Dathea", "Terros", "Sennarth", "Kurog", "Broodkeeper", "Raszageth"},
-				{"Broodkeeper", "Raszageth"}
-			},
-			["parent_paths"] = {},
-		},
-		["Terros"] = {
-			["children_paths"] = {
-				{"Sennarth", "Kurog", "Council", "Dathea", "Broodkeeper", "Raszageth"},
-				{"Dathea", "Broodkeeper", "Raszageth"}
-			},
-			["parent_paths"] = {
-				{"Eranog"},
-				{"Dathea", "Council", "Eranog"},
-			},
-		},
-		["Sennarth"] = {
-			["children_paths"] = {
-				{"Kurog", "Council", "Dathea", "Broodkeeper", "Raszageth"},
-				{"Kurog", "Broodkeeper", "Raszageth"}
-			},
-			["parent_paths"] = {
-				{"Terros", "Eranog"},
-				{"Terros", "Dathea", "Council", "Eranog"},
-			},
-		},
-		["Kurog"] = {
-			["children_paths"] = {
-				{"Council", "Dathea", "Broodkeeper", "Raszageth"},
-				{"Broodkeeper", "Raszageth"}
-			},
-			["parent_paths"] = {
-				{"Sennarth", "Terros", "Eranog"},
-				{"Sennarth", "Terros", "Dathea", "Council", "Eranog"},
-			},
-		},
-		["Council"] = {
-			["children_paths"] = {
-				{"Dathea", "Broodkeeper", "Raszageth"},
-				{"Terros", "Sennarth", "Kurog", "Broodkeeper", "Raszageth"},
-			},
-			["parent_paths"] = {
-				{"Eranog"},
-				{"Kurog", "Sennarth", "Terros", "Eranog"},
-			},
-		},
-		["Dathea"] = {
-			["children_paths"] = {
-				{"Terros", "Broodkeeper", "Raszageth"},
-				{"Broodkeeper", "Raszageth"}
-			},
-			["parent_paths"] = {
-				{"Council", "Eranog"},
-				{"Council", "Kurog", "Sennarth", "Terros", "Eranog"},
-			},
-		},
-		["Broodkeeper"] = {
-			["children_paths"] = {
-				{"Raszageth"}
-			},
-			["parent_paths"] = {
-				{"Eranog"},
-				{"Dathea", "Council", "Kurog", "Sennarth", "Terros", "Eranog"},
-				{"Kurog", "Sennarth", "Terros", "Dathea", "Council", "Eranog"},
-			},
-		},
-		["Raszageth"] = {
-			["children_paths"] = {},
-			["parent_paths"] = {
-				{"Broodkeeper", "Eranog"},
-				{"Broodkeeper", "Dathea", "Council", "Kurog", "Sennarth", "Terros", "Eranog"},
-				{"Broodkeeper", "Kurog", "Sennarth", "Terros", "Dathea", "Council", "Eranog"},
-			},
-		}
-	},
-	["ADH"] = {
-		["Gnarlroot"] = {
-			["children_paths"] = {
-				{"Igira", "Volcoross", "Larodar", "Council", "Nymue", "Smolderon", "Tindral", "Fyrakk"},
-				{"Igira", "Council", "Nymue", "Volcoross", "Larodar", "Smolderon", "Tindral", "Fyrakk"},
-				{"Smolderon", "Tindral", "Fyrakk"}
-			},
-			["parent_paths"] = {},
-		},
-		["Igira"] = {
-			["children_paths"] = {
-				{"Volcoross", "Larodar", "Council", "Nymue", "Smolderon", "Tindral", "Fyrakk"},
-				{"Council", "Nymue", "Volcoross", "Larodar", "Smolderon", "Tindral", "Fyrakk"}
-			},
-			["parent_paths"] = {
-				{"Gnarlroot"},
-			},
-		},
-		["Volcoross"] = {
-			["children_paths"] = {
-				{"Larodar", "Council", "Nymue", "Smolderon", "Tindral", "Fyrakk"},
-				{"Larodar", "Smolderon", "Tindral", "Fyrakk"}
-			},
-			["parent_paths"] = {
-				{"Igira", "Gnarlroot"},
-				{"Nymue", "Council", "Igira", "Gnarlroot"},
-			},
-		},
-		["Larodar"] = {
-			["children_paths"] = {
-				{"Council", "Nymue", "Smolderon", "Tindral", "Fyrakk"},
-				{"Smolderon", "Tindral", "Fyrakk"}
-			},
-			["parent_paths"] = {
-				{"Volcoross", "Igira", "Gnarlroot"},
-				{"Volcoross", "Nymue", "Council", "Igira", "Gnarlroot"},
-			},
-		},
-		["Council"] = {
-			["children_paths"] = {
-				{"Nymue", "Smolderon", "Tindral", "Fyrakk"},
-				{"Volcoross", "Larodar", "Smolderon", "Tindral", "Fyrakk"},
-			},
-			["parent_paths"] = {
-				{"Igira", "Gnarlroot"},
-				{"Larodar", "Volcoross", "Igira", "Gnarlroot"},
-			},
-		},
-		["Nymue"] = {
-			["children_paths"] = {
-				{"Volcoross", "Larodar", "Smolderon", "Tindral", "Fyrakk"},
-				{"Smolderon", "Tindral", "Fyrakk"}
-			},
-			["parent_paths"] = {
-				{"Council", "Igira", "Gnarlroot"},
-				{"Council", "Larodar", "Volcoross", "Igira", "Gnarlroot"},
-			},
-		},
-		["Smolderon"] = {
-			["children_paths"] = {
-				{"Tindral", "Fyrakk"}
-			},
-			["parent_paths"] = {
-				{"Gnarlroot"},
-				{"Nymue", "Council", "Larodar", "Volcoross", "Igira", "Gnarlroot"},
-				{"Larodar", "Volcoross", "Nymue", "Council", "Igira", "Gnarlroot"},
-			},
-		},
-		["Tindral"] = {
-			["children_paths"] = {
-				{"Fyrakk"}
-			},
-			["parent_paths"] = {
-				{"Smolderon", "Gnarlroot"},
-				{"Smolderon", "Nymue", "Council", "Larodar", "Volcoross", "Igira", "Gnarlroot"},
-				{"Smolderon", "Larodar", "Volcoross", "Nymue", "Council", "Igira", "Gnarlroot"},
-			},
-		},
-		["Fyrakk"] = {
-			["children_paths"] = {},
-			["parent_paths"] = {
-				{"Tindral", "Smolderon", "Gnarlroot"},
-				{"Tindral", "Smolderon", "Nymue", "Council", "Larodar", "Volcoross", "Igira", "Gnarlroot"},
-				{"Tindral", "Smolderon", "Larodar", "Volcoross", "Nymue", "Council", "Igira", "Gnarlroot"},
-			},
-		}
-	},
-};
-local VOTI_Path = {
-	["Eranog"] = {
-		["children_paths"] = {
-			{"Terros", "Sennarth", "Kurog", "Council", "Dathea", "Broodkeeper", "Raszageth"},
-			{"Council", "Dathea", "Terros", "Sennarth", "Kurog", "Broodkeeper", "Raszageth"},
-			{"Broodkeeper", "Raszageth"}
-		},
-		["parent_paths"] = {},
-	},
-	["Terros"] = {
-		["children_paths"] = {
-			{"Sennarth", "Kurog", "Council", "Dathea", "Broodkeeper", "Raszageth"},
-			{"Dathea", "Broodkeeper", "Raszageth"}
-		},
-		["parent_paths"] = {
-			{"Eranog"},
-			{"Dathea", "Council", "Eranog"},
-		},
-	},
-	["Sennarth"] = {
-		["children_paths"] = {
-			{"Kurog", "Council", "Dathea", "Broodkeeper", "Raszageth"},
-			{"Kurog", "Broodkeeper", "Raszageth"}
-		},
-		["parent_paths"] = {
-			{"Terros", "Eranog"},
-			{"Terros", "Dathea", "Council", "Eranog"},
-		},
-	},
-	["Kurog"] = {
-		["children_paths"] = {
-			{"Council", "Dathea", "Broodkeeper", "Raszageth"},
-			{"Broodkeeper", "Raszageth"}
-		},
-		["parent_paths"] = {
-			{"Sennarth", "Terros", "Eranog"},
-			{"Sennarth", "Terros", "Dathea", "Council", "Eranog"},
-		},
-	},
-	["Council"] = {
-		["children_paths"] = {
-			{"Dathea", "Broodkeeper", "Raszageth"},
-			{"Terros", "Sennarth", "Kurog", "Broodkeeper", "Raszageth"},
-		},
-		["parent_paths"] = {
-			{"Eranog"},
-			{"Kurog", "Sennarth", "Terros", "Eranog"},
-		},
-	},
-	["Dathea"] = {
-		["children_paths"] = {
-			{"Terros", "Broodkeeper", "Raszageth"},
-			{"Broodkeeper", "Raszageth"}
-		},
-		["parent_paths"] = {
-			{"Council", "Eranog"},
-			{"Council", "Kurog", "Sennarth", "Terros", "Eranog"},
-		},
-	},
-	["Broodkeeper"] = {
-		["children_paths"] = {
-			{"Raszageth"}
-		},
-		["parent_paths"] = {
-			{"Eranog"},
-			{"Dathea", "Council", "Kurog", "Sennarth", "Terros", "Eranog"},
-			{"Kurog", "Sennarth", "Terros", "Dathea", "Council", "Eranog"},
-		},
-	},
-	["Raszageth"] = {
-		["children_paths"] = {},
-		["parent_paths"] = {
-			{"Broodkeeper", "Eranog"},
-			{"Broodkeeper", "Dathea", "Council", "Kurog", "Sennarth", "Terros", "Eranog"},
-			{"Broodkeeper", "Kurog", "Sennarth", "Terros", "Dathea", "Council", "Eranog"},
-		},
-	}
 };
 
 --[[
@@ -720,9 +424,7 @@ local selectedInfo = {
 	Documentation: All of the achievementIDs for CE, Mythic Boss, AOTC, Normal Clear. Order decides which one is best, lower key = better
 ]]
 local achievementIDs = {
-	["Vault of the Incarnates"] = {17108, 16352, 16350, 16351, 16349, 16347, 16346, 16348, 16346, 17107, 16343},
-	["Aberrus"] = {18254, 18158, 18157, 18156, 18155, 18153, 18154, 18152, 18151, 18253, 18177, 18167, 18165, 18164, 18163},
-	["Amirdrassil"] = {19351, 19342, 19341, 19339, 19340, 19337, 19338, 19336, 19335, 19350 ,19331},
+	["Nerub-ar Palace"] = {40254, 40242, 40241, 40240, 40239, 40238, 40237, 40236, 40253, 40244},
 };
 
 --[[
@@ -1069,7 +771,7 @@ end
 ]]
 local function isNextBoss(graph, boss, bosses)
 	if (boss and graph) then
-		if (boss == "Broodkeeper" or boss == "Neltharion" or boss == "Smolderon") then
+		if (boss == "Silken Court") then -- or boss XX
 			if (bosses[graph[boss]["parent_paths"][1][1]] and PGF_GetSize(bosses) == 1) then
 				return true;
 			elseif (bosses[graph[boss]["parent_paths"][1][1]] and bosses[graph[boss]["parent_paths"][2][1]] and bosses[graph[boss]["parent_paths"][3][1]]) then
@@ -1223,11 +925,11 @@ end
 	The function takes the categoryID and if a filter should be applied or not which depends on the category. For raids 0 is for all raids including legacy while 1 is only current raids. For dungeons
 
 	Payload:
-	categoryID param(int) - the categoryID of LFGListFrame.SearchPanel.categoryID or the categoryID of the activity
-	filters param(int) - if a filter for recommended groups should be applied or not
+	categoryID param int - the categoryID of LFGListFrame.SearchPanel.categoryID or the categoryID of the activity
+	filters param ?int - if a filter for recommended groups should be applied or not
 
 	Returns:
-	filters (int)
+	filters ?integer
 ]]
 local function ResolveCategoryFilters(categoryID, filters)
 	-- Dungeons ONLY display recommended groups.
@@ -3774,7 +3476,7 @@ function PGF_DevGenerateAllActivityIDs()
 	};
 	PGF_DevDungeonsActivityIDs = {};
 	PGF_DevRaidActivityIDs = {};
-	for i = 1, 1400 do
+	for i = 1, 1600 do
 		local activityInfo = C_LFGList.GetActivityInfoTable(i);
 		if (activityInfo) then
 			local cat = activityInfo.categoryID;

@@ -56,7 +56,6 @@
         "LFDRoleCheckPopupRoleButtonDPS",
         "LE_PARTY_CATEGORY_INSTANCE",
         "DEFAULT_CHAT_FRAME",
-        "GetAddOnMetadata",
         "Hide",
         "Show",
         "ClearAllPoints",
@@ -64,6 +63,27 @@
         "GROUP_FINDER",
         "LFGListSearchPanel_UpdateResultList",
         "enabled",
-        "LFDRoleCheckPopup"
+        "LFDRoleCheckPopup",
+        "ChatFrame_OpenChat",
+        "SETTINGS",
+        "GameTooltip_SetDefaultAnchor",
+        "TRIVIAL_DIFFICULTY_COLOR",
+        "IMPOSSIBLE_DIFFICULTY_COLOR",
+        "EASY_DIFFICULTY_COLOR"
+    ],
+    "Lua.runtime.version": "Lua 5.1",
+    "Lua.runtime.builtin": {
+        "basic": "disable",
+        "debug": "disable",
+        "io": "disable",
+        "math": "disable",
+        "os": "disable",
+        "package": "disable",
+        "string": "disable",
+        "table": "disable",
+        "utf8": "disable"
+    },
+    "Lua.workspace.library": [
+        "c:\\Users\\Ant\\.vscode\\extensions\\ketho.wow-api-0.15.2\\Annotations"
     ]
 }
