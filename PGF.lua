@@ -3544,7 +3544,7 @@ end);
 ]]
 LFDRoleCheckPopup:HookScript("OnShow", function(self)
 	local apps = C_LFGList.GetApplications();
-	if(IsInGroup() and not UnitIsGroupLeader("player")) then
+	if(IsInGroup(2) or (IsInGroup(1) and not UnitIsGroupLeader("player"))) then
 		if (PGF_roles["TANK"]) then
 			LFDRoleCheckPopupRoleButtonTank.checkButton:SetChecked(true);
 		else
