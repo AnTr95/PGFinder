@@ -69,7 +69,15 @@
         "GameTooltip_SetDefaultAnchor",
         "TRIVIAL_DIFFICULTY_COLOR",
         "IMPOSSIBLE_DIFFICULTY_COLOR",
-        "EASY_DIFFICULTY_COLOR"
+        "EASY_DIFFICULTY_COLOR",
+        "ChatFrame_AddMessageEventFilter",
+        "CompactRaidFrameContainer",
+        "ObjectiveTrackerFrame",
+        "EJSuggestFrame_OpenFrame",
+        "EJ_ContentTab_SetEnabled",
+        "EncounterJournal",
+        "ChatTypeInfo",
+        "BattlefieldMapFrame"
     ],
     "Lua.runtime.version": "Lua 5.1",
     "Lua.runtime.builtin": {
@@ -84,6 +92,6 @@
         "utf8": "disable"
     },
     "Lua.workspace.library": [
-        "c:\\Users\\Ant\\.vscode\\extensions\\ketho.wow-api-0.15.2\\Annotations"
+        "~\\.vscode\\extensions\\ketho.wow-api-0.17.4\\Annotations"
     ]
 }

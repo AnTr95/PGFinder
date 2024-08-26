@@ -1,6 +1,6 @@
 ## Interface: 110002
 ## Title: Premade Group Finder
-## Version: 11.00
+## Version: 11.01
 ## Notes: Made finding groups quick and easy
 ## Author: Ant-Kazzak / Ant-Ragnaros
 ## X-Curse-Project-ID: 91733

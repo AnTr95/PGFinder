@@ -603,6 +603,22 @@ local function handler(msg, editbox)
 end
 SlashCmdList["PREMADEGROUPFINDER"] = handler;
 
+function PGF_GetTexCoordsForRole(role)
+	local textureHeight, textureWidth = 256, 256;
+	local roleHeight, roleWidth = 67, 67;
+	if ( role == "GUIDE" ) then
+		return GetTexCoordsByGrid(1, 1, textureWidth, textureHeight, roleWidth, roleHeight);
+	elseif ( role == "TANK" ) then
+		return GetTexCoordsByGrid(1, 2, textureWidth, textureHeight, roleWidth, roleHeight);
+	elseif ( role == "HEALER" ) then
+		return GetTexCoordsByGrid(2, 1, textureWidth, textureHeight, roleWidth, roleHeight);
+	elseif ( role == "DAMAGER" ) then
+		return GetTexCoordsByGrid(2, 2, textureWidth, textureHeight, roleWidth, roleHeight);
+	else
+		error("Unknown role: "..tostring(role));
+	end
+end
+
 --[[
 	Documentation: Looks up the r, g, b values from the coreLookup table or sends a default value if it is out of range. O(1)
 ]]
@@ -1693,7 +1709,7 @@ local function initDungeon()
 	dpsTexture:SetTexture("Interface\\LFGFrame\\UI-LFG-ICON-ROLES");
 	dpsTexture:SetPoint("TOPLEFT", roleText, 58, 1);
 	dpsTexture:SetSize(16, 16);
-	dpsTexture:SetTexCoord(GetTexCoordsForRole("DAMAGER"));
+	dpsTexture:SetTexCoord(PGF_GetTexCoordsForRole("DAMAGER"));
 	local dpsButton = CreateFrame("CheckButton", nil, f, "UICheckButtonTemplate");
 	dpsButton:SetSize(20, 20);
 	dpsButton:SetPoint("TOPLEFT", dpsTexture, "TOPLEFT", 0, -15);
@@ -1714,7 +1730,7 @@ local function initDungeon()
 	healerTexture:SetTexture("Interface\\LFGFrame\\UI-LFG-ICON-ROLES");
 	healerTexture:SetPoint("TOPLEFT", dpsTexture, 18, 0);
 	healerTexture:SetSize(16, 16);
-	healerTexture:SetTexCoord(GetTexCoordsForRole("HEALER"));
+	healerTexture:SetTexCoord(PGF_GetTexCoordsForRole("HEALER"));
 	local healerButon = CreateFrame("CheckButton", nil, f, "UICheckButtonTemplate");
 	healerButon:SetSize(20, 20);
 	healerButon:SetPoint("TOPLEFT", healerTexture, "TOPLEFT", 0, -15);
@@ -1734,7 +1750,7 @@ local function initDungeon()
 	tankTexture:SetTexture("Interface\\LFGFrame\\UI-LFG-ICON-ROLES");
 	tankTexture:SetPoint("TOPLEFT", healerTexture, 18, 0);
 	tankTexture:SetSize(16, 16);
-	tankTexture:SetTexCoord(GetTexCoordsForRole("TANK"));
+	tankTexture:SetTexCoord(PGF_GetTexCoordsForRole("TANK"));
 	local tankButton = CreateFrame("CheckButton", nil, f, "UICheckButtonTemplate");
 	tankButton:SetSize(20, 20);
 	tankButton:SetPoint("TOPLEFT", tankTexture, "TOPLEFT", 0, -15);
@@ -1845,7 +1861,7 @@ local function initDungeon()
 	tankTexture2:SetTexture("Interface\\LFGFrame\\UI-LFG-ICON-ROLES");
 	tankTexture2:SetPoint("TOP", showGroupsForYourRoleButtonTank, "TOP", 0, 15);
 	tankTexture2:SetSize(16, 16);
-	tankTexture2:SetTexCoord(GetTexCoordsForRole("TANK"));
+	tankTexture2:SetTexCoord(PGF_GetTexCoordsForRole("TANK"));
 	local showGroupsForYourRoleButtonHealer = CreateFrame("CheckButton", nil, dungeonOptionsFrame, "UICheckButtonTemplate");
 	showGroupsForYourRoleButtonHealer:SetSize(20, 20);
 	showGroupsForYourRoleButtonHealer:SetPoint("RIGHT", showGroupsForYourRoleButtonTank, "RIGHT", 20, 0);
@@ -1867,7 +1883,7 @@ local function initDungeon()
 	healerTexture2:SetTexture("Interface\\LFGFrame\\UI-LFG-ICON-ROLES");
 	healerTexture2:SetPoint("TOP", showGroupsForYourRoleButtonHealer, "TOP", 0, 15);
 	healerTexture2:SetSize(16, 16);
-	healerTexture2:SetTexCoord(GetTexCoordsForRole("HEALER"));
+	healerTexture2:SetTexCoord(PGF_GetTexCoordsForRole("HEALER"));
 	local showGroupsForYourRoleButtonDPS = CreateFrame("CheckButton", nil, dungeonOptionsFrame, "UICheckButtonTemplate");
 	showGroupsForYourRoleButtonDPS:SetSize(20, 20);
 	showGroupsForYourRoleButtonDPS:SetPoint("RIGHT", showGroupsForYourRoleButtonHealer, "RIGHT", 20, 0);
@@ -1889,7 +1905,7 @@ local function initDungeon()
 	dpsTexture2:SetTexture("Interface\\LFGFrame\\UI-LFG-ICON-ROLES");
 	dpsTexture2:SetPoint("TOP", showGroupsForYourRoleButtonDPS, "TOP", 0, 15);
 	dpsTexture2:SetSize(16, 16);
-	dpsTexture2:SetTexCoord(GetTexCoordsForRole("DAMAGER"));
+	dpsTexture2:SetTexCoord(PGF_GetTexCoordsForRole("DAMAGER"));
 	local showGroupsWithoutMyClassText = dungeonOptionsFrame:CreateFontString(nil, "ARTWORK", "GameFontNormalTiny2");
 	showGroupsWithoutMyClassText:SetFont(showGroupsWithoutMyClassText:GetFont(), 10);
 	showGroupsWithoutMyClassText:SetPoint("TOPLEFT", showGroupsForYourRoleText, "TOPLEFT", 0, -18);
