@@ -511,6 +511,8 @@ PGF_allRaidActivityIDs = {
 	[1505] = "Nerub-ar Palace (Normal)",
 	[1506] = "Nerub-ar Palace (Heroic)",
 	[1504] = "Nerub-ar Palace (Mythic)",
+	[1551] = "Blackrock Depths (Normal)",
+	[1552]= "Blackrock Depths (Heroic)",
 	[1289] = "World Bosses (War Within)",
 };
 
