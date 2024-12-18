@@ -1,4 +1,4 @@
-local addon = ...; -- The name of the addon folder
+local addon = ...;        -- The name of the addon folder
 local L = PGFinderLocals; -- Strings
 
 --[[
@@ -93,12 +93,18 @@ local debugTicks = 0;
 local debugPerformanceReset = 5;
 local currentSearchTime = 0;
 local prevSearchTime = 0;
-local refreshTimeReset = 3; --defines the time that must pass between searches
+local refreshTimeReset = 3;                                                    --defines the time that must pass between searches
 local searchAvailable = true;
-local dungeonStates = {"Normal", "Heroic", "Mythic", "Mythic+ (Keystone)"}; --visible states for the dropdown
-local raidStates = {"All", "NP Normal", "NP Heroic", "NP Mythic", "NP All"}; --visible states for the dropdown
-local sortingStates = {[1] = "Time", [2] = "Score"};
-local sortingRaidStates = {[1] = "Time", [2] = "Few of your class", [3] = "Many of your class", [4] = "Few of your tier", [5] = "Many of your tier"};
+local dungeonStates = { "Normal", "Heroic", "Mythic", "Mythic+ (Keystone)" };  --visible states for the dropdown
+local raidStates = { "All", "NP Normal", "NP Heroic", "NP Mythic", "NP All" }; --visible states for the dropdown
+local sortingStates = { [1] = "Time", [2] = "Score" };
+local sortingRaidStates = {
+	[1] = "Time",
+	[2] = "Few of your class",
+	[3] = "Many of your class",
+	[4] = "Few of your tier",
+	[5] = "Many of your tier"
+};
 local lastSelectedDungeonState = "";
 local lastSelectedRaidState = "";
 local performanceTimeStamp = 0;
@@ -130,18 +136,18 @@ local raidStateMap = {
 };
 local tierSetsMap = {
 	["DEATHKNIGHT"] = "Dreadful",
-    ["DEMONHUNTER"] = "Dreadful",
-    ["DRUID"] = "Mystic",
-    ["EVOKER"] = "Zenith",
-    ["HUNTER"] = "Mystic",
-    ["MAGE"] = "Mystic",
-    ["MONK"] = "Zenith",
-    ["PALADIN"] = "Venerated",
-    ["PRIEST"] = "Venerated",
-    ["ROGUE"] = "Zenith",
-    ["SHAMAN"] = "Venerated",
-    ["WARLOCK"] = "Dreadful",
-    ["WARRIOR"] = "Zenith"
+	["DEMONHUNTER"] = "Dreadful",
+	["DRUID"] = "Mystic",
+	["EVOKER"] = "Zenith",
+	["HUNTER"] = "Mystic",
+	["MAGE"] = "Mystic",
+	["MONK"] = "Zenith",
+	["PALADIN"] = "Venerated",
+	["PRIEST"] = "Venerated",
+	["ROGUE"] = "Zenith",
+	["SHAMAN"] = "Venerated",
+	["WARLOCK"] = "Dreadful",
+	["WARRIOR"] = "Zenith"
 };
 --local bestLevelPerDungeonMap = {};
 --local challengeIDMap = {};
@@ -196,7 +202,7 @@ local dungeonAbbreviations = {
 	["The Vortex Pinnacle"] = "VP",
 	["Dawn of the Infinite"] = "DI",
 	["Dawn of the Infinite: Galakrond's Fall"] = "FALL",
-	["Dawn of the Infinite: Murozond's Rise"] ="RISE",
+	["Dawn of the Infinite: Murozond's Rise"] = "RISE",
 	["Black Rook Hold"] = "BRH",
 	["Darkheart Thicket"] = "DHT",
 	["Throne of the Tides"] = "TOTT",
@@ -227,75 +233,75 @@ local boss_Paths = {
 	["NP"] = {
 		["Ulgrax"] = {
 			["children_paths"] = {
-				{"Bloodbound Horror", "Sikran", "Rasha'nan", "Broodtwister", "Ky'veza", "Silken Court", "Ansurek"},
-				{"Bloodbound Horror", "Sikran", "Rasha'nan", "Ky'veza", "Broodtwister", "Silken Court", "Ansurek"},
-				{"Silken Court", "Ansurek"},
+				{ "Bloodbound Horror", "Sikran", "Rasha'nan", "Broodtwister", "Ky'veza",      "Silken Court", "Ansurek" },
+				{ "Bloodbound Horror", "Sikran", "Rasha'nan", "Ky'veza",      "Broodtwister", "Silken Court", "Ansurek" },
+				{ "Silken Court",      "Ansurek" },
 			},
 			["parent_paths"] = {},
 		},
 		["Bloodbound Horror"] = {
 			["children_paths"] = {
-				{"Sikran", "Rasha'nan", "Broodtwister", "Ky'veza", "Silken Court", "Ansurek"},
-				{"Sikran", "Rasha'nan", "Ky'veza", "Broodtwister", "Silken Court", "Ansurek"},
+				{ "Sikran", "Rasha'nan", "Broodtwister", "Ky'veza",      "Silken Court", "Ansurek" },
+				{ "Sikran", "Rasha'nan", "Ky'veza",      "Broodtwister", "Silken Court", "Ansurek" },
 			},
 			["parent_paths"] = {
-				{"Ulgrax"},
+				{ "Ulgrax" },
 			},
 		},
 		["Sikran"] = {
 			["children_paths"] = {
-				{"Rasha'nan", "Broodtwister", "Ky'veza", "Silken Court", "Ansurek"},
-				{"Rasha'nan", "Ky'veza", "Broodtwister", "Silken Court", "Ansurek"},
+				{ "Rasha'nan", "Broodtwister", "Ky'veza",      "Silken Court", "Ansurek" },
+				{ "Rasha'nan", "Ky'veza",      "Broodtwister", "Silken Court", "Ansurek" },
 			},
 			["parent_paths"] = {
-				{"Bloodbound Horror", "Ulgrax"},
+				{ "Bloodbound Horror", "Ulgrax" },
 			},
 		},
 		["Rasha'nan"] = {
 			["children_paths"] = {
-				{"Broodtwister", "Ky'veza", "Silken Court", "Ansurek"},
-				{"Ky'veza", "Broodtwister", "Silken Court", "Ansurek"},
+				{ "Broodtwister", "Ky'veza",      "Silken Court", "Ansurek" },
+				{ "Ky'veza",      "Broodtwister", "Silken Court", "Ansurek" },
 			},
 			["parent_paths"] = {
-				{"Sikran", "Bloodbound Horror", "Ulgrax"},
+				{ "Sikran", "Bloodbound Horror", "Ulgrax" },
 			},
 		},
 		["Broodtwister"] = {
 			["children_paths"] = {
-				{"Ky'veza", "Silken Court", "Ansurek"},
-				{"Silken Court", "Ansurek"},
+				{ "Ky'veza",      "Silken Court", "Ansurek" },
+				{ "Silken Court", "Ansurek" },
 			},
 			["parent_paths"] = {
-				{"Rasha'nan", "Sikran", "Bloodbound Horror", "Ulgrax"},
-				{"Ky'veza", "Rasha'nan", "Sikran", "Bloodbound Horror", "Ulgrax"},
+				{ "Rasha'nan", "Sikran",    "Bloodbound Horror", "Ulgrax" },
+				{ "Ky'veza",   "Rasha'nan", "Sikran",            "Bloodbound Horror", "Ulgrax" },
 			},
 		},
 		["Ky'veza"] = {
 			["children_paths"] = {
-				{"Broodtwister", "Silken Court", "Ansurek"},
-				{"Silken Court", "Ansurek"},
+				{ "Broodtwister", "Silken Court", "Ansurek" },
+				{ "Silken Court", "Ansurek" },
 			},
 			["parent_paths"] = {
-				{"Rasha'nan", "Sikran", "Bloodbound Horror", "Ulgrax"},
-				{"Broodtwister", "Rasha'nan", "Sikran", "Bloodbound Horror", "Ulgrax"},
+				{ "Rasha'nan",    "Sikran",    "Bloodbound Horror", "Ulgrax" },
+				{ "Broodtwister", "Rasha'nan", "Sikran",            "Bloodbound Horror", "Ulgrax" },
 			},
 		},
 		["Silken Court"] = {
 			["children_paths"] = {
-				{"Ansurek",}
+				{ "Ansurek", }
 			},
 			["parent_paths"] = {
-				{"Broodtwister", "Ky'veza", "Rasha'nan", "Sikran", "Bloodbound Horror", "Ulgrax"},
-				{"Ky'veza", "Broodtwister", "Rasha'nan", "Sikran", "Bloodbound Horror", "Ulgrax"},
-				{"Ulgrax"},
+				{ "Broodtwister", "Ky'veza",      "Rasha'nan", "Sikran", "Bloodbound Horror", "Ulgrax" },
+				{ "Ky'veza",      "Broodtwister", "Rasha'nan", "Sikran", "Bloodbound Horror", "Ulgrax" },
+				{ "Ulgrax" },
 			},
 		},
 		["Ansurek"] = {
 			["children_paths"] = {},
 			["parent_paths"] = {
-				{"Ulgrax", "Silken Court"},
-				{"Silken Court", "Broodtwister", "Ky'veza", "Rasha'nan", "Sikran", "Bloodbound Horror", "Ulgrax"},
-				{"Silken Court", "Ky'veza", "Broodtwister", "Rasha'nan", "Sikran", "Bloodbound Horror", "Ulgrax"},
+				{ "Ulgrax",       "Silken Court" },
+				{ "Silken Court", "Broodtwister", "Ky'veza",      "Rasha'nan", "Sikran", "Bloodbound Horror", "Ulgrax" },
+				{ "Silken Court", "Ky'veza",      "Broodtwister", "Rasha'nan", "Sikran", "Bloodbound Horror", "Ulgrax" },
 			}
 		},
 	},
@@ -315,87 +321,87 @@ local roleRemainingKeyLookup = {
 ]]
 
 local classSpecilizationMap = {
-    ["DEATHKNIGHT"] = {
-        ["Blood"] = 250,
-        ["Frost"] = 251,
-        ["Unholy"] = 252,
-        ["Initial"] = 1455
-    },
-    ["DEMONHUNTER"] = {
-        ["Havoc"] = 577,
-        ["Vengeance"] = 581,
-        ["Initial"] = 1456
-    },
-    ["DRUID"] = {
-        ["Balance"] = 102,
-        ["Feral"] = 103,
-        ["Guardian"] = 104,
-        ["Restoration"] = 105,
-        ["Initial"] = 1447
-    },
-    ["EVOKER"] = {
-        ["Devastation"] = 1467,
-        ["Preservation"] = 1468,
-        ["Augmentation"] = 1473,
-        ["Initial"] = 1465
-    },
-    ["HUNTER"] = {
-        ["Beast Mastery"] = 253,
-        ["Marksmanship"] = 254,
-        ["Survival"] = 255,
-        ["Initial"] = 1448
-    },
-    ["MAGE"] = {
-        ["Arcane"] = 62,
-        ["Fire"] = 63,
-        ["Frost"] = 64,
-        ["Initial"] = 1449
-    },
-    ["MONK"] = {
-        ["Brewmaster"] = 268,
-        ["Windwalker"] = 269,
-        ["Mistweaver"] = 270,
-        ["Initial"] = 1450
-    },
-    ["PALADIN"] = {
-        ["Holy"] = 65,
-        ["Protection"] = 66,
-        ["Retribution"] = 70,
-        ["Initial"] = 1451
-    },
-    ["PRIEST"] = {
-        ["Discipline"] = 256,
-        ["Holy"] = 257,
-        ["Shadow"] = 258,
-        ["Initial"] = 1452
-    },
-    ["ROGUE"] = {
-        ["Assassination"] = 259,
-        ["Outlaw"] = 260,
-        ["Subtlety"] = 261,
-        ["Initial"] = 1453
-    },
-    ["SHAMAN"] = {
-        ["Elemental"] = 262,
-        ["Enhancement"] = 263,
-        ["Restoration"] = 264,
-        ["Initial"] = 1444
-    },
-    ["WARLOCK"] = {
-        ["Affliction"] = 265,
-        ["Demonology"] = 266,
-        ["Destruction"] = 267,
-        ["Initial"] = 1454
-    },
-    ["WARRIOR"] = {
-        ["Arms"] = 71,
-        ["Fury"] = 72,
-        ["Protection"] = 73,
-        ["Initial"] = 1446
-    }
+	["DEATHKNIGHT"] = {
+		["Blood"] = 250,
+		["Frost"] = 251,
+		["Unholy"] = 252,
+		["Initial"] = 1455
+	},
+	["DEMONHUNTER"] = {
+		["Havoc"] = 577,
+		["Vengeance"] = 581,
+		["Initial"] = 1456
+	},
+	["DRUID"] = {
+		["Balance"] = 102,
+		["Feral"] = 103,
+		["Guardian"] = 104,
+		["Restoration"] = 105,
+		["Initial"] = 1447
+	},
+	["EVOKER"] = {
+		["Devastation"] = 1467,
+		["Preservation"] = 1468,
+		["Augmentation"] = 1473,
+		["Initial"] = 1465
+	},
+	["HUNTER"] = {
+		["Beast Mastery"] = 253,
+		["Marksmanship"] = 254,
+		["Survival"] = 255,
+		["Initial"] = 1448
+	},
+	["MAGE"] = {
+		["Arcane"] = 62,
+		["Fire"] = 63,
+		["Frost"] = 64,
+		["Initial"] = 1449
+	},
+	["MONK"] = {
+		["Brewmaster"] = 268,
+		["Windwalker"] = 269,
+		["Mistweaver"] = 270,
+		["Initial"] = 1450
+	},
+	["PALADIN"] = {
+		["Holy"] = 65,
+		["Protection"] = 66,
+		["Retribution"] = 70,
+		["Initial"] = 1451
+	},
+	["PRIEST"] = {
+		["Discipline"] = 256,
+		["Holy"] = 257,
+		["Shadow"] = 258,
+		["Initial"] = 1452
+	},
+	["ROGUE"] = {
+		["Assassination"] = 259,
+		["Outlaw"] = 260,
+		["Subtlety"] = 261,
+		["Initial"] = 1453
+	},
+	["SHAMAN"] = {
+		["Elemental"] = 262,
+		["Enhancement"] = 263,
+		["Restoration"] = 264,
+		["Initial"] = 1444
+	},
+	["WARLOCK"] = {
+		["Affliction"] = 265,
+		["Demonology"] = 266,
+		["Destruction"] = 267,
+		["Initial"] = 1454
+	},
+	["WARRIOR"] = {
+		["Arms"] = 71,
+		["Fury"] = 72,
+		["Protection"] = 73,
+		["Initial"] = 1446
+	}
 };
 
-local roleIndex = {["TANK"] = 1, ["HEALER"] = 2, ["DAMAGER"] = 3}; --Syncs the order of displayData to ensure tanks are always most left etc
+local roleIndex = { ["TANK"] = 1, ["HEALER"] = 2, ["DAMAGER"] = 3 }; --Syncs the order of displayData to ensure tanks are always most left etc
 
 --[[
 	Documentation:
@@ -424,145 +430,145 @@ local selectedInfo = {
 	Documentation: All of the achievementIDs for CE, Mythic Boss, AOTC, Normal Clear. Order decides which one is best, lower key = better
 ]]
 local achievementIDs = {
-	["Nerub-ar Palace"] = {40254, 40242, 40241, 40240, 40239, 40238, 40237, 40236, 40253, 40244},
+	["Nerub-ar Palace"] = { 40254, 40242, 40241, 40240, 40239, 40238, 40237, 40236, 40253, 40244 },
 };
 
 --[[
 	Documentation: All of the red, green, blue values for the leader score. The score must be equal or above the key to use the r, g, b value
 ]]
 local scoreColors = {
-	[3650] = {1.00, 0.50, 0.00},
-	[3385] = {1.00, 0.49, 0.08},
-	[3365] = {0.99, 0.49, 0.13},
-	[3340] = {0.99, 0.48, 0.17},
-	[3315] = {0.98, 0.47, 0.20},
-	[3290] = {0.98, 0.46, 0.23},
-	[3265] = {0.97, 0.45, 0.25},
-	[3245] = {0.97, 0.45, 0.28},
-	[3220] = {0.96, 0.44, 0.31},
-	[3195] = {0.96, 0.43, 0.33},
-	[3170] = {0.95, 0.42, 0.35},
-	[3145] = {0.95, 0.41, 0.38},
-	[3125] = {0.94, 0.40, 0.40},
-	[3100] = {0.93, 0.40, 0.42},
-	[3075] = {0.93, 0.39, 0.44},
-	[3050] = {0.92, 0.38, 0.46},
-	[3025] = {0.91, 0.37, 0.48},
-	[3005] = {0.91, 0.36, 0.50},
-	[2980] = {0.90, 0.36, 0.52},
-	[2955] = {0.89, 0.35, 0.55},
-	[2930] = {0.88, 0.34, 0.56},
-	[2905] = {0.87, 0.33, 0.58},
-	[2885] = {0.86, 0.33, 0.60},
-	[2860] = {0.85, 0.32, 0.62},
-	[2835] = {0.84, 0.31, 0.64},
-	[2810] = {0.83, 0.30, 0.66},
-	[2785] = {0.82, 0.29, 0.68},
-	[2765] = {0.81, 0.28, 0.70},
-	[2740] = {0.80, 0.28, 0.72},
-	[2715] = {0.79, 0.27, 0.74},
-	[2690] = {0.78, 0.26, 0.76},
-	[2665] = {0.77, 0.25, 0.78},
-	[2645] = {0.76, 0.24, 0.80},
-	[2620] = {0.75, 0.23, 0.82},
-	[2595] = {0.74, 0.22, 0.84},
-	[2570] = {0.70, 0.23, 0.87},
-    [2545] = {0.68, 0.22, 0.89},
-    [2525] = {0.66, 0.22, 0.91},
-    [2500] = {0.64, 0.21, 0.93},
-    [2455] = {0.62, 0.23, 0.93},
-    [2430] = {0.60, 0.25, 0.93},
-    [2405] = {0.58, 0.27, 0.92},
-    [2385] = {0.57, 0.28, 0.92},
-    [2360] = {0.55, 0.29, 0.92},
-    [2335] = {0.53, 0.31, 0.91},
-    [2310] = {0.51, 0.32, 0.91},
-    [2285] = {0.49, 0.33, 0.91},
-    [2265] = {0.47, 0.35, 0.90},
-    [2240] = {0.44, 0.36, 0.90},
-    [2215] = {0.42, 0.36, 0.90},
-    [2190] = {0.40, 0.38, 0.89},
-    [2165] = {0.37, 0.38, 0.89},
-    [2145] = {0.34, 0.39, 0.89},
-    [2120] = {0.31, 0.40, 0.88},
-    [2095] = {0.28, 0.41, 0.88},
-    [2070] = {0.24, 0.42, 0.88},
-    [2045] = {0.19, 0.42, 0.87},
-    [2025] = {0.13, 0.43, 0.87},
-    [2000] = {0.00, 0.44, 0.87},
-    [1930] = {0.09, 0.45, 0.85},
-	[1905] = {0.14, 0.46, 0.84},
-	[1880] = {0.18, 0.47, 0.83},
-	[1855] = {0.20, 0.49, 0.82},
-	[1830] = {0.23, 0.49, 0.81},
-	[1810] = {0.25, 0.51, 0.80},
-	[1785] = {0.26, 0.52, 0.78},
-	[1760] = {0.28, 0.53, 0.77},
-	[1735] = {0.29, 0.54, 0.76},
-	[1710] = {0.30, 0.55, 0.75},
-	[1690] = {0.31, 0.56, 0.73},
-	[1665] = {0.32, 0.58, 0.72},
-	[1640] = {0.33, 0.59, 0.71},
-	[1615] = {0.34, 0.60, 0.69},
-	[1590] = {0.35, 0.61, 0.68},
-	[1570] = {0.35, 0.62, 0.67},
-	[1545] = {0.36, 0.64, 0.66},
-	[1520] = {0.36, 0.65, 0.65},
-	[1495] = {0.36, 0.66, 0.63},
-	[1470] = {0.37, 0.67, 0.62},
-	[1450] = {0.37, 0.68, 0.61},
-	[1425] = {0.37, 0.69, 0.59},
-	[1400] = {0.37, 0.71, 0.58},
-	[1375] = {0.37, 0.72, 0.56},
-	[1350] = {0.37, 0.73, 0.55},
-	[1330] = {0.37, 0.74, 0.54},
-	[1305] = {0.37, 0.76, 0.52},
-	[1280] = {0.37, 0.77, 0.51},
-	[1255] = {0.37, 0.78, 0.49},
-	[1230] = {0.36, 0.79, 0.48},
-	[1210] = {0.36, 0.80, 0.46},
-	[1185] = {0.36, 0.82, 0.45},
-	[1160] = {0.35, 0.83, 0.43},
-	[1135] = {0.35, 0.84, 0.42},
-	[1110] = {0.34, 0.85, 0.40},
-	[1090] = {0.33, 0.86, 0.38},
-	[1065] = {0.32, 0.87, 0.36},
-	[1040] = {0.31, 0.89, 0.34},
-	[1015] = {0.30, 0.90, 0.32},
-	[990] = {0.29, 0.91, 0.30},
-	[970] = {0.27, 0.93, 0.28},
-	[945] = {0.26, 0.94, 0.25},
-	[920] = {0.24, 0.95, 0.22},
-	[895] = {0.22, 0.96, 0.19},
-	[870] = {0.19, 0.98, 0.15},
-	[850] = {0.16, 0.99, 0.10},
-	[825] = {0.12, 1.00, 0.00},
-	[800] = {0.23, 1.00, 0.13 },
-	[775] = {0.30, 1.00, 0.20 },
-	[750] = {0.36, 1.00, 0.25 },
-	[725] = {0.41, 1.00, 0.30 },
-	[700] = {0.45, 1.00, 0.34 },
-	[675] = {0.49, 1.00, 0.38 },
-	[650] = {0.53, 1.00, 0.42 },
-	[625] = {0.56, 1.00, 0.45 },
-	[600] = {0.60, 1.00, 0.49 },
-	[575] = {0.63, 1.00, 0.52 },
-	[550] = {0.66, 1.00, 0.56 },
-	[525] = {0.69, 1.00, 0.59 },
-	[500] = {0.71, 1.00, 0.62 },
-	[475] = {0.74, 1.00, 0.65 },
-	[450] = {0.77, 1.00, 0.69 },
-	[425] = {0.79, 1.00, 0.72 },
-	[400] = {0.82, 1.00, 0.75 },
-	[375] = {0.84, 1.00, 0.78 },
-	[350] = {0.87, 1.00, 0.81 },
-	[325] = {0.89, 1.00, 0.84 },
-	[300] = {0.91, 1.00, 0.87 },
-	[275] = {0.93, 1.00, 0.91 },
-	[250] = {0.96, 1.00, 0.94 },
-	[225] = {0.98, 1.00, 0.97 },
-	[200] = {1.00, 1.00, 1.00 },
-	[0] = {0.62, 0.62, 0.62},
+	[3650] = { 1.00, 0.50, 0.00 },
+	[3385] = { 1.00, 0.49, 0.08 },
+	[3365] = { 0.99, 0.49, 0.13 },
+	[3340] = { 0.99, 0.48, 0.17 },
+	[3315] = { 0.98, 0.47, 0.20 },
+	[3290] = { 0.98, 0.46, 0.23 },
+	[3265] = { 0.97, 0.45, 0.25 },
+	[3245] = { 0.97, 0.45, 0.28 },
+	[3220] = { 0.96, 0.44, 0.31 },
+	[3195] = { 0.96, 0.43, 0.33 },
+	[3170] = { 0.95, 0.42, 0.35 },
+	[3145] = { 0.95, 0.41, 0.38 },
+	[3125] = { 0.94, 0.40, 0.40 },
+	[3100] = { 0.93, 0.40, 0.42 },
+	[3075] = { 0.93, 0.39, 0.44 },
+	[3050] = { 0.92, 0.38, 0.46 },
+	[3025] = { 0.91, 0.37, 0.48 },
+	[3005] = { 0.91, 0.36, 0.50 },
+	[2980] = { 0.90, 0.36, 0.52 },
+	[2955] = { 0.89, 0.35, 0.55 },
+	[2930] = { 0.88, 0.34, 0.56 },
+	[2905] = { 0.87, 0.33, 0.58 },
+	[2885] = { 0.86, 0.33, 0.60 },
+	[2860] = { 0.85, 0.32, 0.62 },
+	[2835] = { 0.84, 0.31, 0.64 },
+	[2810] = { 0.83, 0.30, 0.66 },
+	[2785] = { 0.82, 0.29, 0.68 },
+	[2765] = { 0.81, 0.28, 0.70 },
+	[2740] = { 0.80, 0.28, 0.72 },
+	[2715] = { 0.79, 0.27, 0.74 },
+	[2690] = { 0.78, 0.26, 0.76 },
+	[2665] = { 0.77, 0.25, 0.78 },
+	[2645] = { 0.76, 0.24, 0.80 },
+	[2620] = { 0.75, 0.23, 0.82 },
+	[2595] = { 0.74, 0.22, 0.84 },
+	[2570] = { 0.70, 0.23, 0.87 },
+	[2545] = { 0.68, 0.22, 0.89 },
+	[2525] = { 0.66, 0.22, 0.91 },
+	[2500] = { 0.64, 0.21, 0.93 },
+	[2455] = { 0.62, 0.23, 0.93 },
+	[2430] = { 0.60, 0.25, 0.93 },
+	[2405] = { 0.58, 0.27, 0.92 },
+	[2385] = { 0.57, 0.28, 0.92 },
+	[2360] = { 0.55, 0.29, 0.92 },
+	[2335] = { 0.53, 0.31, 0.91 },
+	[2310] = { 0.51, 0.32, 0.91 },
+	[2285] = { 0.49, 0.33, 0.91 },
+	[2265] = { 0.47, 0.35, 0.90 },
+	[2240] = { 0.44, 0.36, 0.90 },
+	[2215] = { 0.42, 0.36, 0.90 },
+	[2190] = { 0.40, 0.38, 0.89 },
+	[2165] = { 0.37, 0.38, 0.89 },
+	[2145] = { 0.34, 0.39, 0.89 },
+	[2120] = { 0.31, 0.40, 0.88 },
+	[2095] = { 0.28, 0.41, 0.88 },
+	[2070] = { 0.24, 0.42, 0.88 },
+	[2045] = { 0.19, 0.42, 0.87 },
+	[2025] = { 0.13, 0.43, 0.87 },
+	[2000] = { 0.00, 0.44, 0.87 },
+	[1930] = { 0.09, 0.45, 0.85 },
+	[1905] = { 0.14, 0.46, 0.84 },
+	[1880] = { 0.18, 0.47, 0.83 },
+	[1855] = { 0.20, 0.49, 0.82 },
+	[1830] = { 0.23, 0.49, 0.81 },
+	[1810] = { 0.25, 0.51, 0.80 },
+	[1785] = { 0.26, 0.52, 0.78 },
+	[1760] = { 0.28, 0.53, 0.77 },
+	[1735] = { 0.29, 0.54, 0.76 },
+	[1710] = { 0.30, 0.55, 0.75 },
+	[1690] = { 0.31, 0.56, 0.73 },
+	[1665] = { 0.32, 0.58, 0.72 },
+	[1640] = { 0.33, 0.59, 0.71 },
+	[1615] = { 0.34, 0.60, 0.69 },
+	[1590] = { 0.35, 0.61, 0.68 },
+	[1570] = { 0.35, 0.62, 0.67 },
+	[1545] = { 0.36, 0.64, 0.66 },
+	[1520] = { 0.36, 0.65, 0.65 },
+	[1495] = { 0.36, 0.66, 0.63 },
+	[1470] = { 0.37, 0.67, 0.62 },
+	[1450] = { 0.37, 0.68, 0.61 },
+	[1425] = { 0.37, 0.69, 0.59 },
+	[1400] = { 0.37, 0.71, 0.58 },
+	[1375] = { 0.37, 0.72, 0.56 },
+	[1350] = { 0.37, 0.73, 0.55 },
+	[1330] = { 0.37, 0.74, 0.54 },
+	[1305] = { 0.37, 0.76, 0.52 },
+	[1280] = { 0.37, 0.77, 0.51 },
+	[1255] = { 0.37, 0.78, 0.49 },
+	[1230] = { 0.36, 0.79, 0.48 },
+	[1210] = { 0.36, 0.80, 0.46 },
+	[1185] = { 0.36, 0.82, 0.45 },
+	[1160] = { 0.35, 0.83, 0.43 },
+	[1135] = { 0.35, 0.84, 0.42 },
+	[1110] = { 0.34, 0.85, 0.40 },
+	[1090] = { 0.33, 0.86, 0.38 },
+	[1065] = { 0.32, 0.87, 0.36 },
+	[1040] = { 0.31, 0.89, 0.34 },
+	[1015] = { 0.30, 0.90, 0.32 },
+	[990] = { 0.29, 0.91, 0.30 },
+	[970] = { 0.27, 0.93, 0.28 },
+	[945] = { 0.26, 0.94, 0.25 },
+	[920] = { 0.24, 0.95, 0.22 },
+	[895] = { 0.22, 0.96, 0.19 },
+	[870] = { 0.19, 0.98, 0.15 },
+	[850] = { 0.16, 0.99, 0.10 },
+	[825] = { 0.12, 1.00, 0.00 },
+	[800] = { 0.23, 1.00, 0.13 },
+	[775] = { 0.30, 1.00, 0.20 },
+	[750] = { 0.36, 1.00, 0.25 },
+	[725] = { 0.41, 1.00, 0.30 },
+	[700] = { 0.45, 1.00, 0.34 },
+	[675] = { 0.49, 1.00, 0.38 },
+	[650] = { 0.53, 1.00, 0.42 },
+	[625] = { 0.56, 1.00, 0.45 },
+	[600] = { 0.60, 1.00, 0.49 },
+	[575] = { 0.63, 1.00, 0.52 },
+	[550] = { 0.66, 1.00, 0.56 },
+	[525] = { 0.69, 1.00, 0.59 },
+	[500] = { 0.71, 1.00, 0.62 },
+	[475] = { 0.74, 1.00, 0.65 },
+	[450] = { 0.77, 1.00, 0.69 },
+	[425] = { 0.79, 1.00, 0.72 },
+	[400] = { 0.82, 1.00, 0.75 },
+	[375] = { 0.84, 1.00, 0.78 },
+	[350] = { 0.87, 1.00, 0.81 },
+	[325] = { 0.89, 1.00, 0.84 },
+	[300] = { 0.91, 1.00, 0.87 },
+	[275] = { 0.93, 1.00, 0.91 },
+	[250] = { 0.96, 1.00, 0.94 },
+	[225] = { 0.98, 1.00, 0.97 },
+	[200] = { 1.00, 1.00, 1.00 },
+	[0] = { 0.62, 0.62, 0.62 },
 };
 
 --[[
@@ -606,16 +612,16 @@ SlashCmdList["PREMADEGROUPFINDER"] = handler;
 function PGF_GetTexCoordsForRole(role)
 	local textureHeight, textureWidth = 256, 256;
 	local roleHeight, roleWidth = 67, 67;
-	if ( role == "GUIDE" ) then
+	if (role == "GUIDE") then
 		return GetTexCoordsByGrid(1, 1, textureWidth, textureHeight, roleWidth, roleHeight);
-	elseif ( role == "TANK" ) then
+	elseif (role == "TANK") then
 		return GetTexCoordsByGrid(1, 2, textureWidth, textureHeight, roleWidth, roleHeight);
-	elseif ( role == "HEALER" ) then
+	elseif (role == "HEALER") then
 		return GetTexCoordsByGrid(2, 1, textureWidth, textureHeight, roleWidth, roleHeight);
-	elseif ( role == "DAMAGER" ) then
+	elseif (role == "DAMAGER") then
 		return GetTexCoordsByGrid(2, 2, textureWidth, textureHeight, roleWidth, roleHeight);
 	else
-		error("Unknown role: "..tostring(role));
+		error("Unknown role: " .. tostring(role));
 	end
 end
 
@@ -623,7 +629,7 @@ end
 	Documentation: Looks up the r, g, b values from the coreLookup table or sends a default value if it is out of range. O(1)
 ]]
 local function getColorForScoreLookup(score)
-	return colorLookup[score] or {0.62, 0.62, 0.62};
+	return colorLookup[score] or { 0.62, 0.62, 0.62 };
 end
 
 --[[
@@ -670,7 +676,7 @@ end
 ]]
 local LFG_LIST_SEARCH_ENTRY_MENU = {
 	{
-		text = nil,	--Group name goes here
+		text = nil, --Group name goes here
 		isTitle = true,
 		notCheckable = true,
 	},
@@ -691,7 +697,7 @@ local LFG_LIST_SEARCH_ENTRY_MENU = {
 		func = function(_, id, name)
 			LFGList_ReportListing(id, name);
 			LFGListSearchPanel_UpdateResultList(LFGListFrame.SearchPanel);
-		end;
+		end,
 	},
 	{
 		text = REPORT_GROUP_FINDER_ADVERTISEMENT,
@@ -699,11 +705,14 @@ local LFG_LIST_SEARCH_ENTRY_MENU = {
 		func = function(_, id, name)
 			LFGList_ReportListing(id, name);
 			LFGListSearchPanel_UpdateResultList(LFGListFrame.SearchPanel);
-		end;
+		end,
 	},
 	{
 		text = "Send Best Achievement",
-		func = function(_, activityShortName, leaderName) SendChatMessage(getBestAchievement(activityShortName), "WHISPER", nil, leaderName); end,
+		func = function(_, activityShortName, leaderName)
+			SendChatMessage(getBestAchievement(activityShortName),
+				"WHISPER", nil, leaderName);
+		end,
 		notCheckable = true,
 		arg1 = nil, --Leader name goes here
 		disabled = nil, --Disabled if we don't have a leader name yet or you haven't applied
@@ -720,14 +729,14 @@ local LFG_LIST_SEARCH_ENTRY_MENU = {
 --[[
 	Documentation: Prefills arrays to improve performance as we know they will be filled later on
 ]]
-local dungeonTextures = {true, true, true, true, true, true, true, true, true, true};
-local raidTextures = {true, true, true, true};
-local GUI = {}; -- array to store all generic widgets
-local dGUI = {}; -- array to store all widgets for dungeons
-local rGUI = {}; -- array to store all widgets for raids
+local dungeonTextures = { true, true, true, true, true, true, true, true, true, true };
+local raidTextures = { true, true, true, true };
+local GUI = {};                                                                                                             -- array to store all generic widgets
+local dGUI = {};                                                                                                            -- array to store all widgets for dungeons
+local rGUI = {};                                                                                                            -- array to store all widgets for raids
 
-local currentDungeonsActivityIDs = {["(Mythic Keystone)"] = {}, ["(Mythic)"] = {}, ["(Heroic)"] = {}, ["(Normal)"] = {}}; --dungeons dropdown is using difficulties to show dungeons for that difficulty as the first filter
-local currentRaidsActivityIDs = {}; --raids dropdown is using the specific raid + difficulty which in form of activityID to show bosses in the first filter
+local currentDungeonsActivityIDs = { ["(Mythic Keystone)"] = {}, ["(Mythic)"] = {}, ["(Heroic)"] = {}, ["(Normal)"] = {} }; --dungeons dropdown is using difficulties to show dungeons for that difficulty as the first filter
+local currentRaidsActivityIDs = {};                                                                                         --raids dropdown is using the specific raid + difficulty which in form of activityID to show bosses in the first filter
 
 --[[
 	Checking if a table PGF_Contains a given value and if it does, what index is the value located at
@@ -809,7 +818,7 @@ dungeonFrame:SetPoint("TOPLEFT", 0, 0);
 dungeonFrame:SetSize(f:GetWidth(), f:GetHeight());
 
 local dungeonOptionsFrame = CreateFrame("Frame", nil, dungeonFrame, BackdropTemplateMixin and "BackdropTemplate");
-dungeonOptionsFrame:SetSize(242,150);
+dungeonOptionsFrame:SetSize(242, 150);
 
 
 --[[
@@ -821,7 +830,7 @@ raidFrame:SetSize(f:GetWidth(), f:GetHeight());
 raidFrame:Hide();
 
 local raidOptionsFrame = CreateFrame("Frame", nil, raidFrame, BackdropTemplateMixin and "BackdropTemplate");
-raidOptionsFrame:SetSize(242,140);
+raidOptionsFrame:SetSize(242, 140);
 
 --C_LFGList.GetSearchResultMemberInfo(resultID, playerIndex); returns: [1] = role, [2] = classUNIVERSAL, [3] = classLocal, [4] = spec
 
@@ -837,42 +846,58 @@ C_ChatInfo.RegisterAddonMessagePrefix("PGF_VERSIONCHECK")
 ]]
 local function saveOriginalUI()
 	originalUI = {
-		["PVEFrame"] = {["width"] = 0, ["height"] = 0},
-		["LFGListFrame"] = {["position"] = {}, ["position2"] = {}},
-		["LFGListFrame.SearchPanel.SearchBox"] = {["position"] = {}},
-		["LFGListFrame.SearchPanel.FilterButton"] = {["position"] = {}},
-		["LFGListFrame.SearchPanel.ResultsInset"] = {["position"] = {}, ["size"] = {}, ["position2"] = {}},
-		["LFGListFrame.SearchPanel.RefreshButton"] = {["position"] = {}},
-		["LFGListFrame.SearchPanel.CategoryName"] = {["position"] = {}},
-		["LFGListFrame.SearchPanel.SignUpButton"] = {["position"] = {}},
-		["LFGListFrame.SearchPanel.BackButton"] = {["position"] = {}},
-		["LFGListFrame.SearchPanel.BackToGroupButton"] = {["position"] = {}},
-		["LFGListFrame.SearchPanel.ScrollBox"] = {["size"] = {}},
-		["LFGListApplicationDialog.Description"] = {["position"] = {}, ["size"] = {}},
-		["LFGListApplicationDialog.Description.EditBox"] = {["size"] = {}},
+		["PVEFrame"] = { ["width"] = 0, ["height"] = 0 },
+		["LFGListFrame"] = { ["position"] = {}, ["position2"] = {} },
+		["LFGListFrame.SearchPanel.SearchBox"] = { ["position"] = {} },
+		["LFGListFrame.SearchPanel.FilterButton"] = { ["position"] = {} },
+		["LFGListFrame.SearchPanel.ResultsInset"] = { ["position"] = {}, ["size"] = {}, ["position2"] = {} },
+		["LFGListFrame.SearchPanel.RefreshButton"] = { ["position"] = {} },
+		["LFGListFrame.SearchPanel.CategoryName"] = { ["position"] = {} },
+		["LFGListFrame.SearchPanel.SignUpButton"] = { ["position"] = {} },
+		["LFGListFrame.SearchPanel.BackButton"] = { ["position"] = {} },
+		["LFGListFrame.SearchPanel.BackToGroupButton"] = { ["position"] = {} },
+		["LFGListFrame.SearchPanel.ScrollBox"] = { ["size"] = {} },
+		["LFGListApplicationDialog.Description"] = { ["position"] = {}, ["size"] = {} },
+		["LFGListApplicationDialog.Description.EditBox"] = { ["size"] = {} },
 	};
 	originalUI["PVEFrame"].width = PVEFrame:GetWidth();
 	originalUI["PVEFrame"].height = PVEFrame:GetHeight();
-	originalUI["LFGListFrame"].position[1], originalUI["LFGListFrame"].position[2], originalUI["LFGListFrame"].position[3], originalUI["LFGListFrame"].position[4], originalUI["LFGListFrame"].position[5] = LFGListFrame:GetPoint(1);
-	originalUI["LFGListFrame"].position2[1], originalUI["LFGListFrame"].position2[2], originalUI["LFGListFrame"].position2[3], originalUI["LFGListFrame"].position2[4], originalUI["LFGListFrame"].position2[5] = LFGListFrame:GetPoint(2);
+	originalUI["LFGListFrame"].position[1], originalUI["LFGListFrame"].position[2], originalUI["LFGListFrame"].position[3], originalUI["LFGListFrame"].position[4], originalUI["LFGListFrame"].position[5] =
+		LFGListFrame:GetPoint(1);
+	originalUI["LFGListFrame"].position2[1], originalUI["LFGListFrame"].position2[2], originalUI["LFGListFrame"].position2[3], originalUI["LFGListFrame"].position2[4], originalUI["LFGListFrame"].position2[5] =
+		LFGListFrame:GetPoint(2);
 	originalUI["LFGListFrame.SearchPanel.SearchBox"].size = LFGListFrame.SearchPanel.SearchBox:GetSize();
-	originalUI["LFGListFrame.SearchPanel.SearchBox"].position[1], originalUI["LFGListFrame.SearchPanel.SearchBox"].position[2], originalUI["LFGListFrame.SearchPanel.SearchBox"].position[3], originalUI["LFGListFrame.SearchPanel.SearchBox"].position[4], originalUI["LFGListFrame.SearchPanel.SearchBox"].position[5] = LFGListFrame.SearchPanel.SearchBox:GetPoint();
+	originalUI["LFGListFrame.SearchPanel.SearchBox"].position[1], originalUI["LFGListFrame.SearchPanel.SearchBox"].position[2], originalUI["LFGListFrame.SearchPanel.SearchBox"].position[3], originalUI["LFGListFrame.SearchPanel.SearchBox"].position[4], originalUI["LFGListFrame.SearchPanel.SearchBox"].position[5] =
+		LFGListFrame.SearchPanel.SearchBox:GetPoint();
 	originalUI["LFGListFrame.SearchPanel.FilterButton"].size = LFGListFrame.SearchPanel.FilterButton:GetSize();
-	originalUI["LFGListFrame.SearchPanel.FilterButton"].position[1], originalUI["LFGListFrame.SearchPanel.FilterButton"].position[2], originalUI["LFGListFrame.SearchPanel.FilterButton"].position[3], originalUI["LFGListFrame.SearchPanel.FilterButton"].position[4], originalUI["LFGListFrame.SearchPanel.FilterButton"].position[5] = LFGListFrame.SearchPanel.FilterButton:GetPoint();
-	originalUI["LFGListFrame.SearchPanel.ResultsInset"].size[1], originalUI["LFGListFrame.SearchPanel.ResultsInset"].size[2] = LFGListFrame.SearchPanel.ResultsInset:GetSize();
-	originalUI["LFGListFrame.SearchPanel.ResultsInset"].position[1], originalUI["LFGListFrame.SearchPanel.ResultsInset"].position[2], originalUI["LFGListFrame.SearchPanel.ResultsInset"].position[3], originalUI["LFGListFrame.SearchPanel.ResultsInset"].position[4], originalUI["LFGListFrame.SearchPanel.ResultsInset"].position[5] = LFGListFrame.SearchPanel.ResultsInset:GetPoint();
-	originalUI["LFGListFrame.SearchPanel.ResultsInset"].position2[1], originalUI["LFGListFrame.SearchPanel.ResultsInset"].position2[2], originalUI["LFGListFrame.SearchPanel.ResultsInset"].position2[3], originalUI["LFGListFrame.SearchPanel.ResultsInset"].position2[4], originalUI["LFGListFrame.SearchPanel.ResultsInset"].position2[5] = LFGListFrame.SearchPanel.ResultsInset:GetPoint(2);
-	originalUI["LFGListFrame.SearchPanel.SignUpButton"].position[1], originalUI["LFGListFrame.SearchPanel.SignUpButton"].position[2], originalUI["LFGListFrame.SearchPanel.SignUpButton"].position[3], originalUI["LFGListFrame.SearchPanel.SignUpButton"].position[4], originalUI["LFGListFrame.SearchPanel.SignUpButton"].position[5] = LFGListFrame.SearchPanel.SignUpButton:GetPoint();
-	originalUI["LFGListFrame.SearchPanel.BackButton"].position[1], originalUI["LFGListFrame.SearchPanel.BackButton"].position[2], originalUI["LFGListFrame.SearchPanel.BackButton"].position[3], originalUI["LFGListFrame.SearchPanel.BackButton"].position[4], originalUI["LFGListFrame.SearchPanel.BackButton"].position[5] = LFGListFrame.SearchPanel.BackButton:GetPoint();
-	originalUI["LFGListFrame.SearchPanel.BackToGroupButton"].position[1], originalUI["LFGListFrame.SearchPanel.BackToGroupButton"].position[2], originalUI["LFGListFrame.SearchPanel.BackToGroupButton"].position[3], originalUI["LFGListFrame.SearchPanel.BackToGroupButton"].position[4], originalUI["LFGListFrame.SearchPanel.BackToGroupButton"].position[5] = LFGListFrame.SearchPanel.BackToGroupButton:GetPoint();
-	originalUI["LFGListFrame.SearchPanel.ScrollBox"].size[1], originalUI["LFGListFrame.SearchPanel.ScrollBox"].size[2] = LFGListFrame.SearchPanel.ScrollBox:GetSize();
+	originalUI["LFGListFrame.SearchPanel.FilterButton"].position[1], originalUI["LFGListFrame.SearchPanel.FilterButton"].position[2], originalUI["LFGListFrame.SearchPanel.FilterButton"].position[3], originalUI["LFGListFrame.SearchPanel.FilterButton"].position[4], originalUI["LFGListFrame.SearchPanel.FilterButton"].position[5] =
+		LFGListFrame.SearchPanel.FilterButton:GetPoint();
+	originalUI["LFGListFrame.SearchPanel.ResultsInset"].size[1], originalUI["LFGListFrame.SearchPanel.ResultsInset"].size[2] =
+		LFGListFrame.SearchPanel.ResultsInset:GetSize();
+	originalUI["LFGListFrame.SearchPanel.ResultsInset"].position[1], originalUI["LFGListFrame.SearchPanel.ResultsInset"].position[2], originalUI["LFGListFrame.SearchPanel.ResultsInset"].position[3], originalUI["LFGListFrame.SearchPanel.ResultsInset"].position[4], originalUI["LFGListFrame.SearchPanel.ResultsInset"].position[5] =
+		LFGListFrame.SearchPanel.ResultsInset:GetPoint();
+	originalUI["LFGListFrame.SearchPanel.ResultsInset"].position2[1], originalUI["LFGListFrame.SearchPanel.ResultsInset"].position2[2], originalUI["LFGListFrame.SearchPanel.ResultsInset"].position2[3], originalUI["LFGListFrame.SearchPanel.ResultsInset"].position2[4], originalUI["LFGListFrame.SearchPanel.ResultsInset"].position2[5] =
+		LFGListFrame.SearchPanel.ResultsInset:GetPoint(2);
+	originalUI["LFGListFrame.SearchPanel.SignUpButton"].position[1], originalUI["LFGListFrame.SearchPanel.SignUpButton"].position[2], originalUI["LFGListFrame.SearchPanel.SignUpButton"].position[3], originalUI["LFGListFrame.SearchPanel.SignUpButton"].position[4], originalUI["LFGListFrame.SearchPanel.SignUpButton"].position[5] =
+		LFGListFrame.SearchPanel.SignUpButton:GetPoint();
+	originalUI["LFGListFrame.SearchPanel.BackButton"].position[1], originalUI["LFGListFrame.SearchPanel.BackButton"].position[2], originalUI["LFGListFrame.SearchPanel.BackButton"].position[3], originalUI["LFGListFrame.SearchPanel.BackButton"].position[4], originalUI["LFGListFrame.SearchPanel.BackButton"].position[5] =
+		LFGListFrame.SearchPanel.BackButton:GetPoint();
+	originalUI["LFGListFrame.SearchPanel.BackToGroupButton"].position[1], originalUI["LFGListFrame.SearchPanel.BackToGroupButton"].position[2], originalUI["LFGListFrame.SearchPanel.BackToGroupButton"].position[3], originalUI["LFGListFrame.SearchPanel.BackToGroupButton"].position[4], originalUI["LFGListFrame.SearchPanel.BackToGroupButton"].position[5] =
+		LFGListFrame.SearchPanel.BackToGroupButton:GetPoint();
+	originalUI["LFGListFrame.SearchPanel.ScrollBox"].size[1], originalUI["LFGListFrame.SearchPanel.ScrollBox"].size[2] =
+		LFGListFrame.SearchPanel.ScrollBox:GetSize();
 	originalUI["LFGListFrame.SearchPanel.RefreshButton"].size = LFGListFrame.SearchPanel.RefreshButton:GetSize();
-	originalUI["LFGListFrame.SearchPanel.RefreshButton"].position[1], originalUI["LFGListFrame.SearchPanel.RefreshButton"].position[2], originalUI["LFGListFrame.SearchPanel.RefreshButton"].position[3], originalUI["LFGListFrame.SearchPanel.RefreshButton"].position[4], originalUI["LFGListFrame.SearchPanel.RefreshButton"].position[5] = LFGListFrame.SearchPanel.RefreshButton:GetPoint();
-	originalUI["LFGListFrame.SearchPanel.CategoryName"].position[1], originalUI["LFGListFrame.SearchPanel.CategoryName"].position[2], originalUI["LFGListFrame.SearchPanel.CategoryName"].position[3], originalUI["LFGListFrame.SearchPanel.CategoryName"].position[4], originalUI["LFGListFrame.SearchPanel.CategoryName"].position[5] = LFGListFrame.SearchPanel.CategoryName:GetPoint();
+	originalUI["LFGListFrame.SearchPanel.RefreshButton"].position[1], originalUI["LFGListFrame.SearchPanel.RefreshButton"].position[2], originalUI["LFGListFrame.SearchPanel.RefreshButton"].position[3], originalUI["LFGListFrame.SearchPanel.RefreshButton"].position[4], originalUI["LFGListFrame.SearchPanel.RefreshButton"].position[5] =
+		LFGListFrame.SearchPanel.RefreshButton:GetPoint();
+	originalUI["LFGListFrame.SearchPanel.CategoryName"].position[1], originalUI["LFGListFrame.SearchPanel.CategoryName"].position[2], originalUI["LFGListFrame.SearchPanel.CategoryName"].position[3], originalUI["LFGListFrame.SearchPanel.CategoryName"].position[4], originalUI["LFGListFrame.SearchPanel.CategoryName"].position[5] =
+		LFGListFrame.SearchPanel.CategoryName:GetPoint();
 	originalUI["LFGListApplicationDialog.Description"].parent = LFGListApplicationDialog.Description:GetParent();
-	originalUI["LFGListApplicationDialog.Description"].position[1], originalUI["LFGListApplicationDialog.Description"].position[2], originalUI["LFGListApplicationDialog.Description"].position[3], originalUI["LFGListApplicationDialog.Description"].position[4], originalUI["LFGListApplicationDialog.Description"].position[5] = LFGListApplicationDialog.Description:GetPoint();
-	originalUI["LFGListApplicationDialog.Description"].size[1], originalUI["LFGListApplicationDialog.Description"].size[2] = LFGListApplicationDialog.Description:GetSize();
-	originalUI["LFGListApplicationDialog.Description.EditBox"].size[1], originalUI["LFGListApplicationDialog.Description.EditBox"].size[2] = LFGListApplicationDialog.Description.EditBox:GetSize();
+	originalUI["LFGListApplicationDialog.Description"].position[1], originalUI["LFGListApplicationDialog.Description"].position[2], originalUI["LFGListApplicationDialog.Description"].position[3], originalUI["LFGListApplicationDialog.Description"].position[4], originalUI["LFGListApplicationDialog.Description"].position[5] =
+		LFGListApplicationDialog.Description:GetPoint();
+	originalUI["LFGListApplicationDialog.Description"].size[1], originalUI["LFGListApplicationDialog.Description"].size[2] =
+		LFGListApplicationDialog.Description:GetSize();
+	originalUI["LFGListApplicationDialog.Description.EditBox"].size[1], originalUI["LFGListApplicationDialog.Description.EditBox"].size[2] =
+		LFGListApplicationDialog.Description.EditBox:GetSize();
 end
 
 local function updateRaidFrameWidth()
@@ -886,10 +911,12 @@ local function updateRaidFrameWidth()
 		x = x + 50;
 		x2 = x2 + 50;
 	end
-	PVEFrame:SetSize(x2,428);
+	PVEFrame:SetSize(x2, 428);
 	PVE_FRAME_BASE_WIDTH = x2; -- blizz is always trying to resize the pveframe based on this value
 	LFGListFrame:ClearAllPoints();
-	LFGListFrame:SetPoint(originalUI["LFGListFrame"].position[1], originalUI["LFGListFrame"].position[2], originalUI["LFGListFrame"].position[3], originalUI["LFGListFrame"].position[4], originalUI["LFGListFrame"].position[5]);
+	LFGListFrame:SetPoint(originalUI["LFGListFrame"].position[1], originalUI["LFGListFrame"].position[2],
+		originalUI["LFGListFrame"].position[3], originalUI["LFGListFrame"].position[4],
+		originalUI["LFGListFrame"].position[5]);
 	LFGListFrame:SetSize(x, LFGListFrame:GetHeight());
 	LFGListSearchPanel_UpdateResults(LFGListFrame.SearchPanel);
 end
@@ -905,28 +932,80 @@ local function restoreOriginalUI()
 	LFGListFrame.SearchPanel.CategoryName:ClearAllPoints();
 	LFGListApplicationDialog.Description:ClearAllPoints();
 	LFGListFrame:ClearAllPoints();
-	LFGListFrame:SetPoint(originalUI["LFGListFrame"].position[1], originalUI["LFGListFrame"].position[2], originalUI["LFGListFrame"].position[3], originalUI["LFGListFrame"].position[4], originalUI["LFGListFrame"].position[5]);
-	LFGListFrame:SetPoint(originalUI["LFGListFrame"].position2[1], originalUI["LFGListFrame"].position2[2], originalUI["LFGListFrame"].position2[3], originalUI["LFGListFrame"].position2[4], originalUI["LFGListFrame"].position2[5]);
-	LFGListFrame.SearchPanel.SearchBox:SetPoint(originalUI["LFGListFrame.SearchPanel.SearchBox"].position[1], originalUI["LFGListFrame.SearchPanel.SearchBox"].position[2], originalUI["LFGListFrame.SearchPanel.SearchBox"].position[3], originalUI["LFGListFrame.SearchPanel.SearchBox"].position[4], originalUI["LFGListFrame.SearchPanel.SearchBox"].position[5]);
-	LFGListFrame.SearchPanel.FilterButton:SetPoint(originalUI["LFGListFrame.SearchPanel.FilterButton"].position[1], originalUI["LFGListFrame.SearchPanel.FilterButton"].position[2], originalUI["LFGListFrame.SearchPanel.FilterButton"].position[3], originalUI["LFGListFrame.SearchPanel.FilterButton"].position[4], originalUI["LFGListFrame.SearchPanel.FilterButton"].position[5]);
-	LFGListFrame.SearchPanel.RefreshButton:SetPoint(originalUI["LFGListFrame.SearchPanel.RefreshButton"].position[1], originalUI["LFGListFrame.SearchPanel.RefreshButton"].position[2], originalUI["LFGListFrame.SearchPanel.RefreshButton"].position[3], originalUI["LFGListFrame.SearchPanel.RefreshButton"].position[4], originalUI["LFGListFrame.SearchPanel.RefreshButton"].position[5]);
-	LFGListFrame.SearchPanel.CategoryName:SetPoint(originalUI["LFGListFrame.SearchPanel.CategoryName"].position[1], originalUI["LFGListFrame.SearchPanel.CategoryName"].position[2], originalUI["LFGListFrame.SearchPanel.CategoryName"].position[3], originalUI["LFGListFrame.SearchPanel.CategoryName"].position[4], originalUI["LFGListFrame.SearchPanel.CategoryName"].position[5]);
+	LFGListFrame:SetPoint(originalUI["LFGListFrame"].position[1], originalUI["LFGListFrame"].position[2],
+		originalUI["LFGListFrame"].position[3], originalUI["LFGListFrame"].position[4],
+		originalUI["LFGListFrame"].position[5]);
+	LFGListFrame:SetPoint(originalUI["LFGListFrame"].position2[1], originalUI["LFGListFrame"].position2[2],
+		originalUI["LFGListFrame"].position2[3], originalUI["LFGListFrame"].position2[4],
+		originalUI["LFGListFrame"].position2[5]);
+	LFGListFrame.SearchPanel.SearchBox:SetPoint(originalUI["LFGListFrame.SearchPanel.SearchBox"].position[1],
+		originalUI["LFGListFrame.SearchPanel.SearchBox"].position[2],
+		originalUI["LFGListFrame.SearchPanel.SearchBox"].position[3],
+		originalUI["LFGListFrame.SearchPanel.SearchBox"].position[4],
+		originalUI["LFGListFrame.SearchPanel.SearchBox"].position[5]);
+	LFGListFrame.SearchPanel.FilterButton:SetPoint(originalUI["LFGListFrame.SearchPanel.FilterButton"].position[1],
+		originalUI["LFGListFrame.SearchPanel.FilterButton"].position[2],
+		originalUI["LFGListFrame.SearchPanel.FilterButton"].position[3],
+		originalUI["LFGListFrame.SearchPanel.FilterButton"].position[4],
+		originalUI["LFGListFrame.SearchPanel.FilterButton"].position[5]);
+	LFGListFrame.SearchPanel.RefreshButton:SetPoint(originalUI["LFGListFrame.SearchPanel.RefreshButton"].position[1],
+		originalUI["LFGListFrame.SearchPanel.RefreshButton"].position[2],
+		originalUI["LFGListFrame.SearchPanel.RefreshButton"].position[3],
+		originalUI["LFGListFrame.SearchPanel.RefreshButton"].position[4],
+		originalUI["LFGListFrame.SearchPanel.RefreshButton"].position[5]);
+	LFGListFrame.SearchPanel.CategoryName:SetPoint(originalUI["LFGListFrame.SearchPanel.CategoryName"].position[1],
+		originalUI["LFGListFrame.SearchPanel.CategoryName"].position[2],
+		originalUI["LFGListFrame.SearchPanel.CategoryName"].position[3],
+		originalUI["LFGListFrame.SearchPanel.CategoryName"].position[4],
+		originalUI["LFGListFrame.SearchPanel.CategoryName"].position[5]);
 	LFGListFrame.SearchPanel.ResultsInset:ClearAllPoints();
-	LFGListFrame.SearchPanel.ResultsInset:SetPoint(originalUI["LFGListFrame.SearchPanel.ResultsInset"].position[1], originalUI["LFGListFrame.SearchPanel.ResultsInset"].position[2], originalUI["LFGListFrame.SearchPanel.ResultsInset"].position[3], originalUI["LFGListFrame.SearchPanel.ResultsInset"].position[4], originalUI["LFGListFrame.SearchPanel.ResultsInset"].position[5]);
-	LFGListFrame.SearchPanel.ResultsInset:SetPoint(originalUI["LFGListFrame.SearchPanel.ResultsInset"].position2[1], originalUI["LFGListFrame.SearchPanel.ResultsInset"].position2[2], originalUI["LFGListFrame.SearchPanel.ResultsInset"].position2[3], originalUI["LFGListFrame.SearchPanel.ResultsInset"].position2[4], originalUI["LFGListFrame.SearchPanel.ResultsInset"].position2[5]);
-	LFGListFrame.SearchPanel.ResultsInset:SetSize(originalUI["LFGListFrame.SearchPanel.ResultsInset"].size[1], originalUI["LFGListFrame.SearchPanel.ResultsInset"].size[2]);
+	LFGListFrame.SearchPanel.ResultsInset:SetPoint(originalUI["LFGListFrame.SearchPanel.ResultsInset"].position[1],
+		originalUI["LFGListFrame.SearchPanel.ResultsInset"].position[2],
+		originalUI["LFGListFrame.SearchPanel.ResultsInset"].position[3],
+		originalUI["LFGListFrame.SearchPanel.ResultsInset"].position[4],
+		originalUI["LFGListFrame.SearchPanel.ResultsInset"].position[5]);
+	LFGListFrame.SearchPanel.ResultsInset:SetPoint(originalUI["LFGListFrame.SearchPanel.ResultsInset"].position2[1],
+		originalUI["LFGListFrame.SearchPanel.ResultsInset"].position2[2],
+		originalUI["LFGListFrame.SearchPanel.ResultsInset"].position2[3],
+		originalUI["LFGListFrame.SearchPanel.ResultsInset"].position2[4],
+		originalUI["LFGListFrame.SearchPanel.ResultsInset"].position2[5]);
+	LFGListFrame.SearchPanel.ResultsInset:SetSize(originalUI["LFGListFrame.SearchPanel.ResultsInset"].size[1],
+		originalUI["LFGListFrame.SearchPanel.ResultsInset"].size[2]);
 	LFGListFrame.SearchPanel.SignUpButton:ClearAllPoints();
-	LFGListFrame.SearchPanel.SignUpButton:SetPoint(originalUI["LFGListFrame.SearchPanel.SignUpButton"].position[1], originalUI["LFGListFrame.SearchPanel.SignUpButton"].position[2], originalUI["LFGListFrame.SearchPanel.SignUpButton"].position[3], originalUI["LFGListFrame.SearchPanel.SignUpButton"].position[4], originalUI["LFGListFrame.SearchPanel.SignUpButton"].position[5]);
+	LFGListFrame.SearchPanel.SignUpButton:SetPoint(originalUI["LFGListFrame.SearchPanel.SignUpButton"].position[1],
+		originalUI["LFGListFrame.SearchPanel.SignUpButton"].position[2],
+		originalUI["LFGListFrame.SearchPanel.SignUpButton"].position[3],
+		originalUI["LFGListFrame.SearchPanel.SignUpButton"].position[4],
+		originalUI["LFGListFrame.SearchPanel.SignUpButton"].position[5]);
 	LFGListFrame.SearchPanel.BackButton:ClearAllPoints();
-	LFGListFrame.SearchPanel.BackButton:SetPoint(originalUI["LFGListFrame.SearchPanel.BackButton"].position[1], originalUI["LFGListFrame.SearchPanel.BackButton"].position[2], originalUI["LFGListFrame.SearchPanel.BackButton"].position[3], originalUI["LFGListFrame.SearchPanel.BackButton"].position[4], originalUI["LFGListFrame.SearchPanel.BackButton"].position[5]);
+	LFGListFrame.SearchPanel.BackButton:SetPoint(originalUI["LFGListFrame.SearchPanel.BackButton"].position[1],
+		originalUI["LFGListFrame.SearchPanel.BackButton"].position[2],
+		originalUI["LFGListFrame.SearchPanel.BackButton"].position[3],
+		originalUI["LFGListFrame.SearchPanel.BackButton"].position[4],
+		originalUI["LFGListFrame.SearchPanel.BackButton"].position[5]);
 	LFGListFrame.SearchPanel.BackToGroupButton:ClearAllPoints();
-	LFGListFrame.SearchPanel.BackToGroupButton:SetPoint(originalUI["LFGListFrame.SearchPanel.BackToGroupButton"].position[1], originalUI["LFGListFrame.SearchPanel.BackToGroupButton"].position[2], originalUI["LFGListFrame.SearchPanel.BackToGroupButton"].position[3], originalUI["LFGListFrame.SearchPanel.BackToGroupButton"].position[4], originalUI["LFGListFrame.SearchPanel.BackToGroupButton"].position[5]);
-	LFGListFrame.SearchPanel.ScrollBox:SetSize(originalUI["LFGListFrame.SearchPanel.ScrollBox"].size[1], originalUI["LFGListFrame.SearchPanel.ScrollBox"].size[2]);
-	LFGListApplicationDialog.Description:SetPoint(originalUI["LFGListApplicationDialog.Description"].position[1], originalUI["LFGListApplicationDialog.Description"].position[2], originalUI["LFGListApplicationDialog.Description"].position[3], originalUI["LFGListApplicationDialog.Description"].position[4], originalUI["LFGListApplicationDialog.Description"].position[5]);
-	LFGListApplicationDialog.Description:SetSize(originalUI["LFGListApplicationDialog.Description"].size[1], originalUI["LFGListApplicationDialog.Description"].size[2]);
-	LFGListApplicationDialog.Description.EditBox:SetSize(originalUI["LFGListApplicationDialog.Description.EditBox"].size[1], originalUI["LFGListApplicationDialog.Description.EditBox"].size[2]);
+	LFGListFrame.SearchPanel.BackToGroupButton:SetPoint(
+		originalUI["LFGListFrame.SearchPanel.BackToGroupButton"].position[1],
+		originalUI["LFGListFrame.SearchPanel.BackToGroupButton"].position[2],
+		originalUI["LFGListFrame.SearchPanel.BackToGroupButton"].position[3],
+		originalUI["LFGListFrame.SearchPanel.BackToGroupButton"].position[4],
+		originalUI["LFGListFrame.SearchPanel.BackToGroupButton"].position[5]);
+	LFGListFrame.SearchPanel.ScrollBox:SetSize(originalUI["LFGListFrame.SearchPanel.ScrollBox"].size[1],
+		originalUI["LFGListFrame.SearchPanel.ScrollBox"].size[2]);
+	LFGListApplicationDialog.Description:SetPoint(originalUI["LFGListApplicationDialog.Description"].position[1],
+		originalUI["LFGListApplicationDialog.Description"].position[2],
+		originalUI["LFGListApplicationDialog.Description"].position[3],
+		originalUI["LFGListApplicationDialog.Description"].position[4],
+		originalUI["LFGListApplicationDialog.Description"].position[5]);
+	LFGListApplicationDialog.Description:SetSize(originalUI["LFGListApplicationDialog.Description"].size[1],
+		originalUI["LFGListApplicationDialog.Description"].size[2]);
+	LFGListApplicationDialog.Description.EditBox:SetSize(
+		originalUI["LFGListApplicationDialog.Description.EditBox"].size[1],
+		originalUI["LFGListApplicationDialog.Description.EditBox"].size[2]);
 	LFGListFrame:ClearAllPoints();
-	LFGListFrame:SetPoint(originalUI["LFGListFrame"].position[1], originalUI["LFGListFrame"].position[2], originalUI["LFGListFrame"].position[3], originalUI["LFGListFrame"].position[4], originalUI["LFGListFrame"].position[5]);
+	LFGListFrame:SetPoint(originalUI["LFGListFrame"].position[1], originalUI["LFGListFrame"].position[2],
+		originalUI["LFGListFrame"].position[3], originalUI["LFGListFrame"].position[4],
+		originalUI["LFGListFrame"].position[5]);
 	LFGListFrame:SetSize(338, LFGListFrame:GetHeight());
 	if (LFGListFrame.SearchPanel:IsShown()) then
 		LFGListFrame.SearchPanel.BackButton:SetShown(not C_LFGList.HasActiveEntryInfo());
@@ -963,7 +1042,7 @@ local function isNewGroup(leaderName, activityID, previousSearchTime)
 	if (newGroups[leaderName] and newGroups[leaderName].ActivityID == activityID and previousSearchTime ~= newGroups[leaderName].PrevSearchTime) then
 		return false;
 	elseif (newGroups[leaderName] == nil or newGroups[leaderName].ActivityID ~= activityID) then
-		newGroups[leaderName] = {["ActivityID"] = activityID, ["PrevSearchTime"] = previousSearchTime};
+		newGroups[leaderName] = { ["ActivityID"] = activityID, ["PrevSearchTime"] = previousSearchTime };
 	end
 	return true;
 end
@@ -1024,13 +1103,19 @@ local function updateSearch()
 		local dungeonsSelected = PGF_GetSize(selectedInfo.dungeons);
 		local count = 0;
 		if (slowSearch == false) then
-			C_LFGList.Search(LFGListFrame.SearchPanel.categoryID, ResolveCategoryFilters(LFGListFrame.SearchPanel.categoryID, LFGListFrame.SearchPanel.filters), LFGListFrame.SearchPanel.preferredFilters, C_LFGList.GetLanguageSearchFilter(), nil, C_LFGList.GetAdvancedFilter());
+			C_LFGList.Search(LFGListFrame.SearchPanel.categoryID,
+				ResolveCategoryFilters(LFGListFrame.SearchPanel.categoryID, LFGListFrame.SearchPanel.filters),
+				LFGListFrame.SearchPanel.preferredFilters, C_LFGList.GetLanguageSearchFilter(), nil,
+				C_LFGList.GetAdvancedFilter());
 		else
 			slowTotal = dungeonsSelected;
 			for k, v in ipairs(selectedInfo.dungeons) do
-				C_Timer.After(3*count, function()
+				C_Timer.After(3 * count, function()
 					C_LFGList.SetSearchToActivity(k);
-					C_LFGList.Search(LFGListFrame.SearchPanel.categoryID, ResolveCategoryFilters(LFGListFrame.SearchPanel.categoryID, LFGListFrame.SearchPanel.filters), LFGListFrame.SearchPanel.preferredFilters, C_LFGList.GetLanguageSearchFilter(), nil, C_LFGList.GetAdvancedFilter());
+					C_LFGList.Search(LFGListFrame.SearchPanel.categoryID,
+						ResolveCategoryFilters(LFGListFrame.SearchPanel.categoryID, LFGListFrame.SearchPanel.filters),
+						LFGListFrame.SearchPanel.preferredFilters, C_LFGList.GetLanguageSearchFilter(), nil,
+						C_LFGList.GetAdvancedFilter());
 				end);
 				count = count + 1;
 			end
@@ -1052,11 +1137,11 @@ end
 ]]
 local function HasRemainingSlotsForLocalPlayerRole(lfgSearchResultID, isFiltering)
 	local roles = C_LFGList.GetSearchResultMemberCounts(lfgSearchResultID);
-	local groupRoles = {["TANK"] = 0, ["HEALER"] = 0, ["DAMAGER"] = 0};
+	local groupRoles = { ["TANK"] = 0, ["HEALER"] = 0, ["DAMAGER"] = 0 };
 	groupRoles[playerRole] = groupRoles[playerRole] + 1;
 	if (IsInGroup()) then
-		for i = 1, GetNumGroupMembers()-1 do --excludes the player
-			local role = UnitGroupRolesAssigned("party"..i);
+		for i = 1, GetNumGroupMembers() - 1 do --excludes the player
+			local role = UnitGroupRolesAssigned("party" .. i);
 			if (role and role ~= "NONE") then
 				groupRoles[role] = groupRoles[role] + 1;
 			end
@@ -1186,9 +1271,9 @@ local function updateDungeonDifficulty(isSameCat)
 				end
 				if (dropDown) then
 					dropDown:Show();
-						if (lastSelectedDungeonState == "") then --addon just loaded
-							lastSelectedDungeonState = dungeonStates[4];
-						end
+					if (lastSelectedDungeonState == "") then --addon just loaded
+						lastSelectedDungeonState = dungeonStates[4];
+					end
 				end
 				if (PGF_roles[index]) then
 					checkbox:SetChecked(true);
@@ -1328,7 +1413,7 @@ local function PGF_ShowDungeonFrame(isSameCat)
 	if (next(originalUI) == nil) then
 		saveOriginalUI();
 	end
-	PVEFrame:SetSize(840,428);
+	PVEFrame:SetSize(840, 428);
 	PVE_FRAME_BASE_WIDTH = 840; -- blizz is always trying to resize the pveframe based on this value
 	LFGListFrame.SearchPanel.SearchBox:ClearAllPoints();
 	LFGListFrame.SearchPanel.RefreshButton:ClearAllPoints();
@@ -1348,10 +1433,13 @@ local function PGF_ShowDungeonFrame(isSameCat)
 	LFGListApplicationDialog.Description:SetPoint("BOTTOMRIGHT", PVEFrame, "BOTTOMRIGHT", -10, 15);
 	LFGListApplicationDialog.Description:SetSize(210, 20);
 	LFGListApplicationDialog.Description.EditBox:SetMaxLetters(50);
-	LFGListApplicationDialog.Description.EditBox:SetSize(LFGListApplicationDialog.Description:GetWidth(), LFGListApplicationDialog.Description:GetHeight());
-	LFGListApplicationDialog.Description.EditBox:SetTextColor(1,1,1,1);
+	LFGListApplicationDialog.Description.EditBox:SetSize(LFGListApplicationDialog.Description:GetWidth(),
+		LFGListApplicationDialog.Description:GetHeight());
+	LFGListApplicationDialog.Description.EditBox:SetTextColor(1, 1, 1, 1);
 	LFGListFrame:ClearAllPoints();
-	LFGListFrame:SetPoint(originalUI["LFGListFrame"].position[1], originalUI["LFGListFrame"].position[2], originalUI["LFGListFrame"].position[3], originalUI["LFGListFrame"].position[4], originalUI["LFGListFrame"].position[5]);
+	LFGListFrame:SetPoint(originalUI["LFGListFrame"].position[1], originalUI["LFGListFrame"].position[2],
+		originalUI["LFGListFrame"].position[3], originalUI["LFGListFrame"].position[4],
+		originalUI["LFGListFrame"].position[5]);
 	LFGListFrame:SetSize(368, LFGListFrame:GetHeight());
 	updateDungeonDifficulty(isSameCat);
 end
@@ -1366,7 +1454,7 @@ local function PGF_ShowRaidFrame(isSameCat)
 	if (next(originalUI) == nil) then
 		saveOriginalUI();
 	end
-	PVEFrame:SetSize(900,428);
+	PVEFrame:SetSize(900, 428);
 	PVE_FRAME_BASE_WIDTH = 900; -- blizz is always trying to resize the pveframe based on this value
 	LFGListFrame.SearchPanel.SearchBox:ClearAllPoints();
 	LFGListFrame.SearchPanel.RefreshButton:ClearAllPoints();
@@ -1386,8 +1474,9 @@ local function PGF_ShowRaidFrame(isSameCat)
 	LFGListApplicationDialog.Description:SetPoint("BOTTOMRIGHT", PVEFrame, "BOTTOMRIGHT", -10, 15);
 	LFGListApplicationDialog.Description:SetSize(210, 20);
 	LFGListApplicationDialog.Description.EditBox:SetMaxLetters(50);
-	LFGListApplicationDialog.Description.EditBox:SetSize(LFGListApplicationDialog.Description:GetWidth(), LFGListApplicationDialog.Description:GetHeight());
-	LFGListApplicationDialog.Description.EditBox:SetTextColor(1,1,1,1);
+	LFGListApplicationDialog.Description.EditBox:SetSize(LFGListApplicationDialog.Description:GetWidth(),
+		LFGListApplicationDialog.Description:GetHeight());
+	LFGListApplicationDialog.Description.EditBox:SetTextColor(1, 1, 1, 1);
 	updateRaidFrameWidth();
 	--[[
 	LFGListFrame:ClearAllPoints();
@@ -1397,9 +1486,10 @@ local function PGF_ShowRaidFrame(isSameCat)
 	updateRaidDifficulty(isSameCat, true);
 end
 
-local function updateDungeonFilter(difficultyID, aIDToAdd, aIDToRemove, minimumRating, showGroupsWithoutMyClass, hasTank, hasHealer, hasDPS)
+local function updateDungeonFilter(difficultyID, aIDToAdd, aIDToRemove, minimumRating, showGroupsWithoutMyClass, hasTank,
+								   hasHealer, hasDPS)
 	local enabled = C_LFGList.GetAdvancedFilter();
-	if(difficultyID) then
+	if (difficultyID) then
 		if (difficultyID == 1) then
 			enabled.difficultyNormal = true;
 			enabled.difficultyHeroic = false;
@@ -1443,8 +1533,11 @@ local function updateDungeonFilter(difficultyID, aIDToAdd, aIDToRemove, minimumR
 			end
 			if (next(enabled.activities) == nil) then
 				--LFGListAdvancedFiltersCheckAllDungeons
-				local seasonGroups = C_LFGList.GetAvailableActivityGroups(GROUP_FINDER_CATEGORY_ID_DUNGEONS, bit.bor(Enum.LFGListFilter.CurrentSeason, Enum.LFGListFilter.PvE));
-				local expansionGroups = C_LFGList.GetAvailableActivityGroups(GROUP_FINDER_CATEGORY_ID_DUNGEONS, bit.bor(Enum.LFGListFilter.CurrentExpansion, Enum.LFGListFilter.NotCurrentSeason, Enum.LFGListFilter.PvE));
+				local seasonGroups = C_LFGList.GetAvailableActivityGroups(GROUP_FINDER_CATEGORY_ID_DUNGEONS,
+					bit.bor(Enum.LFGListFilter.CurrentSeason, Enum.LFGListFilter.PvE));
+				local expansionGroups = C_LFGList.GetAvailableActivityGroups(GROUP_FINDER_CATEGORY_ID_DUNGEONS,
+					bit.bor(Enum.LFGListFilter.CurrentExpansion, Enum.LFGListFilter.NotCurrentSeason,
+						Enum.LFGListFilter.PvE));
 				local allDungeons = {};
 				tAppendAll(allDungeons, seasonGroups);
 				tAppendAll(allDungeons, expansionGroups);
@@ -1496,11 +1589,11 @@ end
 local function initDungeon()
 	if (PVEFrame.GetBackdrop) then
 		dungeonOptionsFrame:SetBackdrop(PVEFrame:GetBackdrop());
-		local r,g,b,a = PVEFrame:GetBackdropColor();
-		dungeonOptionsFrame:SetBackdropColor(r,g,b,a);
-		r,g,b,a = PVEFrame:GetBackdropBorderColor();
-		dungeonOptionsFrame:SetBackdropBorderColor(r,g,b,a);
-		dungeonOptionsFrame:SetPoint("BOTTOMRIGHT", PVEFrame, "BOTTOMRIGHT", -1,-150);
+		local r, g, b, a = PVEFrame:GetBackdropColor();
+		dungeonOptionsFrame:SetBackdropColor(r, g, b, a);
+		r, g, b, a = PVEFrame:GetBackdropBorderColor();
+		dungeonOptionsFrame:SetBackdropBorderColor(r, g, b, a);
+		dungeonOptionsFrame:SetPoint("BOTTOMRIGHT", PVEFrame, "BOTTOMRIGHT", -1, -150);
 	elseif (PVEFrameBg:GetTexture()) then
 		local texture = dungeonOptionsFrame:CreateTexture(nil, "BACKGROUND");
 		dungeonOptionsFrame:SetBackdrop({
@@ -1511,8 +1604,8 @@ local function initDungeon()
 		});
 		texture:SetTexture(PVEFrameBg:GetTexture());
 		texture:SetAllPoints();
-		dungeonOptionsFrame:SetBackdropBorderColor(0.1,0.1,0.1,1);
-		dungeonOptionsFrame:SetPoint("BOTTOMRIGHT", PVEFrame, "BOTTOMRIGHT", -1,-148);
+		dungeonOptionsFrame:SetBackdropBorderColor(0.1, 0.1, 0.1, 1);
+		dungeonOptionsFrame:SetPoint("BOTTOMRIGHT", PVEFrame, "BOTTOMRIGHT", -1, -148);
 	end
 	local dungeonDifficultyText = dungeonFrame:CreateFontString(nil, "ARTWORK", "GameFontNormalTiny2");
 	dungeonDifficultyText:SetFont(dungeonDifficultyText:GetFont(), 10);
@@ -1520,7 +1613,7 @@ local function initDungeon()
 	local dungeonDifficultyDropDown = CreateFrame("Button", nil, dungeonFrame, "UIDropDownMenuTemplate");
 	dungeonDifficultyDropDown:SetPoint("LEFT", dungeonDifficultyText, "RIGHT", -12, -2);
 	local function Initialize_DungeonStates(self, level)
-		for k,v in pairs(dungeonStates) do
+		for k, v in pairs(dungeonStates) do
 			local info = UIDropDownMenu_CreateInfo();
 			info.text = v;
 			info.value = v;
@@ -1541,7 +1634,8 @@ local function initDungeon()
 	UIDropDownMenu_JustifyText(dungeonDifficultyDropDown, "CENTER");
 	UIDropDownMenu_Initialize(dungeonDifficultyDropDown, Initialize_DungeonStates);
 	UIDropDownMenu_SetSelectedID(dungeonDifficultyDropDown, 4);
-	local matchingActivities = C_LFGList.GetAvailableActivities(GROUP_FINDER_CATEGORY_ID_DUNGEONS, nil, ResolveCategoryFilters(GROUP_FINDER_CATEGORY_ID_DUNGEONS, 0), "");
+	local matchingActivities = C_LFGList.GetAvailableActivities(GROUP_FINDER_CATEGORY_ID_DUNGEONS, nil,
+		ResolveCategoryFilters(GROUP_FINDER_CATEGORY_ID_DUNGEONS, 0), "");
 	for i = 1, #matchingActivities do
 		local name = PGF_allDungeonsActivityIDs[matchingActivities[i]];
 		local shortName = name:gsub("%s%(.*", "")
@@ -1569,7 +1663,8 @@ local function initDungeon()
 		end
 	end
 	for i = 1, 2500 do
-		local name, typeID, subtypeID, minLevel, maxLevel, recLevel, minRecLevel, maxRecLevel, expansionLevel, groupID, textureFilename, difficulty, maxPlayers, description, isHoliday, bonusRepAmount, minPlayers, isTimeWalker, name2, minGearLevel, isScalingDungeon, lfgMapID = GetLFGDungeonInfo(i);
+		local name, typeID, subtypeID, minLevel, maxLevel, recLevel, minRecLevel, maxRecLevel, expansionLevel, groupID, textureFilename, difficulty, maxPlayers, description, isHoliday, bonusRepAmount, minPlayers, isTimeWalker, name2, minGearLevel, isScalingDungeon, lfgMapID =
+			GetLFGDungeonInfo(i);
 		if (name) then
 			local shortName = name:gsub("%s%(.*", "");
 			if (dungeonAbbreviations[shortName]) then
@@ -1587,7 +1682,7 @@ local function initDungeon()
 			if (difficulty == "(Mythic Keystone)" and (GetLocale() == "enGB" or GetLocale() == "enUS")) then
 				texture:SetTexture(dungeonTextures[name]);
 			end
-			texture:SetPoint("TOPLEFT", 30,-65-((count-1)*24));
+			texture:SetPoint("TOPLEFT", 30, -65 - ((count - 1) * 24));
 			texture:SetSize(18, 18);
 			local checkbox = CreateFrame("CheckButton", nil, dungeonFrame, "UICheckButtonTemplate");
 			checkbox:SetSize(20, 20);
@@ -1609,7 +1704,7 @@ local function initDungeon()
 			text:SetJustifyH("LEFT");
 			text:SetText(name);
 			text:SetFont(text:GetFont(), 12);
-			text:SetTextColor(1,1,1,1);
+			text:SetTextColor(1, 1, 1, 1);
 			dGUI[aID] = {};
 			dGUI[aID].text = text;
 			dGUI[aID].checkbox = checkbox;
@@ -1624,10 +1719,11 @@ local function initDungeon()
 	performanceText:SetJustifyH("LEFT");
 	performanceText:SetText("");
 	performanceText:SetFont(performanceText:GetFont(), 10);
-	performanceText:SetTextColor(1,1,1,1);
+	performanceText:SetTextColor(1, 1, 1, 1);
 	function PGF_SetPerformanceText(input)
 		performanceText:SetText(input);
 	end
+
 	local blizzSearchInfo = CreateFrame("Button", nil, f, "UIPanelInfoButton");
 	blizzSearchInfo:SetPoint("TOPRIGHT", LFGListFrame.SearchPanel.ResultsInset, "TOPRIGHT", -28, 19);
 	blizzSearchInfo:SetScript("OnEnter", function(self)
@@ -1639,7 +1735,7 @@ local function initDungeon()
 		GameTooltip:Hide();
 	end);
 	--LFGListApplicationDialog.Description.EditBox:SetFont(LFGListApplicationDialog.Description.EditBox:GetFont(), 7);
-	dGUI["dungeonDifficulty"] = {["dropDown"] = dungeonDifficultyDropDown, ["text"] = dungeonDifficultyText};
+	dGUI["dungeonDifficulty"] = { ["dropDown"] = dungeonDifficultyDropDown, ["text"] = dungeonDifficultyText };
 	dungeonDifficultyText:SetText(L.OPTIONS_DUNGEON_DIFFICULTY);
 	local filterRolesText = dungeonFrame:CreateFontString(nil, "ARTWORK", "GameFontNormalTiny2");
 	filterRolesText:SetFont(filterRolesText:GetFont(), 10);
@@ -1668,12 +1764,12 @@ local function initDungeon()
 	minLeaderScoreEditBox:SetAutoFocus(false);
 	minLeaderScoreEditBox:SetMultiLine(false);
 	minLeaderScoreEditBox:SetFontObject(GameFontNormalTiny2);
-	minLeaderScoreEditBox:SetTextColor(1,1,1,1);
-	minLeaderScoreEditBox:SetTextInsets(1,5,2,5);
+	minLeaderScoreEditBox:SetTextColor(1, 1, 1, 1);
+	minLeaderScoreEditBox:SetTextInsets(1, 5, 2, 5);
 	minLeaderScoreEditBox:SetMaxLetters(4);
 	minLeaderScoreEditBox:SetSize(85, 10);
 	minLeaderScoreEditBox:SetText("");
-	minLeaderScoreEditBox:SetScript("OnEscapePressed", function (self)
+	minLeaderScoreEditBox:SetScript("OnEscapePressed", function(self)
 		self:ClearFocus();
 	end);
 	--Use input:GetNumber() to ensure its a number, returns 0 if not a number which is fine in this case
@@ -1778,7 +1874,7 @@ local function initDungeon()
 		showMoreButton:SetNormalTexture("Interface\\Buttons\\Arrow-Down-Down.PNG");
 		showMoreButton:SetPoint("BOTTOMRIGHT", PVEFrame, "BOTTOMRIGHT", 0, -7);
 	end
-	showMoreButton:SetSize(18,18);
+	showMoreButton:SetSize(18, 18);
 	showMoreButton:SetScript("OnClick", function(self)
 		if (dungeonOptionsFrame:IsShown()) then
 			PGF_ShowDungeonOptionsFrame = false;
@@ -1862,7 +1958,8 @@ local function initDungeon()
 	tankTexture2:SetPoint("TOP", showGroupsForYourRoleButtonTank, "TOP", 0, 15);
 	tankTexture2:SetSize(16, 16);
 	tankTexture2:SetTexCoord(PGF_GetTexCoordsForRole("TANK"));
-	local showGroupsForYourRoleButtonHealer = CreateFrame("CheckButton", nil, dungeonOptionsFrame, "UICheckButtonTemplate");
+	local showGroupsForYourRoleButtonHealer = CreateFrame("CheckButton", nil, dungeonOptionsFrame,
+		"UICheckButtonTemplate");
 	showGroupsForYourRoleButtonHealer:SetSize(20, 20);
 	showGroupsForYourRoleButtonHealer:SetPoint("RIGHT", showGroupsForYourRoleButtonTank, "RIGHT", 20, 0);
 	showGroupsForYourRoleButtonHealer:SetChecked(PGF_OnlyShowMyRole2["HEALER"]);
@@ -1972,7 +2069,7 @@ local function initDungeon()
 	local sortingDropdown = CreateFrame("Button", nil, dungeonOptionsFrame, "UIDropDownMenuTemplate");
 	sortingDropdown:SetPoint("LEFT", sortingText, "RIGHT", -12, -2);
 	local function Initialize_SortingStates(self, level)
-		for k,v in ipairs(sortingStates) do
+		for k, v in ipairs(sortingStates) do
 			local info = UIDropDownMenu_CreateInfo();
 			info.text = v;
 			info.value = v;
@@ -1993,15 +2090,15 @@ local function initDungeon()
 	UIDropDownMenu_Initialize(sortingDropdown, Initialize_SortingStates);
 	UIDropDownMenu_SetSelectedID(sortingDropdown, PGF_SortingVariable);
 
-	dGUI["DAMAGER"] = {["texture"] = dpsTexture, ["checkbox"] = dpsButton};
-	dGUI["HEALER"] = {["texture"] = healerTexture, ["checkbox"] = healerButon};
-	dGUI["TANK"] = {["texture"] = tankTexture, ["checkbox"] = tankButton};
-	dGUI["FilterRoles"] = {["text"] = filterRolesText, ["checkbox"] = filterRolesCheckButton};
-	dGUI["MoreOptions"] = {["text"] = showMoreText, ["button"] = showMoreButton};
-	dGUI["Sorting"] = {["text"]= sortingText, ["dropDown"] = sortingDropdown};
-	dGUI["LeaderScore"] = {["text"] = showLeaderScoreForDungeonText, ["checkbox"] = showLeaderScoreForDungeonButton};
-	dGUI["DetailedData"] = {["text"] = showDetailedDataText, ["checkbox"] = showDetailedDataButton};
-	dGUI["OnlyMyRole"]= {["text"] = showGroupsForYourRoleText, ["checkbox"] = showGroupsForYourRoleButtonTank};
+	dGUI["DAMAGER"] = { ["texture"] = dpsTexture, ["checkbox"] = dpsButton };
+	dGUI["HEALER"] = { ["texture"] = healerTexture, ["checkbox"] = healerButon };
+	dGUI["TANK"] = { ["texture"] = tankTexture, ["checkbox"] = tankButton };
+	dGUI["FilterRoles"] = { ["text"] = filterRolesText, ["checkbox"] = filterRolesCheckButton };
+	dGUI["MoreOptions"] = { ["text"] = showMoreText, ["button"] = showMoreButton };
+	dGUI["Sorting"] = { ["text"] = sortingText, ["dropDown"] = sortingDropdown };
+	dGUI["LeaderScore"] = { ["text"] = showLeaderScoreForDungeonText, ["checkbox"] = showLeaderScoreForDungeonButton };
+	dGUI["DetailedData"] = { ["text"] = showDetailedDataText, ["checkbox"] = showDetailedDataButton };
+	dGUI["OnlyMyRole"] = { ["text"] = showGroupsForYourRoleText, ["checkbox"] = showGroupsForYourRoleButtonTank };
 end
 --[[
 	Documentation: Creates all of the UI elements related to the raidFrame including:
@@ -2012,11 +2109,11 @@ end
 local function initRaid()
 	if (PVEFrame.GetBackdrop) then
 		raidOptionsFrame:SetBackdrop(PVEFrame:GetBackdrop());
-		local r,g,b,a = PVEFrame:GetBackdropColor();
-		raidOptionsFrame:SetBackdropColor(r,g,b,a);
-		r,g,b,a = PVEFrame:GetBackdropBorderColor();
-		raidOptionsFrame:SetBackdropBorderColor(r,g,b,a);
-		raidOptionsFrame:SetPoint("BOTTOMRIGHT", PVEFrame, "BOTTOMRIGHT", -1,-140);
+		local r, g, b, a = PVEFrame:GetBackdropColor();
+		raidOptionsFrame:SetBackdropColor(r, g, b, a);
+		r, g, b, a = PVEFrame:GetBackdropBorderColor();
+		raidOptionsFrame:SetBackdropBorderColor(r, g, b, a);
+		raidOptionsFrame:SetPoint("BOTTOMRIGHT", PVEFrame, "BOTTOMRIGHT", -1, -140);
 	elseif (PVEFrameBg:GetTexture()) then
 		local texture = raidOptionsFrame:CreateTexture(nil, "BACKGROUND");
 		raidOptionsFrame:SetBackdrop({
@@ -2027,8 +2124,8 @@ local function initRaid()
 		});
 		texture:SetTexture(PVEFrameBg:GetTexture());
 		texture:SetAllPoints();
-		raidOptionsFrame:SetBackdropBorderColor(0.1,0.1,0.1,1);
-		raidOptionsFrame:SetPoint("BOTTOMRIGHT", PVEFrame, "BOTTOMRIGHT", -1,-138);
+		raidOptionsFrame:SetBackdropBorderColor(0.1, 0.1, 0.1, 1);
+		raidOptionsFrame:SetPoint("BOTTOMRIGHT", PVEFrame, "BOTTOMRIGHT", -1, -138);
 	end
 	local raidDifficultyText = raidFrame:CreateFontString(nil, "ARTWORK", "GameFontNormalTiny2");
 	raidDifficultyText:SetFont(raidDifficultyText:GetFont(), 10);
@@ -2036,7 +2133,7 @@ local function initRaid()
 	local raidDifficultyDropDown = CreateFrame("Button", nil, raidFrame, "UIDropDownMenuTemplate");
 	raidDifficultyDropDown:SetPoint("LEFT", raidDifficultyText, "RIGHT", -12, -2);
 	local function Initialize_RaidStates(self, level)
-		for k,v in pairs(raidStates) do
+		for k, v in pairs(raidStates) do
 			local info = UIDropDownMenu_CreateInfo();
 			info.text = v;
 			info.value = v;
@@ -2088,13 +2185,13 @@ local function initRaid()
 			local raidNameShort = PGF_allRaidActivityIDs[aID]:gsub("%s%(.*", "");
 			local trimedName = bossOrderMap[raidAbbreviations[raidNameShort]][index];
 			if (raidNameShort ~= "Aberrus") then --try Interface\\ENCOUNTERJOURNAL\\UI-EJ-BOSS-IgiratheCruel
-				trimedName = bossOrderMap[raidAbbreviations[raidNameShort]][index]:gsub("(%s)","");
+				trimedName = bossOrderMap[raidAbbreviations[raidNameShort]][index]:gsub("(%s)", "");
 			end
-			trimedName = trimedName:gsub(",","");
-			texture:SetTexture("Interface\\ENCOUNTERJOURNAL\\UI-EJ-BOSS-" .. trimedName ..".PNG"); --try Interface\\ENCOUNTERJOURNAL\\UI-EJ-BOSS-Igira
-			if (texture:GetTextureFileID() == nil) then --try Interface\\ENCOUNTERJOURNAL\\UI-EJ-BOSS-Igira the Cruel
-				trimedName = bossOrderMap[raidAbbreviations[raidNameShort]][index]:gsub(",","");
-				texture:SetTexture("Interface\\ENCOUNTERJOURNAL\\UI-EJ-BOSS-" .. trimedName ..".PNG");
+			trimedName = trimedName:gsub(",", "");
+			texture:SetTexture("Interface\\ENCOUNTERJOURNAL\\UI-EJ-BOSS-" .. trimedName .. ".PNG"); --try Interface\\ENCOUNTERJOURNAL\\UI-EJ-BOSS-Igira
+			if (texture:GetTextureFileID() == nil) then                                    --try Interface\\ENCOUNTERJOURNAL\\UI-EJ-BOSS-Igira the Cruel
+				trimedName = bossOrderMap[raidAbbreviations[raidNameShort]][index]:gsub(",", "");
+				texture:SetTexture("Interface\\ENCOUNTERJOURNAL\\UI-EJ-BOSS-" .. trimedName .. ".PNG");
 			end
 			if (texture:GetTextureFileID() == nil) then --fallback to Boss Name instead of just BossName
 				if (bossOrderMap[raidAbbreviations[raidNameShort]][index] == "Fyrakk the Blazing") then
@@ -2103,7 +2200,7 @@ local function initRaid()
 					texture:SetTexture("Interface\\ENCOUNTERJOURNAL\\UI-EJ-BOSS-Tindral Sageswift Seer of Flame.PNG");
 				end
 			end
-			texture:SetPoint("TOPLEFT", 30,-65-((count-1)*24));
+			texture:SetPoint("TOPLEFT", 30, -65 - ((count - 1) * 24));
 			texture:SetSize(18, 18);
 			local checkbox = CreateFrame("CheckButton", nil, raidFrame, "UICheckButtonTemplate");
 			checkbox:SetSize(20, 20);
@@ -2123,7 +2220,7 @@ local function initRaid()
 			text:SetJustifyH("LEFT");
 			text:SetText(name);
 			text:SetFont(text:GetFont(), 12);
-			text:SetTextColor(1,1,1,1);
+			text:SetTextColor(1, 1, 1, 1);
 			rGUI[aID][name] = {};
 			rGUI[aID][name].text = text;
 			rGUI[aID][name].checkbox = checkbox;
@@ -2154,7 +2251,7 @@ local function initRaid()
 	slowSearchtext:SetTextColor(1,1,1,1);
 	]]
 	--LFGListApplicationDialog.Description.EditBox:SetFont(LFGListApplicationDialog.Description.EditBox:GetFont(), 7);
-	rGUI["raidDifficulty"] = {["dropDown"] = raidDifficultyDropDown, ["text"] = raidDifficultyText};
+	rGUI["raidDifficulty"] = { ["dropDown"] = raidDifficultyDropDown, ["text"] = raidDifficultyText };
 	raidDifficultyText:SetText(L.OPTIONS_RAID_SELECT);
 	--Use input:GetNumber() to ensure its a number, returns 0 if not a number which is fine in this case
 	local showMoreText = raidFrame:CreateFontString(nil, "ARTWORK", "GameFontNormalTiny2");
@@ -2169,7 +2266,7 @@ local function initRaid()
 		showMoreButton:SetNormalTexture("Interface\\Buttons\\Arrow-Down-Down.PNG");
 		showMoreButton:SetPoint("BOTTOMRIGHT", PVEFrame, "BOTTOMRIGHT", 0, -7);
 	end
-	showMoreButton:SetSize(18,18);
+	showMoreButton:SetSize(18, 18);
 	showMoreButton:SetScript("OnClick", function(self)
 		if (raidOptionsFrame:IsShown()) then
 			raidOptionsFrame:Hide();
@@ -2234,7 +2331,7 @@ local function initRaid()
 	local sortingDropdown = CreateFrame("Button", nil, raidOptionsFrame, "UIDropDownMenuTemplate");
 	sortingDropdown:SetPoint("LEFT", sortingText, "RIGHT", -12, -2);
 	local function Initialize_SortingStates(self, level)
-		for k,v in ipairs(sortingRaidStates) do
+		for k, v in ipairs(sortingRaidStates) do
 			local info = UIDropDownMenu_CreateInfo();
 			info.text = v;
 			info.value = v;
@@ -2255,7 +2352,7 @@ local function initRaid()
 	UIDropDownMenu_Initialize(sortingDropdown, Initialize_SortingStates);
 	UIDropDownMenu_SetSelectedID(sortingDropdown, PGF_RaidSortingVariable);
 
-	rGUI["Sorting"] = {["text"]= sortingText, ["dropDown"] = sortingDropdown};
+	rGUI["Sorting"] = { ["text"] = sortingText, ["dropDown"] = sortingDropdown };
 end
 --[[
 	local function initChallengeMap()
@@ -2305,7 +2402,7 @@ end
 	Documentation: Initiate the UI if it has not been done before.
 ]]
 PVEFrame:HookScript("OnShow", function(self)
-	if(next(dGUI) == nil) then
+	if (next(dGUI) == nil) then
 		--initChallengeMap();
 		--initBestScores();
 		initDungeon();
@@ -2332,8 +2429,10 @@ local function restoreDungeonFilter(enabled)
 	enabled.difficultyHeroic = false;
 	enabled.difficultyMythic = false;
 	enabled.difficultyMythicPlus = true;
-	local seasonGroups = C_LFGList.GetAvailableActivityGroups(GROUP_FINDER_CATEGORY_ID_DUNGEONS, bit.bor(Enum.LFGListFilter.CurrentSeason, Enum.LFGListFilter.PvE));
-	local expansionGroups = C_LFGList.GetAvailableActivityGroups(GROUP_FINDER_CATEGORY_ID_DUNGEONS, bit.bor(Enum.LFGListFilter.CurrentExpansion, Enum.LFGListFilter.NotCurrentSeason, Enum.LFGListFilter.PvE));
+	local seasonGroups = C_LFGList.GetAvailableActivityGroups(GROUP_FINDER_CATEGORY_ID_DUNGEONS,
+		bit.bor(Enum.LFGListFilter.CurrentSeason, Enum.LFGListFilter.PvE));
+	local expansionGroups = C_LFGList.GetAvailableActivityGroups(GROUP_FINDER_CATEGORY_ID_DUNGEONS,
+		bit.bor(Enum.LFGListFilter.CurrentExpansion, Enum.LFGListFilter.NotCurrentSeason, Enum.LFGListFilter.PvE));
 	local allDungeons = {};
 	tAppendAll(allDungeons, seasonGroups);
 	tAppendAll(allDungeons, expansionGroups);
@@ -2347,7 +2446,7 @@ f:SetScript("OnEvent", function(self, event, ...)
 		C_MythicPlus.RequestMapInfo();
 		playerRole = GetSpecializationRole(GetSpecialization());
 		if (PGF_roles == nil) then
-			PGF_roles = {["TANK"] = false, ["HEALER"] = false, ["DAMAGER"] = false};
+			PGF_roles = { ["TANK"] = false, ["HEALER"] = false, ["DAMAGER"] = false };
 			PGF_roles[playerRole] = true;
 		else
 			local canBeTank, canBeHealer, canBeDPS = UnitGetAvailableRoles("player");
@@ -2376,7 +2475,7 @@ f:SetScript("OnEvent", function(self, event, ...)
 		if (PGF_ShowYourClassAmount == nil) then PGF_ShowYourClassAmount = true; end
 		if (PGF_ShowLeaderDungeonKey == nil) then PGF_ShowLeaderDungeonKey = false; end
 		if (PGF_SortingVariable == nil) then PGF_SortingVariable = 1; end
-		if (PGF_OnlyShowMyRole2 == nil) then PGF_OnlyShowMyRole2 = {["TANK"] = false, ["HEALER"] = false, ["DAMAGER"] = false}; end
+		if (PGF_OnlyShowMyRole2 == nil) then PGF_OnlyShowMyRole2 = { ["TANK"] = false, ["HEALER"] = false, ["DAMAGER"] = false }; end
 		if IsInGuild() then
 			C_ChatInfo.SendAddonMessage("PGF_VERSIONCHECK", version, "GUILD");
 		end
@@ -2457,7 +2556,9 @@ LFGListFrame:HookScript("OnSizeChanged", function(self)
 	self:Show();
 	if (LFGListFrame.SearchPanel.categoryID == GROUP_FINDER_CATEGORY_ID_DUNGEONS and LFGListFrame.SearchPanel:IsVisible()) then
 		LFGListFrame:ClearAllPoints();
-		LFGListFrame:SetPoint(originalUI["LFGListFrame"].position[1], originalUI["LFGListFrame"].position[2], originalUI["LFGListFrame"].position[3], originalUI["LFGListFrame"].position[4], originalUI["LFGListFrame"].position[5]);
+		LFGListFrame:SetPoint(originalUI["LFGListFrame"].position[1], originalUI["LFGListFrame"].position[2],
+			originalUI["LFGListFrame"].position[3], originalUI["LFGListFrame"].position[4],
+			originalUI["LFGListFrame"].position[5]);
 		LFGListFrame:SetSize(368, LFGListFrame:GetHeight());
 		C_Timer.After(0.05, function()
 			LFGListSearchPanel_UpdateResults(LFGListFrame.SearchPanel);
@@ -2499,7 +2600,7 @@ LFGListFrame.SearchPanel:HookScript("OnShow", function(self)
 			PGF_ShowRaidFrame(true);
 		end
 		f:Show();
-		if(next(selectedInfo.bosses)) then
+		if (next(selectedInfo.bosses)) then
 			updateSearch();
 		end
 	else
@@ -2531,7 +2632,7 @@ LFGListFrame.SearchPanel.RefreshButton:HookScript("OnEnter", function(self)
 		GameTooltip:Show();
 	else
 		GameTooltip:SetOwner(self);
-		local calc = string.format("%.2fs", refreshTimeReset-ticks);
+		local calc = string.format("%.2fs", refreshTimeReset - ticks);
 		GameTooltip:SetText(L.OPTIONS_REFRESH_BUTTON_DISABLED .. calc, 1, 1, 1, 1, true);
 		GameTooltip:Show();
 	end
@@ -2558,7 +2659,7 @@ LFGListFrame.SearchPanel.SearchBox:SetScript("OnEnterPressed", LFGListSearchPane
 
 function LFGListSearchPanelSearchBox_OnEnterPressed(self)
 	local parent = self:GetParent();
-	if ( parent.AutoCompleteFrame:IsShown() and parent.AutoCompleteFrame.selected ) then
+	if (parent.AutoCompleteFrame:IsShown() and parent.AutoCompleteFrame.selected) then
 		C_LFGList.SetSearchToActivity(parent.AutoCompleteFrame.selected);
 	end
 	if (searchAvailable) then
@@ -2634,7 +2735,7 @@ hooksecurefunc("LFGListApplicationViewer_UpdateInfo", PGF_LFGListApplicationView
 function LFGListUtil_GetSearchEntryMenu(resultID)
 	local searchResults = C_LFGList.GetSearchResultInfo(resultID);
 	local _, appStatus, pendingStatus, appDuration = C_LFGList.GetApplicationInfo(resultID);
-	local activityID = searchResults.activityID;
+	local activityID = searchResults.activityIDs[1];
 	local activityInfo = C_LFGList.GetActivityInfoTable(activityID);
 	local activityFullName = activityInfo.fullName;
 	local categoryID = activityInfo.categoryID;
@@ -2661,6 +2762,7 @@ function LFGListUtil_GetSearchEntryMenu(resultID)
 	end
 	return LFG_LIST_SEARCH_ENTRY_MENU;
 end
+
 local function realTimeApplication(self)
 	local _, appStatus, pendingStatus, appDuration = C_LFGList.GetApplicationInfo(self.resultID);
 	local isApplication = (appStatus ~= "none" or pendingStatus);
@@ -2698,18 +2800,18 @@ local function PGF_LFGListSearchEntry_Update(self)
 	local searchResultInfo = C_LFGList.GetSearchResultInfo(resultID);
 
 	--group no longer compatible
-	if(self.IncompatibleBG) then
+	if (self.IncompatibleBG) then
 		self.IncompatibleBG:Hide();
 	else
 		local texture = self:CreateTexture(nil, "OVERLAY");
-		texture:SetColorTexture(0.5,0,0,0.5);
+		texture:SetColorTexture(0.5, 0, 0, 0.5);
 		texture:SetPoint("TOPLEFT", 0, 0);
 		texture:SetSize(self:GetWidth(), self:GetHeight());
 		texture:Hide();
 		self.IncompatibleBG = texture;
 	end
 	--group no longer compatible
-	if(self.NewIcon) then
+	if (self.NewIcon) then
 		self.NewIcon:Hide();
 	else
 		local texture = self:CreateTexture(nil, "OVERLAY");
@@ -2730,7 +2832,7 @@ local function PGF_LFGListSearchEntry_Update(self)
 		texture:Hide();
 		self.NewIcon = texture;
 	end
-	if ((isNewGroup(searchResultInfo.leaderName, searchResultInfo.activityID, prevSearchTime) or GetTime()-searchResultInfo.age > prevSearchTime or searchResultInfo.leaderName == nil or searchResultInfo.leaderName == "") and (prevSearchTime ~= 0 and currentSearchTime ~= 0)) then
+	if ((isNewGroup(searchResultInfo.leaderName, searchResultInfo.activityID, prevSearchTime) or GetTime() - searchResultInfo.age > prevSearchTime or searchResultInfo.leaderName == nil or searchResultInfo.leaderName == "") and (prevSearchTime ~= 0 and currentSearchTime ~= 0)) then
 		self.NewIcon:Show();
 	end
 	--[[
@@ -2763,7 +2865,11 @@ local function PGF_LFGListSearchEntry_Update(self)
 			self.PendingLabel:SetText(LFG_LIST_APP_FULL);
 		elseif (appStatus == "declined") then
 			if (searchResultInfo.leaderName and searchResultInfo.leaderName ~= "") then
-				declinedGroups[searchResultInfo.leaderName] = {["activityID"] = searchResultInfo.activityID, ["timeout"] = GetTime()+declineResetTimer};
+				declinedGroups[searchResultInfo.leaderName] = {
+					["activityIDs"] = searchResultInfo.activityIDs,
+					["timeout"] =
+						GetTime() + declineResetTimer
+				};
 			end
 			self.PendingLabel:SetText(LFG_LIST_APP_DECLINED);
 		end
@@ -2778,7 +2884,11 @@ local function PGF_LFGListSearchEntry_Update(self)
 		self.ExpirationTime:Hide();
 		self.CancelButton:Hide();
 		if (searchResultInfo.leaderName and searchResultInfo.leaderName ~= "") then
-			declinedGroups[searchResultInfo.leaderName] = {["activityID"] = searchResultInfo.activityID, ["timeout"] = GetTime()+declineResetTimer};
+			declinedGroups[searchResultInfo.leaderName] = {
+				["activityIDs"] = searchResultInfo.activityIDs,
+				["timeout"] =
+					GetTime() + declineResetTimer
+			};
 		end
 	elseif (appStatus == "invited") then
 		self.PendingLabel:SetText(LFG_LIST_APP_INVITED);
@@ -2801,7 +2911,7 @@ local function PGF_LFGListSearchEntry_Update(self)
 	elseif (isApplication and pendingStatus ~= "applied") then
 		self.PendingLabel:SetText(LFG_LIST_PENDING);
 		self.PendingLabel:SetTextColor(GREEN_FONT_COLOR.r, GREEN_FONT_COLOR.g, GREEN_FONT_COLOR.b);
-		self.PendingLabel:SetSize(self:GetWidth()-30, self:GetHeight())
+		self.PendingLabel:SetSize(self:GetWidth() - 30, self:GetHeight())
 		self.PendingLabel:Hide();
 		self.ExpirationTime:Show();
 		if (LFGListFrame.SearchPanel.categoryID == GROUP_FINDER_CATEGORY_ID_DUNGEONS) then
@@ -2820,7 +2930,7 @@ local function PGF_LFGListSearchEntry_Update(self)
 		self.CancelButton:Show();
 		self.CancelButton:ClearAllPoints();
 		self.CancelButton:SetPoint("RIGHT", self.DataDisplay, "RIGHT", -10, 0);
-		self.CancelButton:SetSize(19,19);
+		self.CancelButton:SetSize(19, 19);
 	else
 		self.PendingLabel:Hide();
 		self.ExpirationTime:Hide();
@@ -2841,17 +2951,17 @@ local function PGF_LFGListSearchEntry_Update(self)
 		local dungeonScoreText = "|cffaaaaaa+0|r";
 		--
 		if (leaderDungeonScoreInfo and leaderDungeonScoreInfo.mapScore ~= 0 and not leaderDungeonScoreInfo.finishedSuccess) then
-			dungeonScoreText = "|cffaaaaaa+" .. leaderDungeonScoreInfo.bestRunLevel .. "|r";
+			dungeonScoreText = "|cffaaaaaa+" .. searchResultInfo.leaderBestDungeonScoreInfo.bestRunLevel .. "|r";
 		elseif (leaderDungeonScoreInfo and leaderDungeonScoreInfo.mapScore ~= 0) then
-			dungeonScoreText = "|cff00aa00+" .. leaderDungeonScoreInfo.bestRunLevel .. "|r";
+			dungeonScoreText = "|cff00aa00+" .. searchResultInfo.leaderBestDungeonScoreInfo.bestRunLevel .. "|r";
 		end
 		if (leaderOverallDungeonScore == nil) then
 			leaderOverallDungeonScore = 0;
 		end
 		local r, g, b = unpack(getColorForScoreLookup(leaderOverallDungeonScore));
-	    local color = format("%02x%02x%02x", r*255,g*255,b*255);
-	    local scoreText = format("|cFF%s%s|r", color, leaderOverallDungeonScore);
-	    if (PGF_ShowLeaderDungeonKey) then
+		local color = format("%02x%02x%02x", r * 255, g * 255, b * 255);
+		local scoreText = format("|cFF%s%s|r", color, leaderOverallDungeonScore);
+		if (PGF_ShowLeaderDungeonKey) then
 			self.Name:SetText(searchResultInfo.name .. " (" .. scoreText .. ")" .. "[" .. dungeonScoreText .. "]");
 		else
 			self.Name:SetText(searchResultInfo.name .. " (" .. scoreText .. ")");
@@ -2859,7 +2969,8 @@ local function PGF_LFGListSearchEntry_Update(self)
 	end
 
 	local displayData = C_LFGList.GetSearchResultMemberCounts(resultID);
-	LFGListGroupDataDisplay_Update(self.DataDisplay, searchResultInfo.activityID, displayData, searchResultInfo.isDelisted);
+	LFGListGroupDataDisplay_Update(self.DataDisplay, searchResultInfo.activityIDs[1], displayData,
+		searchResultInfo.isDelisted);
 end
 
 hooksecurefunc("LFGListSearchEntry_Update", PGF_LFGListSearchEntry_Update);
@@ -2868,16 +2979,19 @@ hooksecurefunc("LFGListSearchEntry_Update", PGF_LFGListSearchEntry_Update);
 	This hooked version will change the coloring system when the categoryID is dungeons
 ]]
 function PGF_LFGListApplicationViewer_UpdateApplicantMember(member, appID, memberIdx, status, pendingStatus)
-	local grayedOut = not pendingStatus and (status == "failed" or status == "cancelled" or status == "declined" or status == "declined_full" or status == "declined_delisted" or status == "invitedeclined" or status == "timedout" or status == "inviteaccepted" or status == "invitedeclined");
-	local name, class, localizedClass, level, itemLevel, honorLevel, tank, healer, damage, assignedRole, relationship, dungeonScore, pvpItemLevel = C_LFGList.GetApplicantMemberInfo(appID, memberIdx);
+	local grayedOut = not pendingStatus and
+		(status == "failed" or status == "cancelled" or status == "declined" or status == "declined_full" or status == "declined_delisted" or status == "invitedeclined" or status == "timedout" or status == "inviteaccepted" or status == "invitedeclined");
+	local name, class, localizedClass, level, itemLevel, honorLevel, tank, healer, damage, assignedRole, relationship, dungeonScore, pvpItemLevel =
+		C_LFGList.GetApplicantMemberInfo(appID, memberIdx);
 	if (not grayedOut and LFGApplicationViewerRatingColumnHeader:IsShown() and dungeonScore) then
 		if (dungeonScore == nil) then
 			dungeonScore = 0;
 		end
 		local r, g, b = unpack(getColorForScoreLookup(dungeonScore));
-		local color = CreateColorFromBytes(r*255,g*255,b*255,1):GenerateHexColor();
+		local color = CreateColorFromBytes(r * 255, g * 255, b * 255, 1):GenerateHexColor();
 		local activeEntryInfo = C_LFGList.GetActiveEntryInfo();
-		local applicantDungeonScoreInfo = C_LFGList.GetApplicantDungeonScoreForListing(appID, memberIdx, activeEntryInfo.activityID);
+		local applicantDungeonScoreInfo = C_LFGList.GetApplicantDungeonScoreForListing(appID, memberIdx,
+			activeEntryInfo.activityIDs[1]);
 		local dungeonScoreText = "|cffaaaaaa[+0]|r";
 		if (applicantDungeonScoreInfo and applicantDungeonScoreInfo.mapScore ~= 0 and not applicantDungeonScoreInfo.finishedSuccess) then
 			dungeonScoreText = "|cffaaaaaa[+" .. applicantDungeonScoreInfo.bestRunLevel .. "]|r";
@@ -2927,7 +3041,7 @@ local function PGF_LFGListGroupDataDisplayEnumerate_Update(self, numPlayers, dis
 		else
 			local texture = self:CreateTexture(nil, "OVERLAY");
 			texture:SetAtlas("groupfinder-icon-leader", false);
-			texture:SetSize(self.Icons[1]:GetWidth()-4, 6);
+			texture:SetSize(self.Icons[1]:GetWidth() - 4, 6);
 			texture:Hide();
 			self.LeaderIcon = texture;
 		end
@@ -2958,36 +3072,41 @@ local function PGF_LFGListGroupDataDisplayEnumerate_Update(self, numPlayers, dis
 				isLeader = true;
 			end
 			--spec = spec:gsub("%s","");
-			table.insert(players, {["role"] = role, ["class"] = classUniversal, ["spec"] = spec, ["isLeader"] = isLeader});
+			table.insert(players,
+				{ ["role"] = role, ["class"] = classUniversal, ["spec"] = spec, ["isLeader"] = isLeader });
 		end
 		table.sort(players, sortRoles);
 		--Another implementation for evokers
 		for i = 1, searchResults.numMembers do
 			if (self.LeaderIcon and players[i].isLeader and PGF_ShowLeaderIcon) then
-				self.LeaderIcon:SetPoint("TOP", self.Icons[6-i], "TOP", -1, 7);
+				self.LeaderIcon:SetPoint("TOP", self.Icons[6 - i], "TOP", -1, 7);
 				self.LeaderIcon:Show();
 			end
 			if (true or players[i].class == "EVOKER") then
 				if (PGF_DetailedDataDisplay) then
-					self.Icons[6-i].Textures[3]:SetTexture(select(4, GetSpecializationInfoByID(classSpecilizationMap[players[i].class][players[i].spec])));
-					self.Icons[6-i].Textures[3]:SetTexCoord(0,1,0,1);
-					self.Icons[6-i].Textures[3]:Show();
+					self.Icons[6 - i].Textures[3]:SetTexture(select(4,
+						GetSpecializationInfoByID(classSpecilizationMap[players[i].class][players[i].spec])));
+					self.Icons[6 - i].Textures[3]:SetTexCoord(0, 1, 0, 1);
+					self.Icons[6 - i].Textures[3]:Show();
 					--spec-thumbnail-evoker-preservation?
 				else
-					self.Icons[6-i].Textures[3]:SetTexture("Interface\\AddOns\\PGFinder\\Res\\" .. players[i].class .. "_" .. players[i].role .. ".tga");
-					self.Icons[6-i].Textures[3]:Show();
+					self.Icons[6 - i].Textures[3]:SetTexture("Interface\\AddOns\\PGFinder\\Res\\" ..
+						players[i].class .. "_" .. players[i].role .. ".tga");
+					self.Icons[6 - i].Textures[3]:Show();
 				end
 			else
-				self.Icons[6-i].Textures[3]:SetAtlas("GarrMission_ClassIcon-"..strlower(players[i].class).."-"..players[i].spec, false);
-				self.Icons[6-i].Textures[3]:Show();
+				self.Icons[6 - i].Textures[3]:SetAtlas(
+					"GarrMission_ClassIcon-" .. strlower(players[i].class) .. "-" .. players[i].spec, false);
+				self.Icons[6 - i].Textures[3]:Show();
 			end
 		end
 		local count = 1;
 		for i = 3, 1, -1 do
 			for j = 1, displayData[roleRemainingKeyLookup[iconOrder[i]]] do
 				if (PGF_DetailedDataDisplay) then
-					self.Icons[count].Textures[3]:SetTexture("Interface\\addons\\PGFinder\\Res\\" .. roleRemainingKeyLookup[iconOrder[i]]);
-					self.Icons[count].Textures[3]:SetTexCoord(0,1,0,1);
+					self.Icons[count].Textures[3]:SetTexture("Interface\\addons\\PGFinder\\Res\\" ..
+						roleRemainingKeyLookup[iconOrder[i]]);
+					self.Icons[count].Textures[3]:SetTexCoord(0, 1, 0, 1);
 					self.Icons[count].Textures[3]:Show();
 				else
 					self.Icons[count].Textures[3]:SetAtlas("groupfinder-icon-emptyslot", false);
@@ -3009,13 +3128,26 @@ local function restoreOriginalRoleCountUI(self)
 	self.TankCount:ClearAllPoints();
 	self.HealerCount:ClearAllPoints();
 	self.DamagerCount:ClearAllPoints();
-	self:SetPoint(originalRoleCountUI[self].main[1], originalRoleCountUI[self].main[2], originalRoleCountUI[self].main[3], originalRoleCountUI[self].main[4], originalRoleCountUI[self].main[5]);
-	self.TankIcon:SetPoint(originalRoleCountUI[self].tankIcon[1], originalRoleCountUI[self].tankIcon[2], originalRoleCountUI[self].tankIcon[3], originalRoleCountUI[self].tankIcon[4], originalRoleCountUI[self].tankIcon[5]);
-	self.HealerIcon:SetPoint(originalRoleCountUI[self].healerIcon[1], originalRoleCountUI[self].healerIcon[2], originalRoleCountUI[self].healerIcon[3], originalRoleCountUI[self].healerIcon[4], originalRoleCountUI[self].healerIcon[5]);
-	self.DamagerIcon:SetPoint(originalRoleCountUI[self].damagerIcon[1], originalRoleCountUI[self].damagerIcon[2], originalRoleCountUI[self].damagerIcon[3], originalRoleCountUI[self].damagerIcon[4], originalRoleCountUI[self].damagerIcon[5]);
-	self.TankCount:SetPoint(originalRoleCountUI[self].tankCount[1], originalRoleCountUI[self].tankCount[2], originalRoleCountUI[self].tankCount[3], originalRoleCountUI[self].tankCount[4], originalRoleCountUI[self].tankCount[5]);
-	self.HealerCount:SetPoint(originalRoleCountUI[self].healerCount[1], originalRoleCountUI[self].healerCount[2], originalRoleCountUI[self].healerCount[3], originalRoleCountUI[self].healerCount[4], originalRoleCountUI[self].healerCount[5]);
-	self.DamagerCount:SetPoint(originalRoleCountUI[self].damagerCount[1], originalRoleCountUI[self].damagerCount[2], originalRoleCountUI[self].damagerCount[3], originalRoleCountUI[self].damagerCount[4], originalRoleCountUI[self].damagerCount[5]);
+	self:SetPoint(originalRoleCountUI[self].main[1], originalRoleCountUI[self].main[2], originalRoleCountUI[self].main
+		[3], originalRoleCountUI[self].main[4], originalRoleCountUI[self].main[5]);
+	self.TankIcon:SetPoint(originalRoleCountUI[self].tankIcon[1], originalRoleCountUI[self].tankIcon[2],
+		originalRoleCountUI[self].tankIcon[3], originalRoleCountUI[self].tankIcon[4],
+		originalRoleCountUI[self].tankIcon[5]);
+	self.HealerIcon:SetPoint(originalRoleCountUI[self].healerIcon[1], originalRoleCountUI[self].healerIcon[2],
+		originalRoleCountUI[self].healerIcon[3], originalRoleCountUI[self].healerIcon[4],
+		originalRoleCountUI[self].healerIcon[5]);
+	self.DamagerIcon:SetPoint(originalRoleCountUI[self].damagerIcon[1], originalRoleCountUI[self].damagerIcon[2],
+		originalRoleCountUI[self].damagerIcon[3], originalRoleCountUI[self].damagerIcon[4],
+		originalRoleCountUI[self].damagerIcon[5]);
+	self.TankCount:SetPoint(originalRoleCountUI[self].tankCount[1], originalRoleCountUI[self].tankCount[2],
+		originalRoleCountUI[self].tankCount[3], originalRoleCountUI[self].tankCount[4],
+		originalRoleCountUI[self].tankCount[5]);
+	self.HealerCount:SetPoint(originalRoleCountUI[self].healerCount[1], originalRoleCountUI[self].healerCount[2],
+		originalRoleCountUI[self].healerCount[3], originalRoleCountUI[self].healerCount[4],
+		originalRoleCountUI[self].healerCount[5]);
+	self.DamagerCount:SetPoint(originalRoleCountUI[self].damagerCount[1], originalRoleCountUI[self].damagerCount[2],
+		originalRoleCountUI[self].damagerCount[3], originalRoleCountUI[self].damagerCount[4],
+		originalRoleCountUI[self].damagerCount[5]);
 end
 
 --[[
@@ -3037,17 +3169,17 @@ local function PGF_LFGListGroupDataDisplayRoleCount_Update(self, displayData, di
 		local dCAnchor, dCParent, dCOffsetAnchor, dCOffsetX, dCOffsetY = self.DamagerCount:GetPoint();
 		local anchor, parent, offsetAnchor, offsetX, offsetY = self:GetPoint();
 		originalRoleCountUI[self] = {
-			["tankIcon"] = {tAnchor, tParent, tOffsetAnchor, tOffsetX, tOffsetY},
-			["healerIcon"] = {hAnchor, hParent, hOffsetAnchor, hOffsetX, hOffsetY},
-			["damagerIcon"] = {dAnchor, dParent, dOffsetAnchor, dOffsetX, dOffsetY},
-			["tankCount"] = {tCAnchor, tCParent, tCOffsetAnchor, tCOffsetX, tCOffsetY},
-			["healerCount"] = {hCAnchor, hCParent, hCOffsetAnchor, hCOffsetX, hCOffsetY},
-			["damagerCount"] = {dCAnchor, dCParent, dCOffsetAnchor, dCOffsetX, dCOffsetY},
-			["main"] = {anchor, parent, offsetAnchor, offsetX-15, offsetY},
+			["tankIcon"] = { tAnchor, tParent, tOffsetAnchor, tOffsetX, tOffsetY },
+			["healerIcon"] = { hAnchor, hParent, hOffsetAnchor, hOffsetX, hOffsetY },
+			["damagerIcon"] = { dAnchor, dParent, dOffsetAnchor, dOffsetX, dOffsetY },
+			["tankCount"] = { tCAnchor, tCParent, tCOffsetAnchor, tCOffsetX, tCOffsetY },
+			["healerCount"] = { hCAnchor, hCParent, hCOffsetAnchor, hCOffsetX, hCOffsetY },
+			["damagerCount"] = { dCAnchor, dCParent, dCOffsetAnchor, dCOffsetX, dCOffsetY },
+			["main"] = { anchor, parent, offsetAnchor, offsetX - 15, offsetY },
 		};
 	end
 	if (LFGListFrame.SearchPanel.categoryID == 3 and (PGF_ShowYourClassAmount or PGF_ShowYourTierAmount)) then
-	--	self:SetSize(165, 24);
+		--	self:SetSize(165, 24);
 		local p1, p2, p3, p4, p5 = self:GetPoint(1);
 		self:ClearAllPoints();
 		self:SetPoint(p1, p2, p3, -75, p5);
@@ -3090,7 +3222,8 @@ local function PGF_LFGListGroupDataDisplayRoleCount_Update(self, displayData, di
 			self.ClassIcon:SetAlpha(disabled and 0.5 or 0.70);
 			self.TierIcon:SetAlpha(disabled and 0.5 or 0.70);
 			if (disabled or RAID_CLASS_COLORS[playerClass] == nil) then
-				self.ClassText:SetTextColor(LFG_LIST_DELISTED_FONT_COLOR.r, LFG_LIST_DELISTED_FONT_COLOR.g, LFG_LIST_DELISTED_FONT_COLOR.b);
+				self.ClassText:SetTextColor(LFG_LIST_DELISTED_FONT_COLOR.r, LFG_LIST_DELISTED_FONT_COLOR.g,
+					LFG_LIST_DELISTED_FONT_COLOR.b);
 				self.ClassText:SetText(classCount);
 			else
 				self.ClassText:SetText(RAID_CLASS_COLORS[playerClass]:WrapTextInColorCode(classCount));
@@ -3127,13 +3260,12 @@ local function PGF_LFGListGroupDataDisplayRoleCount_Update(self, displayData, di
 				self.TierIcon:Hide();
 				self.TierTextInfo:Hide();
 			end
-
 		else
 			local fontName, fontHeight, fontFlags = self.DamagerCount:GetFont()
 			local classTexture = self:CreateTexture(nil, "OVERLAY");
-			local atlas = C_Texture.GetAtlasInfo("classicon-"..playerClass);
+			local atlas = C_Texture.GetAtlasInfo("classicon-" .. playerClass);
 			classTexture:SetSize(self.TankIcon:GetWidth(), self.TankIcon:GetHeight());
-			classTexture:SetAtlas("groupfinder-icon-class-"..playerClass, false);
+			classTexture:SetAtlas("groupfinder-icon-class-" .. playerClass, false);
 			if (playerClass == "EVOKER") then
 				classTexture:SetAtlas("classicon-evoker", false);
 			end
@@ -3145,9 +3277,9 @@ local function PGF_LFGListGroupDataDisplayRoleCount_Update(self, displayData, di
 			classText:Hide();
 			self.ClassText = classText;
 
-			local tierAmountText= self:CreateFontString(nil, "ARTWORK", "GameFontNormalTiny2");
+			local tierAmountText = self:CreateFontString(nil, "ARTWORK", "GameFontNormalTiny2");
 			tierAmountText:SetFont(fontName, fontHeight, fontFlags);
-			tierAmountText:SetTextColor(1,1,1,1);
+			tierAmountText:SetTextColor(1, 1, 1, 1);
 			tierAmountText:Hide();
 			self.TierText = tierAmountText;
 
@@ -3262,7 +3394,7 @@ end
 ]]
 function LFGListSearchPanel_UpdateResultList(self)
 	if (LFGListFrame.SearchPanel.categoryID == GROUP_FINDER_CATEGORY_ID_DUNGEONS) then
-		if(not PGF_FilterRemainingRoles and not PGF_DontShowDeclinedGroups) then
+		if (not PGF_FilterRemainingRoles and not PGF_DontShowDeclinedGroups) then
 			LFGListFrame.SearchPanel.RefreshButton:SetScript("OnClick", function() end);
 			LFGListFrame.SearchPanel.RefreshButton.Icon:SetTexture("Interface\\AddOns\\PGFinder\\Res\\RedRefresh.tga");
 			searchAvailable = false;
@@ -3292,7 +3424,7 @@ function LFGListSearchPanel_UpdateResultList(self)
 			local newResults = {};
 			for i = 1, self.totalResults do
 				local searchResults = C_LFGList.GetSearchResultInfo(self.results[i]);
-				local activityID = searchResults.activityID;
+				local activityID = searchResults.activityIDs[1];
 				local activityInfo = C_LFGList.GetActivityInfoTable(activityID);
 				local activityFullName = activityInfo.fullName;
 				local isMythicPlusActivity = activityInfo.isMythicPlusActivity;
@@ -3313,7 +3445,7 @@ function LFGListSearchPanel_UpdateResultList(self)
 				if (appStatus == "applied") then
 					table.insert(newResults, self.results[i]);
 				elseif (PGF_DontShowDeclinedGroups) then
-					if ((declinedGroups[leaderName] == nil or declinedGroups[leaderName].activityID ~= activityID) and (requiredDungeonScore == nil or C_ChallengeMode.GetOverallDungeonScore() >= requiredDungeonScore) and (not PGF_FilterRemainingRoles or HasRemainingSlotsForLocalPlayerRole(self.results[i], true))) then
+					if ((declinedGroups[leaderName] == nil or declinedGroups[leaderName].activityIDs[1] ~= activityID) and (requiredDungeonScore == nil or C_ChallengeMode.GetOverallDungeonScore() >= requiredDungeonScore) and (not PGF_FilterRemainingRoles or HasRemainingSlotsForLocalPlayerRole(self.results[i], true))) then
 						table.insert(newResults, self.results[i]);
 					end
 				elseif (PGF_FilterRemainingRoles) then
@@ -3333,7 +3465,7 @@ function LFGListSearchPanel_UpdateResultList(self)
 			return true;
 		end
 	elseif (LFGListFrame.SearchPanel.categoryID == 3) then
-		if((next(selectedInfo.bosses) == nil and raidStateMap[lastSelectedRaidState] ~= 0 and not lastSelectedRaidState:match(" All")) or raidStateMap[lastSelectedRaidState] == 0) then
+		if ((next(selectedInfo.bosses) == nil and raidStateMap[lastSelectedRaidState] ~= 0 and not lastSelectedRaidState:match(" All")) or raidStateMap[lastSelectedRaidState] == 0) then
 			LFGListFrame.SearchPanel.RefreshButton:SetScript("OnClick", function() end);
 			LFGListFrame.SearchPanel.RefreshButton.Icon:SetTexture("Interface\\AddOns\\PGFinder\\Res\\RedRefresh.tga");
 			searchAvailable = false;
@@ -3354,7 +3486,7 @@ function LFGListSearchPanel_UpdateResultList(self)
 			local newResults = {};
 			for i = 1, #self.results do
 				local searchResults = C_LFGList.GetSearchResultInfo(self.results[i]);
-				local activityID = searchResults.activityID;
+				local activityID = searchResults.activityIDs[1];
 				local activityInfo = C_LFGList.GetActivityInfoTable(activityID);
 				local activityFullName = activityInfo.fullName;
 				local activityShortName = activityFullName:gsub("%s%(.*", "");
@@ -3370,7 +3502,7 @@ function LFGListSearchPanel_UpdateResultList(self)
 				local encounterInfo = C_LFGList.GetSearchResultEncounterInfo(self.results[i]);
 				local bossesDefeated = {};
 				if (lastSelectedRaidState:match(" All")) then
-					if (raidStateMap[lastSelectedRaidState] == activityID or raidStateMap[lastSelectedRaidState]-1 == activityID or raidStateMap[lastSelectedRaidState]-2 == activityID) then --raidStateMap[lastSelectedRaidState] is always mythicID, and heroic and normal are also accepted when the user is looking for ANY raid and their aIDs are -1 and -2 from mythic always
+					if (raidStateMap[lastSelectedRaidState] == activityID or raidStateMap[lastSelectedRaidState] - 1 == activityID or raidStateMap[lastSelectedRaidState] - 2 == activityID) then --raidStateMap[lastSelectedRaidState] is always mythicID, and heroic and normal are also accepted when the user is looking for ANY raid and their aIDs are -1 and -2 from mythic always
 						if (next(selectedInfo.bosses) == nil) then
 							table.insert(newResults, self.results[i]);
 						else
@@ -3435,7 +3567,7 @@ function LFGListSearchPanel_UpdateResultList(self)
 			self.totalResults, self.results = C_LFGList.GetFilteredSearchResults();
 			for i = 1, #self.results do
 				local searchResults = C_LFGList.GetSearchResultInfo(self.results[i]);
-				local activityID = searchResults.activityID;
+				local activityID = searchResults.activityIDs[1];
 				local activityInfo = C_LFGList.GetActivityInfoTable(activityID);
 				local activityFullName = activityInfo.fullName;
 				local isMythicPlusActivity = activityInfo.isMythicPlusActivity;
@@ -3479,6 +3611,7 @@ function LFGListSearchPanel_UpdateResultList(self)
 		return true;
 	end
 end
+
 --only goes up to 1400 dungeons currently at 1200 as of 10.1
 --[[
 	Documenation: A function to fetch all activity names from the activityIDs 1-1400 and stores them in the WTF that can be used to update the addon with new dungeons/raids.
@@ -3510,6 +3643,7 @@ function PGF_DevGenerateAllActivityIDs()
 		end
 	end
 end
+
 --hooksecurefunc("LFGListSearchPanel_UpdateResultList", PGF_Search);
 
 --[[
@@ -3523,14 +3657,17 @@ function LFGListSearchPanel_SelectResult(self, resultID)
 	self.selectedResult = resultID;
 	LFGListSearchPanel_UpdateResults(self);
 	if ((true or PGF_autoSign) and (IsInGroup() == false or UnitIsGroupLeader("player"))) then
-		C_LFGList.ApplyToGroup(LFGListFrame.SearchPanel.selectedResult, PGF_roles["TANK"], PGF_roles["HEALER"], PGF_roles["DAMAGER"]);
+		C_LFGList.ApplyToGroup(LFGListFrame.SearchPanel.selectedResult, PGF_roles["TANK"], PGF_roles["HEALER"],
+			PGF_roles["DAMAGER"]);
 	end
 end
+
 function LFGListUtil_SortSearchResults(results)
 	if (results and #results > 0) then
 		table.sort(results, LFGListUtil_SortSearchResultsCB);
 	end
 end
+
 --[[
 LFGListSearchEntry:HookScript("OnClick", function(self)
 	if (true or PGF_autoSign) then
@@ -3544,7 +3681,7 @@ end);
 ]]
 LFDRoleCheckPopup:HookScript("OnShow", function(self)
 	local apps = C_LFGList.GetApplications();
-	if(IsInGroup(2) or (IsInGroup(1) and not UnitIsGroupLeader("player"))) then
+	if (IsInGroup(2) or (IsInGroup(1) and not UnitIsGroupLeader("player"))) then
 		if (PGF_roles["TANK"]) then
 			LFDRoleCheckPopupRoleButtonTank.checkButton:SetChecked(true);
 		else
@@ -3691,10 +3828,11 @@ function PGF_GetPlaystyleString(playstyle, activityInfo)
 		return nil;
 	end
 end
+
 --[[
 	Documentation: Override Blizzards function with the new one
 ]]
-C_LFGList.GetPlaystyleString = function(playstyle,activityInfo)
+C_LFGList.GetPlaystyleString = function(playstyle, activityInfo)
 	return PGF_GetPlaystyleString(playstyle, activityInfo);
 end
 
