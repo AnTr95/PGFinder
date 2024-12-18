@@ -2950,10 +2950,14 @@ local function PGF_LFGListSearchEntry_Update(self)
 		local leaderDungeonScoreInfo = searchResultInfo.leaderDungeonScoreInfo;
 		local dungeonScoreText = "|cffaaaaaa+0|r";
 		--
-		if (leaderDungeonScoreInfo and leaderDungeonScoreInfo.mapScore ~= 0 and not leaderDungeonScoreInfo.finishedSuccess) then
-			dungeonScoreText = "|cffaaaaaa+" .. searchResultInfo.leaderBestDungeonScoreInfo.bestRunLevel .. "|r";
-		elseif (leaderDungeonScoreInfo and leaderDungeonScoreInfo.mapScore ~= 0) then
-			dungeonScoreText = "|cff00aa00+" .. searchResultInfo.leaderBestDungeonScoreInfo.bestRunLevel .. "|r";
+		if (leaderDungeonScoreInfo and leaderDungeonScoreInfo[1].mapScore ~= 0 and not leaderDungeonScoreInfo[1].finishedSuccess) then
+			if searchResultInfo and searchResultInfo.leaderBestDungeonScoreInfo then
+				dungeonScoreText = "|cffaaaaaa+" .. searchResultInfo.leaderBestDungeonScoreInfo.bestRunLevel .. "|r";
+			end
+		elseif (leaderDungeonScoreInfo and leaderDungeonScoreInfo[1].mapScore ~= 0) then
+			if searchResultInfo and searchResultInfo.leaderBestDungeonScoreInfo then
+				dungeonScoreText = "|cff00aa00+" .. searchResultInfo.leaderBestDungeonScoreInfo.bestRunLevel .. "|r";
+			end
 		end
 		if (leaderOverallDungeonScore == nil) then
 			leaderOverallDungeonScore = 0;
