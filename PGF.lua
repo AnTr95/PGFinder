@@ -2634,7 +2634,7 @@ hooksecurefunc("LFGListApplicationViewer_UpdateInfo", PGF_LFGListApplicationView
 function LFGListUtil_GetSearchEntryMenu(resultID)
 	local searchResults = C_LFGList.GetSearchResultInfo(resultID);
 	local _, appStatus, pendingStatus, appDuration = C_LFGList.GetApplicationInfo(resultID);
-	local activityID = searchResults.activityID;
+	local activityID = searchResults.activityIDs[1];
 	local activityInfo = C_LFGList.GetActivityInfoTable(activityID);
 	local activityFullName = activityInfo.fullName;
 	local categoryID = activityInfo.categoryID;
@@ -2840,10 +2840,10 @@ local function PGF_LFGListSearchEntry_Update(self)
 		local leaderDungeonScoreInfo = searchResultInfo.leaderDungeonScoreInfo;
 		local dungeonScoreText = "|cffaaaaaa+0|r";
 		--
-		if (leaderDungeonScoreInfo and leaderDungeonScoreInfo.mapScore ~= 0 and not leaderDungeonScoreInfo.finishedSuccess) then
-			dungeonScoreText = "|cffaaaaaa+" .. leaderDungeonScoreInfo.bestRunLevel .. "|r";
-		elseif (leaderDungeonScoreInfo and leaderDungeonScoreInfo.mapScore ~= 0) then
-			dungeonScoreText = "|cff00aa00+" .. leaderDungeonScoreInfo.bestRunLevel .. "|r";
+		if (leaderDungeonScoreInfo and leaderDungeonScoreInfo[1] and leaderDungeonScoreInfo[1].bestRunLevel and leaderDungeonScoreInfo.mapScore ~= 0 and not leaderDungeonScoreInfo[1].finishedSuccess) then
+			dungeonScoreText = "|cffaaaaaa+" .. leaderDungeonScoreInfo[1].bestRunLevel .. "|r";
+		elseif (leaderDungeonScoreInfo and leaderDungeonScoreInfo[1] and leaderDungeonScoreInfo[1].bestRunLevel and leaderDungeonScoreInfo.mapScore ~= 0) then
+			dungeonScoreText = "|cff00aa00+" .. leaderDungeonScoreInfo[1].bestRunLevel .. "|r";
 		end
 		if (leaderOverallDungeonScore == nil) then
 			leaderOverallDungeonScore = 0;
@@ -2859,7 +2859,7 @@ local function PGF_LFGListSearchEntry_Update(self)
 	end
 
 	local displayData = C_LFGList.GetSearchResultMemberCounts(resultID);
-	LFGListGroupDataDisplay_Update(self.DataDisplay, searchResultInfo.activityID, displayData, searchResultInfo.isDelisted);
+	LFGListGroupDataDisplay_Update(self.DataDisplay, searchResultInfo.activityIDs[1], displayData, searchResultInfo.isDelisted);
 end
 
 hooksecurefunc("LFGListSearchEntry_Update", PGF_LFGListSearchEntry_Update);
@@ -3292,7 +3292,7 @@ function LFGListSearchPanel_UpdateResultList(self)
 			local newResults = {};
 			for i = 1, self.totalResults do
 				local searchResults = C_LFGList.GetSearchResultInfo(self.results[i]);
-				local activityID = searchResults.activityID;
+				local activityID = searchResults.activityIDs[1];
 				local activityInfo = C_LFGList.GetActivityInfoTable(activityID);
 				local activityFullName = activityInfo.fullName;
 				local isMythicPlusActivity = activityInfo.isMythicPlusActivity;
@@ -3354,7 +3354,7 @@ function LFGListSearchPanel_UpdateResultList(self)
 			local newResults = {};
 			for i = 1, #self.results do
 				local searchResults = C_LFGList.GetSearchResultInfo(self.results[i]);
-				local activityID = searchResults.activityID;
+				local activityID = searchResults.activityIDs[1];
 				local activityInfo = C_LFGList.GetActivityInfoTable(activityID);
 				local activityFullName = activityInfo.fullName;
 				local activityShortName = activityFullName:gsub("%s%(.*", "");
@@ -3435,7 +3435,7 @@ function LFGListSearchPanel_UpdateResultList(self)
 			self.totalResults, self.results = C_LFGList.GetFilteredSearchResults();
 			for i = 1, #self.results do
 				local searchResults = C_LFGList.GetSearchResultInfo(self.results[i]);
-				local activityID = searchResults.activityID;
+				local activityID = searchResults.activityIDs[1];
 				local activityInfo = C_LFGList.GetActivityInfoTable(activityID);
 				local activityFullName = activityInfo.fullName;
 				local isMythicPlusActivity = activityInfo.isMythicPlusActivity;
