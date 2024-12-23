@@ -2877,7 +2877,7 @@ function PGF_LFGListApplicationViewer_UpdateApplicantMember(member, appID, membe
 		local r, g, b = unpack(getColorForScoreLookup(dungeonScore));
 		local color = CreateColorFromBytes(r*255,g*255,b*255,1):GenerateHexColor();
 		local activeEntryInfo = C_LFGList.GetActiveEntryInfo();
-		local applicantDungeonScoreInfo = C_LFGList.GetApplicantDungeonScoreForListing(appID, memberIdx, activeEntryInfo.activityID);
+		local applicantDungeonScoreInfo = C_LFGList.GetApplicantDungeonScoreForListing(appID, memberIdx, activeEntryInfo.activityIDs[1]);
 		local dungeonScoreText = "|cffaaaaaa[+0]|r";
 		if (applicantDungeonScoreInfo and applicantDungeonScoreInfo.mapScore ~= 0 and not applicantDungeonScoreInfo.finishedSuccess) then
 			dungeonScoreText = "|cffaaaaaa[+" .. applicantDungeonScoreInfo.bestRunLevel .. "]|r";
