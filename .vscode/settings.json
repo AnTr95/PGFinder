@@ -77,7 +77,10 @@
         "EJ_ContentTab_SetEnabled",
         "EncounterJournal",
         "ChatTypeInfo",
-        "BattlefieldMapFrame"
+        "BattlefieldMapFrame",
+        "Settings",
+        "UIDROPDOWNMENU_MAXLEVELS",
+        "UIDROPDOWNMENU_MAXBUTTONS"
     ],
     "Lua.runtime.version": "Lua 5.1",
     "Lua.runtime.builtin": {
