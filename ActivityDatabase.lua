@@ -378,6 +378,11 @@ PGF_allDungeonsActivityIDs = {
 	[1511] = "Priory of the Sacred Flame (Heroic)",
 	[1512] = "Priory of the Sacred Flame (Mythic)",
 	[1281] = "Priory of the Sacred Flame (Mythic Keystone)",
+	[1547] = "Operation: Floodgate (Normal)",
+	[1548] = "Operation: Floodgate (Heroic)",
+	[1549] = "Operation: Floodgate (Mythic)",
+	[1550] = "Operation: Floodgate (Mythic Keystone)",
+	[1616] = "Mechagon Workshop (Mythic)",
 };
 
 PGF_allRaidActivityIDs = {
@@ -514,6 +519,9 @@ PGF_allRaidActivityIDs = {
 	[1551] = "Blackrock Depths (Normal)",
 	[1552]= "Blackrock Depths (Heroic)",
 	[1289] = "World Bosses (War Within)",
+	[1600] = "Liberation of Undermine (Heroic)",
+	[1601] = "Liberation of Undermine (Normal)",
+	[1602] = "Liberation of Undermine (Mythic)",
 };
 
 local raidMapIDs = {

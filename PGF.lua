@@ -96,7 +96,7 @@ local prevSearchTime = 0;
 local refreshTimeReset = 3; --defines the time that must pass between searches
 local searchAvailable = true;
 local dungeonStates = {"Normal", "Heroic", "Mythic", "Mythic+ (Keystone)"}; --visible states for the dropdown
-local raidStates = {"All", "NP Normal", "NP Heroic", "NP Mythic", "NP All"}; --visible states for the dropdown
+local raidStates = {"All", "LOU Normal", "LOU Heroic", "LOU Mythic", "LOU All", "NP Normal", "NP Heroic", "NP Mythic", "NP All",}; --visible states for the dropdown
 local sortingStates = {[1] = "Time", [2] = "Score"};
 local sortingRaidStates = {[1] = "Time", [2] = "Few of your class", [3] = "Many of your class", [4] = "Few of your tier", [5] = "Many of your tier"};
 local lastSelectedDungeonState = "";
@@ -126,7 +126,11 @@ local raidStateMap = {
 	["NP Normal"] = 1505,
 	["NP Heroic"] = 1506,
 	["NP Mythic"] = 1504,
-	["NP All"] = 1505, --no activity ID for this so lets take the boss data from normal
+	["NP All"] = 1506, --no activity ID for this so lets take the boss data from normal
+	["LOU Normal"] = 1601,
+	["LOU Heroic"] = 1600,
+	["LOU Mythic"] = 1602,
+	["LOU All"] = 1602, --no activity ID for this so lets take the boss data from normal
 };
 local tierSetsMap = {
 	["DEATHKNIGHT"] = "Dreadful",
@@ -160,6 +164,17 @@ local bossOrderMap = {
 		"Queen Ansurek",
 		"Fresh",
 	},
+	["LOU"] = {
+		"Vexie and the Geargrinders",
+		"Cauldron of Carnage",
+		"Rik Reverb",
+		"Stix Bunkjunker",
+		"Sprocketmonger Lockenstock",
+		"The One-Armed Bandit",
+		"Mug'Zee, Heads of Security",
+		"Chrome King Gallywix",
+		"Fresh",
+	},
 };
 --[[
 	Documentation: This converts the names used in the GUIs for the user to see with the actual names in the code.
@@ -175,6 +190,17 @@ local bossNameMap = {
 		["The Silken Court"] = "Silken Court",
 		["Queen Ansurek"] = "Ansurek",
 		["Fresh"] = "Fresh Run",
+	},
+	["LOU"] = {
+		["Vexie and the Geargrinders"] = "Vexie",
+		["Cauldron of Carnage"] = "Cauldron of Carnage",
+		["Rik Reverb"] = "Rik Reverb",
+		["Stix Bunkjunker"] = "Stix Bunkjunker",
+		["Sprocketmonger Lockenstock"] = "Sprocketmonger Lockenstock",
+		["The One-Armed Bandit"] = "One-Armed Bandit",
+		["Mug'Zee, Heads of Security"] = "Mug'Zee",
+		["Chrome King Gallywix"] = "Gallywix",
+		["Fresh"] = "Fresh run",
 	},
 };
 local dungeonAbbreviations = {
@@ -215,9 +241,16 @@ local dungeonAbbreviations = {
 	["Cinderbrew Meadery"] = "CBM",
 	["Darkflame Cleft"] = "DFC",
 	["Priory of the Sacred Flame"] = "PSF",
+	["Operation: Floodgate"] = "OP:FG",
+	["The MOTHERLODE!!"] = "ML",
+	["THE MOTHERLODE"] = "ML",
+	["Theater of Pain"] = "TOP",
+	["Operation: Mechagon"] = "OP:M",
+	["Mechagon Workshop"] = "OP:MW",
 };
 
 local raidAbbreviations = {
+	["Liberation of Undermine"] = "LOU",
 	["Nerub-ar Palace"] = "NP",
 };
 --[[
@@ -296,6 +329,70 @@ local boss_Paths = {
 				{"Ulgrax", "Silken Court"},
 				{"Silken Court", "Broodtwister", "Ky'veza", "Rasha'nan", "Sikran", "Bloodbound Horror", "Ulgrax"},
 				{"Silken Court", "Ky'veza", "Broodtwister", "Rasha'nan", "Sikran", "Bloodbound Horror", "Ulgrax"},
+			}
+		},
+	},
+	["LOU"] = {
+		["Vexie"] = {
+			["children_paths"] = {
+				{"Cauldron of Carnage", "Rik Reverb", "Stix Bunkjunker", "Sprocketmonger Lockenstock", "One-Armed Bandit", "Mug'Zee", "Gallywix"}
+			},
+			["parent_paths"] = {},
+		},
+		["Cauldron of Carnage"] = {
+			["children_paths"] = {
+				{"Rik Reverb", "Stix Bunkjunker", "Sprocketmonger Lockenstock", "One-Armed Bandit", "Mug'Zee", "Gallywix"}
+			},
+			["parent_paths"] = {
+				{"Vexie"},
+			},
+		},
+		["Rik Reverb"] = {
+			["children_paths"] = {
+				{"Stix Bunkjunker", "Sprocketmonger Lockenstock", "One-Armed Bandit", "Mug'Zee", "Gallywix"}
+			},
+			["parent_paths"] = {
+				{"Cauldron of Carnage", "Vexie"},
+			},
+		},
+		["Stix Bunkjunker"] = {
+			["children_paths"] = {
+				{"Sprocketmonger Lockenstock", "One-Armed Bandit", "Mug'Zee", "Gallywix"}
+			},
+			["parent_paths"] = {
+				{"Rik Reverb", "Cauldron of Carnage", "Vexie"},
+			},
+		},
+		["Sprocketmonger Lockenstock"] = {
+			["children_paths"] = {
+				{"One-Armed Bandit", "Mug'Zee", "Gallywix"}
+			},
+			["parent_paths"] = {
+				{"Stix Bunkjunker", "Rik Reverb", "Cauldron of Carnage", "Vexie"},
+			},
+		},
+		["One-Armed Bandit"] = {
+			["children_paths"] = {
+				{"Mug'Zee", "Gallywix"}
+			},
+			["parent_paths"] = {
+				{"Sprocketmonger Lockenstock", "Stix Bunkjunker", "Rik Reverb", "Cauldron of Carnage", "Vexie"},
+			},
+		},
+		["Mug'Zee"] = {
+			["children_paths"] = {
+				{"Gallywix"}
+			},
+			["parent_paths"] = {
+				{"One-Armed Bandit", "Sprocketmonger Lockenstock", "Stix Bunkjunker", "Rik Reverb", "Cauldron of Carnage", "Vexie"},
+				{"Vexie"},
+			},
+		},
+		["Gallywix"] = {
+			["children_paths"] = {},
+			["parent_paths"] = {
+				{"Mug'Zee", "One-Armed Bandit", "Sprocketmonger Lockenstock", "Stix Bunkjunker", "Rik Reverb", "Cauldron of Carnage", "Vexie"},
+				{"Vexie", "Mug'Zee"}
 			}
 		},
 	},
@@ -424,6 +521,7 @@ local selectedInfo = {
 	Documentation: All of the achievementIDs for CE, Mythic Boss, AOTC, Normal Clear. Order decides which one is best, lower key = better
 ]]
 local achievementIDs = {
+	["Liberation of Undermine"] = {41297, 41235, 41234, 41233, 41232, 41231, 41230, 41229, 41298, 41222},
 	["Nerub-ar Palace"] = {40254, 40242, 40241, 40240, 40239, 40238, 40237, 40236, 40253, 40244},
 };
 
@@ -787,7 +885,7 @@ end
 ]]
 local function isNextBoss(graph, boss, bosses)
 	if (boss and graph) then
-		if (boss == "Silken Court") then -- or boss XX
+		if (boss == "Silken Court" or boss == "Mug'Zee") then -- or boss XX
 			if (bosses[graph[boss]["parent_paths"][1][1]] and PGF_GetSize(bosses) == 1) then
 				return true;
 			elseif (bosses[graph[boss]["parent_paths"][1][1]] and bosses[graph[boss]["parent_paths"][2][1]] and bosses[graph[boss]["parent_paths"][3][1]]) then
@@ -1565,6 +1663,11 @@ local function initDungeon()
 		for index, challengeID in ipairs(C_ChallengeMode.GetMapTable()) do
 			local name, id, timeLimit, texture, backgroundTexture = C_ChallengeMode.GetMapUIInfo(challengeID);
 			local shortName = name:gsub("%s%(.*", "");
+			if (name == "The MOTHERLODE!!") then
+				name = "THE MOTHERLODE";
+			elseif (name == "Operation: Mechagon - Workshop") then
+				name = "Mechagon Workshop";
+			end
 			dungeonTextures[dungeonAbbreviations[name] .. " (Mythic Keystone)"] = texture;
 		end
 	end
@@ -2087,7 +2190,7 @@ local function initRaid()
 			local shortName = name:gsub("%s%(.*", "");
 			local raidNameShort = PGF_allRaidActivityIDs[aID]:gsub("%s%(.*", "");
 			local trimedName = bossOrderMap[raidAbbreviations[raidNameShort]][index];
-			if (raidNameShort ~= "Aberrus") then --try Interface\\ENCOUNTERJOURNAL\\UI-EJ-BOSS-IgiratheCruel
+			if (raidNameShort == "") then --try Interface\\ENCOUNTERJOURNAL\\UI-EJ-BOSS-IgiratheCruel
 				trimedName = bossOrderMap[raidAbbreviations[raidNameShort]][index]:gsub("(%s)","");
 			end
 			trimedName = trimedName:gsub(",","");
@@ -2096,9 +2199,18 @@ local function initRaid()
 				trimedName = bossOrderMap[raidAbbreviations[raidNameShort]][index]:gsub(",","");
 				texture:SetTexture("Interface\\ENCOUNTERJOURNAL\\UI-EJ-BOSS-" .. trimedName ..".PNG");
 			end
+			if (texture:GetTextureFileID() == nil) then --try Interface\\ENCOUNTERJOURNAL\\UI-EJ-BOSS-Ovinax
+				trimedName = bossOrderMap[raidAbbreviations[raidNameShort]][index]:gsub("'","");
+				texture:SetTexture("Interface\\ENCOUNTERJOURNAL\\UI-EJ-BOSS-" .. trimedName ..".PNG");
+			end
+			if (texture:GetTextureFileID() == nil) then --try Interface\\ENCOUNTERJOURNAL\\UI-EJ-BOSS-Igira
+				trimedName = bossOrderMap[raidAbbreviations[raidNameShort]][index]:gsub(",?%s.*","");
+				texture:SetTexture("Interface\\ENCOUNTERJOURNAL\\UI-EJ-BOSS-" .. trimedName ..".PNG");
+			end
 			if (texture:GetTextureFileID() == nil) then --fallback to Boss Name instead of just BossName
-				if (bossOrderMap[raidAbbreviations[raidNameShort]][index] == "Fyrakk the Blazing") then
-					texture:SetTexture("Interface\\ENCOUNTERJOURNAL\\UI-EJ-BOSS-Fyrakk the Burning.PNG");
+				texture:SetTexture("Interface\\ENCOUNTERJOURNAL\\UI-EJ-BOSS-" .. bossOrderMap[raidAbbreviations[raidNameShort]][index] ..".PNG");
+				if (bossOrderMap[raidAbbreviations[raidNameShort]][index] == "Nexus-Princess Ky'veza") then
+					texture:SetTexture("Interface\\ENCOUNTERJOURNAL\\UI-EJ-BOSS-Kyveza.PNG");
 				elseif (bossOrderMap[raidAbbreviations[raidNameShort]][index] == "Tindral Sageswift, Seer of the Flame") then
 					texture:SetTexture("Interface\\ENCOUNTERJOURNAL\\UI-EJ-BOSS-Tindral Sageswift Seer of Flame.PNG");
 				end
@@ -3492,7 +3604,7 @@ function PGF_DevGenerateAllActivityIDs()
 	};
 	PGF_DevDungeonsActivityIDs = {};
 	PGF_DevRaidActivityIDs = {};
-	for i = 1, 1600 do
+	for i = 1, 2000 do
 		local activityInfo = C_LFGList.GetActivityInfoTable(i);
 		if (activityInfo) then
 			local cat = activityInfo.categoryID;
