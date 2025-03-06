@@ -345,6 +345,9 @@ local boss_Paths = {
 			},
 			["parent_paths"] = {
 				{"Vexie"},
+				{"Rik Reverb", "Vexie"},
+				{"Stix Bunkjunker", "Vexie"},
+				{"Stix Bunkjunker", "Rik Reverb", "Vexie"},
 			},
 		},
 		["Rik Reverb"] = {
@@ -352,7 +355,10 @@ local boss_Paths = {
 				{"Stix Bunkjunker", "Sprocketmonger Lockenstock", "One-Armed Bandit", "Mug'Zee", "Gallywix"}
 			},
 			["parent_paths"] = {
+				{"Vexie"},
 				{"Cauldron of Carnage", "Vexie"},
+				{"Stix Bunkjunker", "Vexie"},
+				{"Stix Bunkjunker", "Cauldron of Carnage", "Vexie"},
 			},
 		},
 		["Stix Bunkjunker"] = {
@@ -360,6 +366,9 @@ local boss_Paths = {
 				{"Sprocketmonger Lockenstock", "One-Armed Bandit", "Mug'Zee", "Gallywix"}
 			},
 			["parent_paths"] = {
+				{"Vexie"},
+				{"Cauldron of Carnage", "Vexie"},
+				{"Rik Reverb", "Vexie"},
 				{"Rik Reverb", "Cauldron of Carnage", "Vexie"},
 			},
 		},
@@ -2193,14 +2202,20 @@ local function initRaid()
 			if (raidNameShort == "") then --try Interface\\ENCOUNTERJOURNAL\\UI-EJ-BOSS-IgiratheCruel
 				trimedName = bossOrderMap[raidAbbreviations[raidNameShort]][index]:gsub("(%s)","");
 			end
-			trimedName = trimedName:gsub(",","");
-			texture:SetTexture("Interface\\ENCOUNTERJOURNAL\\UI-EJ-BOSS-" .. trimedName ..".PNG"); --try Interface\\ENCOUNTERJOURNAL\\UI-EJ-BOSS-Igira
 			if (texture:GetTextureFileID() == nil) then --try Interface\\ENCOUNTERJOURNAL\\UI-EJ-BOSS-Igira the Cruel
 				trimedName = bossOrderMap[raidAbbreviations[raidNameShort]][index]:gsub(",","");
 				texture:SetTexture("Interface\\ENCOUNTERJOURNAL\\UI-EJ-BOSS-" .. trimedName ..".PNG");
 			end
 			if (texture:GetTextureFileID() == nil) then --try Interface\\ENCOUNTERJOURNAL\\UI-EJ-BOSS-Ovinax
 				trimedName = bossOrderMap[raidAbbreviations[raidNameShort]][index]:gsub("'","");
+				texture:SetTexture("Interface\\ENCOUNTERJOURNAL\\UI-EJ-BOSS-" .. trimedName ..".PNG");
+			end
+			if (texture:GetTextureFileID() == nil) then --try Interface\\ENCOUNTERJOURNAL\\UI-EJ-BOSS-Ovinax
+				trimedName = bossOrderMap[raidAbbreviations[raidNameShort]][index]:gsub("[',]","");
+				texture:SetTexture("Interface\\ENCOUNTERJOURNAL\\UI-EJ-BOSS-" .. trimedName ..".PNG");
+			end
+			if (texture:GetTextureFileID() == nil) then --try Interface\\ENCOUNTERJOURNAL\\UI-EJ-BOSS-Igira
+				trimedName = bossOrderMap[raidAbbreviations[raidNameShort]][index]:gsub("%-"," ");
 				texture:SetTexture("Interface\\ENCOUNTERJOURNAL\\UI-EJ-BOSS-" .. trimedName ..".PNG");
 			end
 			if (texture:GetTextureFileID() == nil) then --try Interface\\ENCOUNTERJOURNAL\\UI-EJ-BOSS-Igira
@@ -2211,6 +2226,10 @@ local function initRaid()
 				texture:SetTexture("Interface\\ENCOUNTERJOURNAL\\UI-EJ-BOSS-" .. bossOrderMap[raidAbbreviations[raidNameShort]][index] ..".PNG");
 				if (bossOrderMap[raidAbbreviations[raidNameShort]][index] == "Nexus-Princess Ky'veza") then
 					texture:SetTexture("Interface\\ENCOUNTERJOURNAL\\UI-EJ-BOSS-Kyveza.PNG");
+				elseif (bossOrderMap[raidAbbreviations[raidNameShort]][index] == "Sprocketmonger Lockenstock") then
+					texture:SetTexture("Interface\\ENCOUNTERJOURNAL\\UI-EJ-BOSS-Sprocketmonger Locknstock.PNG");
+				elseif (bossOrderMap[raidAbbreviations[raidNameShort]][index] == "The One-Armed Bandit") then
+					texture:SetTexture("Interface\\ENCOUNTERJOURNAL\\UI-EJ-BOSS-One Armed Bandit.PNG");
 				elseif (bossOrderMap[raidAbbreviations[raidNameShort]][index] == "Tindral Sageswift, Seer of the Flame") then
 					texture:SetTexture("Interface\\ENCOUNTERJOURNAL\\UI-EJ-BOSS-Tindral Sageswift Seer of Flame.PNG");
 				end
