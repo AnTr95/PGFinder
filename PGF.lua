@@ -170,7 +170,7 @@ local bossOrderMap = {
 		"Rik Reverb",
 		"Stix Bunkjunker",
 		"Sprocketmonger Lockenstock",
-		"The One-Armed Bandit",
+		"One-Armed Bandit",
 		"Mug'Zee, Heads of Security",
 		"Chrome King Gallywix",
 		"Fresh",
@@ -197,7 +197,7 @@ local bossNameMap = {
 		["Rik Reverb"] = "Rik Reverb",
 		["Stix Bunkjunker"] = "Stix Bunkjunker",
 		["Sprocketmonger Lockenstock"] = "Sprocketmonger Lockenstock",
-		["The One-Armed Bandit"] = "One-Armed Bandit",
+		["One-Armed Bandit"] = "One-Armed Bandit",
 		["Mug'Zee, Heads of Security"] = "Mug'Zee",
 		["Chrome King Gallywix"] = "Gallywix",
 		["Fresh"] = "Fresh run",
@@ -2201,6 +2201,7 @@ local function initRaid()
 			local trimedName = bossOrderMap[raidAbbreviations[raidNameShort]][index];
 			if (raidNameShort == "") then --try Interface\\ENCOUNTERJOURNAL\\UI-EJ-BOSS-IgiratheCruel
 				trimedName = bossOrderMap[raidAbbreviations[raidNameShort]][index]:gsub("(%s)","");
+				texture:SetTexture("Interface\\ENCOUNTERJOURNAL\\UI-EJ-BOSS-" .. trimedName ..".PNG");
 			end
 			if (texture:GetTextureFileID() == nil) then --try Interface\\ENCOUNTERJOURNAL\\UI-EJ-BOSS-Igira the Cruel
 				trimedName = bossOrderMap[raidAbbreviations[raidNameShort]][index]:gsub(",","");
