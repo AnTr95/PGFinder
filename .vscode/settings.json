@@ -80,7 +80,8 @@
         "BattlefieldMapFrame",
         "Settings",
         "UIDROPDOWNMENU_MAXLEVELS",
-        "UIDROPDOWNMENU_MAXBUTTONS"
+        "UIDROPDOWNMENU_MAXBUTTONS",
+        "RAID_CLASS_COLORS"
     ],
     "Lua.runtime.version": "Lua 5.1",
     "Lua.runtime.builtin": {
@@ -95,6 +96,6 @@
         "utf8": "disable"
     },
     "Lua.workspace.library": [
-        "~\\.vscode\\extensions\\ketho.wow-api-0.18.2\\Annotations"
+        "~\\.vscode\\extensions\\ketho.wow-api-0.20.7\\Annotations\\Core"
     ]
 }

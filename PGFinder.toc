@@ -1,6 +1,6 @@
-## Interface: 110100
+## Interface: 110105
 ## Title: Premade Group Finder
-## Version: 11.10
+## Version: 11.11
 ## Notes: Made finding groups quick and easy
 ## Category: Dungeons & Raids
 ## Author: Ant-Kazzak / Ant-Ragnaros

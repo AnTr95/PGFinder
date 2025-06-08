@@ -2828,7 +2828,6 @@ local function PGF_LFGListSearchEntry_Update(self)
 
 	local isApplication = (appStatus ~= "none" or pendingStatus);
 	local searchResultInfo = C_LFGList.GetSearchResultInfo(resultID);
-
 	--group no longer compatible
 	if(self.IncompatibleBG) then
 		self.IncompatibleBG:Hide();
