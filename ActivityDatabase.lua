@@ -383,6 +383,10 @@ PGF_allDungeonsActivityIDs = {
 	[1549] = "Operation: Floodgate (Mythic)",
 	[1550] = "Operation: Floodgate (Mythic Keystone)",
 	[1616] = "Mechagon Workshop (Mythic)",
+	[1707] = "Eco-Dome Al'dani (Normal)",
+	[1708] = "Eco-Dome Al'dani (Heroic)",
+	[1709] = "Eco-Dome Al'dani (Mythic)",
+	[1694] = "Eco-Dome Al'dani (Mythic Keystone)",
 };
 
 PGF_allRaidActivityIDs = {
@@ -522,6 +526,9 @@ PGF_allRaidActivityIDs = {
 	[1600] = "Liberation of Undermine (Heroic)",
 	[1601] = "Liberation of Undermine (Normal)",
 	[1602] = "Liberation of Undermine (Mythic)",
+	[1617] = "Manaforge Omega (Normal)",
+	[1618] = "Manaforge Omega (Heroic)",
+	[1619] = "Manaforge Omega (Mythic)",
 };
 
 local raidMapIDs = {

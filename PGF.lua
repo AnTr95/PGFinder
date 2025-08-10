@@ -61,15 +61,15 @@ local refreshButtonClick = LFGListFrame.SearchPanel.RefreshButton:GetScript("OnC
 
 --[[
 	To add a new raid:
-	Update the raidStates
-	Add the activityID to the raidStateMap
+	Update the raidStates X
+	Add the activityID to the raidStateMap X
 	Add the abbreviated version of the raid name to the bossNameMap and all of the bosses long and short names
 	Add the abbreviated version of the raid name to the bossOrderMap and all long names of the bosses in the prefered order
 	Add the boss paths to the PATHs graph (use short names)
-	Add the abbreviated name of the raid to the raidAbbreviations
+	Add the abbreviated name of the raid to the raidAbbreviations X
 	Add all achievement IDs to the achievementID array using the generic raid name (without difficulty)
 	Update isNextBoss function to cover first boss and post multiple wing bosses i.e Broodkeeper
-	Add the activityIDs of all difficulties to PGF_allRaidActivityIDs
+	Add the activityIDs of all difficulties to PGF_allRaidActivityIDs X
 	Change lastSelectedRaidState to match the new raids "All" AFTER it has been released
 
 	To add a new dungeon:
@@ -96,7 +96,7 @@ local prevSearchTime = 0;
 local refreshTimeReset = 3; --defines the time that must pass between searches
 local searchAvailable = true;
 local dungeonStates = {"Normal", "Heroic", "Mythic", "Mythic+ (Keystone)"}; --visible states for the dropdown
-local raidStates = {"All", "LOU Normal", "LOU Heroic", "LOU Mythic", "LOU All", "NP Normal", "NP Heroic", "NP Mythic", "NP All",}; --visible states for the dropdown
+local raidStates = {"All", "MFO Normal", "MFO Heroic", "MFO Mythic", "MFO All", "LOU Normal", "LOU Heroic", "LOU Mythic", "LOU All", "NP Normal", "NP Heroic", "NP Mythic", "NP All",}; --visible states for the dropdown
 local sortingStates = {[1] = "Time", [2] = "Score"};
 local sortingRaidStates = {[1] = "Time", [2] = "Few of your class", [3] = "Many of your class", [4] = "Few of your tier", [5] = "Many of your tier"};
 local lastSelectedDungeonState = "";
@@ -131,6 +131,10 @@ local raidStateMap = {
 	["LOU Heroic"] = 1600,
 	["LOU Mythic"] = 1602,
 	["LOU All"] = 1602, --no activity ID for this so lets take the boss data from normal
+	["MFO Normal"] = 1617,
+	["MFO Heroic"] = 1618,
+	["MFO Mythic"] = 1619,
+	["MFO All"] = 1619, --no activity ID for this so lets take the boss data from normal
 };
 local tierSetsMap = {
 	["DEATHKNIGHT"] = "Dreadful",
@@ -175,6 +179,17 @@ local bossOrderMap = {
 		"Chrome King Gallywix",
 		"Fresh",
 	},
+	["MFO"] = {
+		"Vexie and the Geargrinders",
+		"Cauldron of Carnage",
+		"Rik Reverb",
+		"Stix Bunkjunker",
+		"Sprocketmonger Lockenstock",
+		"One-Armed Bandit",
+		"Mug'Zee, Heads of Security",
+		"Chrome King Gallywix",
+		"Fresh",
+	},
 };
 --[[
 	Documentation: This converts the names used in the GUIs for the user to see with the actual names in the code.
@@ -192,6 +207,17 @@ local bossNameMap = {
 		["Fresh"] = "Fresh Run",
 	},
 	["LOU"] = {
+		["Vexie and the Geargrinders"] = "Vexie",
+		["Cauldron of Carnage"] = "Cauldron of Carnage",
+		["Rik Reverb"] = "Rik Reverb",
+		["Stix Bunkjunker"] = "Stix Bunkjunker",
+		["Sprocketmonger Lockenstock"] = "Sprocketmonger Lockenstock",
+		["One-Armed Bandit"] = "One-Armed Bandit",
+		["Mug'Zee, Heads of Security"] = "Mug'Zee",
+		["Chrome King Gallywix"] = "Gallywix",
+		["Fresh"] = "Fresh run",
+	},
+	["MFO"] = {
 		["Vexie and the Geargrinders"] = "Vexie",
 		["Cauldron of Carnage"] = "Cauldron of Carnage",
 		["Rik Reverb"] = "Rik Reverb",
@@ -247,11 +273,17 @@ local dungeonAbbreviations = {
 	["Theater of Pain"] = "TOP",
 	["Operation: Mechagon"] = "MECHA",
 	["Mechagon Workshop"] = "WORK",
+	["Halls of Atonement"] = "HOA",
+	["Eco-Dome Al'dani"] = "EDA",
+	["Tazavesh, the Veiled Market"] = "TVM",
+	["Tazavesh Gambit"] = "GMBT",
+	["Tazavesh Streets"] = "STRT",
 };
 
 local raidAbbreviations = {
 	["Liberation of Undermine"] = "LOU",
 	["Nerub-ar Palace"] = "NP",
+	["Manaforge Omega"] = "MFO",
 };
 --[[
 	Documentation: This is DAG that defines which bosses are after and which are before the selected boss and is used for figuring out what boss is next based on the raid lockout
@@ -1676,6 +1708,10 @@ local function initDungeon()
 				name = "THE MOTHERLODE";
 			elseif (name == "Operation: Mechagon - Workshop") then
 				name = "Mechagon Workshop";
+			elseif (name == "Tazavesh: So'leah's Gambit") then
+				name = "Tazavesh Gambit";
+			elseif (name == "Tazavesh: Streets of Wonder") then
+				name = "Tazavesh Streets";
 			end
 			dungeonTextures[dungeonAbbreviations[name] .. " (Mythic Keystone)"] = texture;
 		end
