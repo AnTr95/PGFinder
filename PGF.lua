@@ -63,14 +63,15 @@ local refreshButtonClick = LFGListFrame.SearchPanel.RefreshButton:GetScript("OnC
 	To add a new raid:
 	Update the raidStates X
 	Add the activityID to the raidStateMap X
-	Add the abbreviated version of the raid name to the bossNameMap and all of the bosses long and short names
-	Add the abbreviated version of the raid name to the bossOrderMap and all long names of the bosses in the prefered order
+	Add the abbreviated version of the raid name to the bossNameMap and all of the bosses long and short names X
+	Add the abbreviated version of the raid name to the bossOrderMap and all long names of the bosses in the prefered order X
 	Add the boss paths to the PATHs graph (use short names)
 	Add the abbreviated name of the raid to the raidAbbreviations X
-	Add all achievement IDs to the achievementID array using the generic raid name (without difficulty)
+	Add all achievement IDs to the achievementID array using the generic raid name (without difficulty) X
 	Update isNextBoss function to cover first boss and post multiple wing bosses i.e Broodkeeper
 	Add the activityIDs of all difficulties to PGF_allRaidActivityIDs X
 	Change lastSelectedRaidState to match the new raids "All" AFTER it has been released
+	TODO STILL FIX PATH FOR MANAFORGE
 
 	To add a new dungeon:
 	Add the abbreviated name of the dungeon to the dungeonAbbreviations
@@ -180,14 +181,14 @@ local bossOrderMap = {
 		"Fresh",
 	},
 	["MFO"] = {
-		"Vexie and the Geargrinders",
-		"Cauldron of Carnage",
-		"Rik Reverb",
-		"Stix Bunkjunker",
-		"Sprocketmonger Lockenstock",
-		"One-Armed Bandit",
-		"Mug'Zee, Heads of Security",
-		"Chrome King Gallywix",
+		"Plexus Sentinel",
+		"Loom'ithar",
+		"Soulbinder Naazindhri",
+		"Forgeweaver Araz",
+		"The Soul Hunters",
+		"Fractillus",
+		"Nexus-King Salhadaar",
+		"Dimensius, the All-Devouring",
 		"Fresh",
 	},
 };
@@ -218,14 +219,14 @@ local bossNameMap = {
 		["Fresh"] = "Fresh run",
 	},
 	["MFO"] = {
-		["Vexie and the Geargrinders"] = "Vexie",
-		["Cauldron of Carnage"] = "Cauldron of Carnage",
-		["Rik Reverb"] = "Rik Reverb",
-		["Stix Bunkjunker"] = "Stix Bunkjunker",
-		["Sprocketmonger Lockenstock"] = "Sprocketmonger Lockenstock",
-		["One-Armed Bandit"] = "One-Armed Bandit",
-		["Mug'Zee, Heads of Security"] = "Mug'Zee",
-		["Chrome King Gallywix"] = "Gallywix",
+		["Plexus Sentinel"] = "Plexus",
+		["Loom'ithar"] = "Loom'ithar",
+		["Soulbinder Naazindhri"] = "Soulbinder Naazindhri",
+		["Forgeweaver Araz"] = "Forgeweaver Araz",
+		["The Soul Hunters"] = "Soul Hunters",
+		["Fractillus"] = "Fractillus",
+		["Nexus-King Salhadaar"] = "Nexus-King Salhadaar",
+		["Dimensius, the All-Devouring"] = "Dimensius",
 		["Fresh"] = "Fresh run",
 	},
 };
@@ -562,6 +563,7 @@ local selectedInfo = {
 	Documentation: All of the achievementIDs for CE, Mythic Boss, AOTC, Normal Clear. Order decides which one is best, lower key = better
 ]]
 local achievementIDs = {
+	["Manaforge Omega"] = {41625, 41610, 41609, 41608, 41607, 41606, 41605, 41604, 41624, 41598},
 	["Liberation of Undermine"] = {41297, 41235, 41234, 41233, 41232, 41231, 41230, 41229, 41298, 41222},
 	["Nerub-ar Palace"] = {40254, 40242, 40241, 40240, 40239, 40238, 40237, 40236, 40253, 40244},
 };
