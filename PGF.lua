@@ -1699,25 +1699,24 @@ local function initDungeon()
 	UIDropDownMenu_SetSelectedID(dungeonDifficultyDropDown, 4);
 	local matchingActivities = C_LFGList.GetAvailableActivities(GROUP_FINDER_CATEGORY_ID_DUNGEONS, nil, ResolveCategoryFilters(GROUP_FINDER_CATEGORY_ID_DUNGEONS, 0), "");
 	for i = 1, #matchingActivities do
-		if (matchingActivities[i] == 425 or matchingActivities[i] == 426 or matchingActivities[i] == 427 or matchingActivities[i] == 428 or matchingActivities[i] == 429 or matchingActivities[i] == 430 or matchingActivities[i] == 431 or matchingActivities[i] == 433 or matchingActivities[i] == 434 or matchingActivities[i] == 435 or matchingActivities[i] == 436 or matchingActivities[i] == 437 or matchingActivities[i] == 438 or matchingActivities[i] == 439 or matchingActivities[i] == 440 or matchingActivities[i] == 441 or matchingActivities[i] == 443 or matchingActivities[i] == 444 or matchingActivities[i] == 474 or matchingActivities[i] == 484 or matchingActivities[i] == 470 or matchingActivities[i] == 472 or matchingActivities[i] == 445 or matchingActivities[i] == 446 or matchingActivities[i] == 447 or matchingActivities[i] == 448 or matchingActivities[i] == 449	or matchingActivities[i] == 450	or matchingActivities[i] == 451	or matchingActivities[i] == 452 or matchingActivities[i] == 453 or matchingActivities[i] == 454	or matchingActivities[i] == 455	or matchingActivities[i] == 475 or matchingActivities[i] == 472 or matchingActivities[i] == 459 or matchingActivities[i] == 460 or matchingActivities[i] == 461	or matchingActivities[i] == 462	or matchingActivities[i] == 463	or matchingActivities[i] == 464	or matchingActivities[i] == 465	or matchingActivities[i] == 466	or matchingActivities[i] == 467	or matchingActivities[i] == 471 or matchingActivities[i] == 473 or matchingActivities[i] == 476 or matchingActivities[i] == 486) then
-			if (isRemixCharacter) then
-				local name = PGF_allDungeonsActivityIDs[matchingActivities[i]];
-				local shortName = name:gsub("%s%(.*", "")
-				local difficulty = name:match("%(.*%)");
-				if (dungeonAbbreviations[shortName]) then
-					shortName = dungeonAbbreviations[shortName];
-				end
-				if (name:match("(Mythic Keystone)")) then
-					currentDungeonsActivityIDs["(Mythic Keystone)"][matchingActivities[i]] = shortName .. " " .. difficulty;
-				elseif (name:match("(Mythic)")) then
-					currentDungeonsActivityIDs["(Mythic)"][matchingActivities[i]] = shortName .. " " .. difficulty;
-				elseif (name:match("(Heroic)")) then
-					currentDungeonsActivityIDs["(Heroic)"][matchingActivities[i]] = shortName .. " " .. difficulty;
-				elseif (name:match("(Normal)")) then
-					currentDungeonsActivityIDs["(Normal)"][matchingActivities[i]] = shortName .. " " .. difficulty;
-				end
+		if (isRemixCharacter) then
+			local name = PGF_allDungeonsActivityIDs[matchingActivities[i]];
+			local shortName = name:gsub("%s%(.*", "")
+			local difficulty = name:match("%(.*%)");
+			if (dungeonAbbreviations[shortName]) then
+				shortName = dungeonAbbreviations[shortName];
 			end
-		else
+			if (name:match("(Mythic Keystone)")) then
+				currentDungeonsActivityIDs["(Mythic Keystone)"][matchingActivities[i]] = shortName .. " " .. difficulty;
+			elseif (name:match("(Mythic)")) then
+				currentDungeonsActivityIDs["(Mythic)"][matchingActivities[i]] = shortName .. " " .. difficulty;
+			elseif (name:match("(Heroic)")) then
+				currentDungeonsActivityIDs["(Heroic)"][matchingActivities[i]] = shortName .. " " .. difficulty;
+			elseif (name:match("(Normal)")) then
+				currentDungeonsActivityIDs["(Normal)"][matchingActivities[i]] = shortName .. " " .. difficulty;
+			end
+		end
+		if (matchingActivities[i] ~= 425 and matchingActivities[i] ~= 426 and matchingActivities[i] ~= 427 and matchingActivities[i] ~= 428 and matchingActivities[i] ~= 429 and matchingActivities[i] ~= 430 and matchingActivities[i] ~= 431 and matchingActivities[i] ~= 433 and matchingActivities[i] ~= 434 and matchingActivities[i] ~= 435 and matchingActivities[i] ~= 436 and matchingActivities[i] ~= 437 and matchingActivities[i] ~= 438 and matchingActivities[i] ~= 439 and matchingActivities[i] ~= 440 and matchingActivities[i] ~= 441 and matchingActivities[i] ~= 443 and matchingActivities[i] ~= 444 and matchingActivities[i] ~= 474 and matchingActivities[i] ~= 484 and matchingActivities[i] ~= 470 and matchingActivities[i] ~= 472 and matchingActivities[i] ~= 445 and matchingActivities[i] ~= 446 and matchingActivities[i] ~= 447 and matchingActivities[i] ~= 448 and matchingActivities[i] ~= 449 and matchingActivities[i] ~= 450 and matchingActivities[i] ~= 451 and matchingActivities[i] ~= 452 and matchingActivities[i] ~= 453 and matchingActivities[i] ~= 454 and matchingActivities[i] ~= 455 and matchingActivities[i] ~= 475 and matchingActivities[i] ~= 472 and matchingActivities[i] ~= 459 and matchingActivities[i] ~= 460 and matchingActivities[i] ~= 461 and matchingActivities[i] ~= 462 and matchingActivities[i] ~= 463 and matchingActivities[i] ~= 464 and matchingActivities[i] ~= 465 and matchingActivities[i] ~= 466 and matchingActivities[i] ~= 467 and matchingActivities[i] ~= 471 and matchingActivities[i] ~= 473 and matchingActivities[i] ~= 476 and matchingActivities[i] ~= 486) then
 			if (not isRemixCharacter) then
 				--only keep this part after legion event
 				local name = PGF_allDungeonsActivityIDs[matchingActivities[i]];
@@ -2554,10 +2553,10 @@ f:SetScript("OnEvent", function(self, event, ...)
 	if (event == "PLAYER_LOGIN") then
 		--Remove after legion event
 		for i = 1, 100 do
-			local auraData = C_UnitAuras.GetDebuffDataByIndex("player", i);
+			local auraData = C_UnitAuras.GetBuffDataByIndex("player", i);
 			if (auraData) then
 				local name, icon, count, dispelType, duration, expirationTime, source, isStealable, nameplateShowPersonal, spellId, canApplyAura, isBossDebuff, castByPlayer, nameplateShowAll, timeMod = AuraUtil.UnpackAuraData(auraData);
-				if (name and not spellId == 1213439) then
+				if (name and spellId == 1213439) then
 					isRemixCharacter = true;
 					break;
 				end
