@@ -61,17 +61,17 @@ local refreshButtonClick = LFGListFrame.SearchPanel.RefreshButton:GetScript("OnC
 
 --[[
 	To add a new raid:
-	Update the raidStates X
-	Add the activityID to the raidStateMap X
-	Add the abbreviated version of the raid name to the bossNameMap and all of the bosses long and short names X
-	Add the abbreviated version of the raid name to the bossOrderMap and all long names of the bosses in the prefered order X
+	Update the raidStates 
+	Add the activityID to the raidStateMap 
+	Add the abbreviated version of the raid name to the bossNameMap and all of the bosses long and short names 
+	Add the abbreviated version of the raid name to the bossOrderMap and all long names of the bosses in the prefered order 
 	Add the boss paths to the PATHs graph (use short names)
-	Add the abbreviated name of the raid to the raidAbbreviations X
-	Add all achievement IDs to the achievementID array using the generic raid name (without difficulty) X
+	Add the abbreviated name of the raid to the raidAbbreviations 
+	Add all achievement IDs to the achievementID array using the generic raid name (without difficulty) 
 	Update isNextBoss function to cover first boss and post multiple wing bosses i.e Broodkeeper
-	Add the activityIDs of all difficulties to PGF_allRaidActivityIDs X
+	Add the activityIDs of all difficulties to PGF_allRaidActivityIDs 
 	Change lastSelectedRaidState to match the new raids "All" AFTER it has been released
-	TODO STILL FIX PATH FOR MANAFORGE
+	TODO STILL FIX PATH FOR MANAFORGE + REMIX RAIDS
 
 	To add a new dungeon:
 	Add the abbreviated name of the dungeon to the dungeonAbbreviations
@@ -234,6 +234,17 @@ local dungeonAbbreviations = {
 	["The Nokhud Offensive"] = "NO",
 	["Court of Stars"] = "COS",
 	["Halls of Valor"] = "HOV",
+	["Eye of Azshara"] = "EOA",
+	["Black Rook Hold"] = "BRH",
+	["Darkheart Thicket"] = "DHT",
+	["Neltharion's Lair"] = "NL",
+	["Vault of the Wardens"] = "VOTW",
+	["Maw of Souls"] = "MOS",
+	["The Arcway"] = "AW",
+	["Lower Karazhan"] = "LOWR",
+	["Upper Karazhan"] = "UPPR",
+	["Cathedral of Eternal Night"] = "COEN",
+	["Seat of the Triumvirate"] = "SEAT",
 	["Algeth'ar Academy"] = "AA",
 	["Shadowmoon Burial Grounds"] = "SBG",
 	["The Azure Vault"] = "AV",
@@ -243,15 +254,12 @@ local dungeonAbbreviations = {
 	["Halls of Infusion"] = "HOI",
 	["Uldaman: Legacy of Tyr"] = "UL",
 	["Neltharus"] = "NELT",
-	["Neltharion's Lair"] = "NL",
 	["Freehold"] = "FH",
 	["The Underrot"] = "UNDR",
 	["The Vortex Pinnacle"] = "VP",
 	["Dawn of the Infinite"] = "DI",
 	["Dawn of the Infinite: Galakrond's Fall"] = "FALL",
 	["Dawn of the Infinite: Murozond's Rise"] = "RISE",
-	["Black Rook Hold"] = "BRH",
-	["Darkheart Thicket"] = "DHT",
 	["Throne of the Tides"] = "TOTT",
 	["Atal'Dazar"] = "AD",
 	["Waycrest Manor"] = "WM",
@@ -285,6 +293,11 @@ local raidAbbreviations = {
 	["Liberation of Undermine"] = "LOU",
 	["Nerub-ar Palace"] = "NP",
 	["Manaforge Omega"] = "MFO",
+	["Emerald Nightmare"] = "EN",
+	["The Nighthold"] = "NH",
+	["Trial of Valor"] = "TOV",
+	["Tomb of Sargeras"] = "TOS",
+	["Antorus, the Burning Throne"] = "ATBT",
 };
 --[[
 	Documentation: This is DAG that defines which bosses are after and which are before the selected boss and is used for figuring out what boss is next based on the raid lockout
@@ -869,6 +882,8 @@ local rGUI = {}; -- array to store all widgets for raids
 
 local currentDungeonsActivityIDs = {["(Mythic Keystone)"] = {}, ["(Mythic)"] = {}, ["(Heroic)"] = {}, ["(Normal)"] = {}}; --dungeons dropdown is using difficulties to show dungeons for that difficulty as the first filter
 local currentRaidsActivityIDs = {}; --raids dropdown is using the specific raid + difficulty which in form of activityID to show bosses in the first filter
+
+local isRemixCharacter = false; -- Remove after legion event
 
 --[[
 	Checking if a table PGF_Contains a given value and if it does, what index is the value located at
@@ -1684,20 +1699,44 @@ local function initDungeon()
 	UIDropDownMenu_SetSelectedID(dungeonDifficultyDropDown, 4);
 	local matchingActivities = C_LFGList.GetAvailableActivities(GROUP_FINDER_CATEGORY_ID_DUNGEONS, nil, ResolveCategoryFilters(GROUP_FINDER_CATEGORY_ID_DUNGEONS, 0), "");
 	for i = 1, #matchingActivities do
-		local name = PGF_allDungeonsActivityIDs[matchingActivities[i]];
-		local shortName = name:gsub("%s%(.*", "")
-		local difficulty = name:match("%(.*%)");
-		if (dungeonAbbreviations[shortName]) then
-			shortName = dungeonAbbreviations[shortName];
-		end
-		if (name:match("(Mythic Keystone)")) then
-			currentDungeonsActivityIDs["(Mythic Keystone)"][matchingActivities[i]] = shortName .. " " .. difficulty;
-		elseif (name:match("(Mythic)")) then
-			currentDungeonsActivityIDs["(Mythic)"][matchingActivities[i]] = shortName .. " " .. difficulty;
-		elseif (name:match("(Heroic)")) then
-			currentDungeonsActivityIDs["(Heroic)"][matchingActivities[i]] = shortName .. " " .. difficulty;
-		elseif (name:match("(Normal)")) then
-			currentDungeonsActivityIDs["(Normal)"][matchingActivities[i]] = shortName .. " " .. difficulty;
+		if (matchingActivities[i] == 425 or matchingActivities[i] == 426 or matchingActivities[i] == 427 or matchingActivities[i] == 428 or matchingActivities[i] == 429 or matchingActivities[i] == 430 or matchingActivities[i] == 431 or matchingActivities[i] == 433 or matchingActivities[i] == 434 or matchingActivities[i] == 435 or matchingActivities[i] == 436 or matchingActivities[i] == 437 or matchingActivities[i] == 438 or matchingActivities[i] == 439 or matchingActivities[i] == 440 or matchingActivities[i] == 441 or matchingActivities[i] == 443 or matchingActivities[i] == 444 or matchingActivities[i] == 474 or matchingActivities[i] == 484 or matchingActivities[i] == 470 or matchingActivities[i] == 472 or matchingActivities[i] == 445 or matchingActivities[i] == 446 or matchingActivities[i] == 447 or matchingActivities[i] == 448 or matchingActivities[i] == 449	or matchingActivities[i] == 450	or matchingActivities[i] == 451	or matchingActivities[i] == 452 or matchingActivities[i] == 453 or matchingActivities[i] == 454	or matchingActivities[i] == 455	or matchingActivities[i] == 475 or matchingActivities[i] == 472 or matchingActivities[i] == 459 or matchingActivities[i] == 460 or matchingActivities[i] == 461	or matchingActivities[i] == 462	or matchingActivities[i] == 463	or matchingActivities[i] == 464	or matchingActivities[i] == 465	or matchingActivities[i] == 466	or matchingActivities[i] == 467	or matchingActivities[i] == 471 or matchingActivities[i] == 473 or matchingActivities[i] == 476 or matchingActivities[i] == 486) then
+			if (isRemixCharacter) then
+				local name = PGF_allDungeonsActivityIDs[matchingActivities[i]];
+				local shortName = name:gsub("%s%(.*", "")
+				local difficulty = name:match("%(.*%)");
+				if (dungeonAbbreviations[shortName]) then
+					shortName = dungeonAbbreviations[shortName];
+				end
+				if (name:match("(Mythic Keystone)")) then
+					currentDungeonsActivityIDs["(Mythic Keystone)"][matchingActivities[i]] = shortName .. " " .. difficulty;
+				elseif (name:match("(Mythic)")) then
+					currentDungeonsActivityIDs["(Mythic)"][matchingActivities[i]] = shortName .. " " .. difficulty;
+				elseif (name:match("(Heroic)")) then
+					currentDungeonsActivityIDs["(Heroic)"][matchingActivities[i]] = shortName .. " " .. difficulty;
+				elseif (name:match("(Normal)")) then
+					currentDungeonsActivityIDs["(Normal)"][matchingActivities[i]] = shortName .. " " .. difficulty;
+				end
+			end
+		else
+			if (not isRemixCharacter) then
+				--only keep this part after legion event
+				local name = PGF_allDungeonsActivityIDs[matchingActivities[i]];
+				local shortName = name:gsub("%s%(.*", "")
+				local difficulty = name:match("%(.*%)");
+				if (dungeonAbbreviations[shortName]) then
+					shortName = dungeonAbbreviations[shortName];
+				end
+				if (name:match("(Mythic Keystone)")) then
+					currentDungeonsActivityIDs["(Mythic Keystone)"][matchingActivities[i]] = shortName .. " " .. difficulty;
+				elseif (name:match("(Mythic)")) then
+					currentDungeonsActivityIDs["(Mythic)"][matchingActivities[i]] = shortName .. " " .. difficulty;
+				elseif (name:match("(Heroic)")) then
+					currentDungeonsActivityIDs["(Heroic)"][matchingActivities[i]] = shortName .. " " .. difficulty;
+				elseif (name:match("(Normal)")) then
+					currentDungeonsActivityIDs["(Normal)"][matchingActivities[i]] = shortName .. " " .. difficulty;
+				end
+				--until there
+			end
 		end
 	end
 	--create all buttons, have updateDifficulty display different buttons
@@ -2511,9 +2550,20 @@ local function restoreDungeonFilter(enabled)
 	C_LFGList.SaveAdvancedFilter(enabled);
 end
 
-
 f:SetScript("OnEvent", function(self, event, ...)
 	if (event == "PLAYER_LOGIN") then
+		--Remove after legion event
+		for i = 1, 100 do
+			local auraData = C_UnitAuras.GetDebuffDataByIndex("player", i);
+			if (auraData) then
+				local name, icon, count, dispelType, duration, expirationTime, source, isStealable, nameplateShowPersonal, spellId, canApplyAura, isBossDebuff, castByPlayer, nameplateShowAll, timeMod = AuraUtil.UnpackAuraData(auraData);
+				if (name and not spellId == 1213439) then
+					isRemixCharacter = true;
+					break;
+				end
+			end
+		end
+		--Legion ends here
 		C_MythicPlus.RequestMapInfo();
 		playerRole = GetSpecializationRole(GetSpecialization());
 		if (PGF_roles == nil) then

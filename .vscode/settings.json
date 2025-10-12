@@ -81,7 +81,8 @@
         "Settings",
         "UIDROPDOWNMENU_MAXLEVELS",
         "UIDROPDOWNMENU_MAXBUTTONS",
-        "RAID_CLASS_COLORS"
+        "RAID_CLASS_COLORS",
+        "GetUnitName"
     ],
     "Lua.runtime.version": "Lua 5.1",
     "Lua.runtime.builtin": {
